@@ -1,8 +1,91 @@
-.admin-orders {
-  padding: 2rem;
+/* Admin Layout */
+.admin-layout {
+  display: flex;
   min-height: 100vh;
+  background: #f8fafc;
+  position: relative;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 280px;
+  background: linear-gradient(180deg, #6366f1 0%, #8b5cf6 100%);
+  padding: 0;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  height: 100vh;
+  overflow-y: auto;
+  top: 0;
+  left: 0;
+  align-self: flex-start;
+}
+
+.sidebar-header {
+  padding: 2rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-header h2 {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.sidebar-nav {
+  padding: 1rem 0;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  margin: 0.25rem 1rem;
+  border-radius: 12px;
+  font-weight: 500;
+  gap: 1rem;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  transform: translateX(4px);
+}
+
+.nav-item.active {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.nav-item.users-nav.active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.nav-icon {
+  font-size: 1.25rem;
+  width: 24px;
+  text-align: center;
+}
+
+.nav-text {
+  font-size: 1rem;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  padding: 2rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+  min-height: calc(100vh - 4rem);
+}
+
+.admin-orders {
+  font-family: 'Arial', sans-serif;
 }
 
 .page-header {
@@ -147,6 +230,10 @@
   border-bottom: 2px solid rgba(52, 152, 219, 0.2);
 }
 
+.table-header > div:last-child {
+  text-align: center;
+}
+
 .table-row {
   display: grid;
   grid-template-columns: 80px 2fr 1fr 1fr 1.5fr 1.5fr 120px;
@@ -254,39 +341,53 @@
 .col-actions {
   display: flex;
   gap: 0.5rem;
+  justify-content: center;
+  align-items: center;
 }
 
 .action-btn {
-  width: 35px;
-  height: 35px;
+  background: none;
   border: none;
-  border-radius: 50%;
   cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  font-size: 1.2rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
-  font-size: 0.85rem;
+  margin: 0 2px;
 }
 
 .action-btn.view {
-  background: #3498db;
-  color: white;
+  color: #3498db;
+}
+
+.action-btn.view:hover {
+  background: rgba(52, 152, 219, 0.1);
+  color: #2980b9;
 }
 
 .action-btn.edit {
-  background: #f39c12;
-  color: white;
+  color: #f39c12;
+}
+
+.action-btn.edit:hover {
+  background: rgba(243, 156, 18, 0.1);
+  color: #e67e22;
 }
 
 .action-btn.print {
-  background: #9b59b6;
-  color: white;
+  color: #9b59b6;
+}
+
+.action-btn.print:hover {
+  background: rgba(155, 89, 182, 0.1);
+  color: #8e44ad;
 }
 
 .action-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
 }
 
 /* État vide */

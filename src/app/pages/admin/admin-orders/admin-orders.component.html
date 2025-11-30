@@ -1,15 +1,47 @@
-<div class="admin-orders">
-  <!-- Header -->
-  <div class="page-header">
-    <div class="header-content">
-      <h1><i class="fas fa-clipboard-list"></i> Gestion des Commandes</h1>
-      <p>Suivez et gérez toutes les commandes</p>
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2>Admin Panel</h2>
     </div>
-    <a routerLink="/admin" class="back-btn">
-      <i class="fas fa-arrow-left"></i>
-      Retour au tableau de bord
-    </a>
+    <nav class="sidebar-nav">
+      <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item">
+        <span class="nav-icon">⚡</span>
+        <span class="nav-text">Dashboard</span>
+      </a>
+      <a routerLink="/admin/products" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">🛒</span>
+        <span class="nav-text">Product</span>
+      </a>
+      <a routerLink="/admin/orders" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📋</span>
+        <span class="nav-text">Orders</span>
+      </a>
+      <a routerLink="/user-management" routerLinkActive="active" class="nav-item users-nav">
+        <span class="nav-icon">👥</span>
+        <span class="nav-text">Users</span>
+      </a>
+      <a routerLink="/admin/stats" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📊</span>
+        <span class="nav-text">Stats</span>
+      </a>
+    </nav>
   </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="admin-orders">
+      <!-- Header -->
+      <div class="page-header">
+        <div class="header-content">
+          <h1><i class="fas fa-clipboard-list"></i> Gestion des Commandes</h1>
+          <p>Suivez et gérez toutes les commandes</p>
+        </div>
+        <a routerLink="/admin" class="back-btn">
+          <i class="fas fa-arrow-left"></i>
+          Retour au tableau de bord
+        </a>
+      </div>
 
   <!-- Filtres et recherche -->
   <div class="filters-section">
@@ -98,17 +130,17 @@
             class="action-btn view"
             (click)="viewOrderDetails(order)"
             title="Voir détails">
-            <i class="fas fa-eye"></i>
+            👁️
           </button>
           <button 
             class="action-btn edit"
             title="Modifier">
-            <i class="fas fa-edit"></i>
+            ✏️
           </button>
           <button 
             class="action-btn print"
             title="Imprimer">
-            <i class="fas fa-print"></i>
+            🖨️
           </button>
         </div>
       </div>
@@ -119,6 +151,8 @@
       <i class="fas fa-clipboard-list"></i>
       <h3>Aucune commande trouvée</h3>
       <p>Aucune commande ne correspond à vos critères de recherche</p>
+    </div>
+  </div>
     </div>
   </div>
 </div>

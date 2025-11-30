@@ -38,47 +38,67 @@
 
   <!-- Statistiques principales -->
   <div class="stats-grid">
-    <div class="stat-card users">
-      <div class="stat-icon">
-        <i class="fas fa-users"></i>
-      </div>
-      <div class="stat-info">
-        <h3>{{ stats.totalUsers | number }}</h3>
-        <p>Utilisateurs</p>
-        <span class="stat-trend positive">+5.2%</span>
-      </div>
-    </div>
-
-    <div class="stat-card orders">
-      <div class="stat-icon">
-        <i class="fas fa-shopping-cart"></i>
-      </div>
-      <div class="stat-info">
-        <h3>{{ stats.totalOrders | number }}</h3>
-        <p>Commandes</p>
-        <span class="stat-trend positive">+12.4%</span>
+    <div class="stat-card product-stock">
+      <div class="stat-content">
+        <div class="stat-info">
+          <p class="stat-label">Product in stock</p>
+          <h3 class="stat-value">25.1k</h3>
+          <div class="stat-bottom">
+            <span class="stat-trend positive">+15%</span>
+            <a href="#" class="view-link">View Report</a>
+          </div>
+        </div>
+        <div class="stat-icon">
+          <i class="fas fa-shopping-cart"></i>
+        </div>
       </div>
     </div>
 
-    <div class="stat-card revenue">
-      <div class="stat-icon">
-        <i class="fas fa-euro-sign"></i>
-      </div>
-      <div class="stat-info">
-        <h3>{{ stats.totalRevenue | currency:'EUR':'symbol':'1.2-2' }}</h3>
-        <p>Chiffre d'affaires</p>
-        <span class="stat-trend positive">+8.7%</span>
+    <div class="stat-card out-of-stock">
+      <div class="stat-content">
+        <div class="stat-info">
+          <p class="stat-label">product out of stock</p>
+          <h3 class="stat-value">$2,435k</h3>
+          <div class="stat-bottom">
+            <span class="stat-trend negative">-3.5%</span>
+            <a href="#" class="view-link">View Report</a>
+          </div>
+        </div>
+        <div class="stat-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
       </div>
     </div>
 
-    <div class="stat-card deliveries">
-      <div class="stat-icon">
-        <i class="fas fa-truck"></i>
+    <div class="stat-card pending-orders">
+      <div class="stat-content">
+        <div class="stat-info">
+          <p class="stat-label">pending orders</p>
+          <h3 class="stat-value">3.5M</h3>
+          <div class="stat-bottom">
+            <span class="stat-trend positive">+15%</span>
+            <a href="#" class="view-link">View More</a>
+          </div>
+        </div>
+        <div class="stat-icon">
+          <i class="fas fa-clipboard-list"></i>
+        </div>
       </div>
-      <div class="stat-info">
-        <h3>{{ stats.activeDeliveries }}</h3>
-        <p>Livraisons actives</p>
-        <span class="stat-trend neutral">{{ stats.pendingOrders }} en attente</span>
+    </div>
+
+    <div class="stat-card orders-delivered">
+      <div class="stat-content">
+        <div class="stat-info">
+          <p class="stat-label">orders delivered</p>
+          <h3 class="stat-value">43.5k</h3>
+          <div class="stat-bottom">
+            <span class="stat-trend positive">+10%</span>
+            <a href="#" class="view-link">View More</a>
+          </div>
+        </div>
+        <div class="stat-icon">
+          <i class="fas fa-truck"></i>
+        </div>
       </div>
     </div>
   </div>
