@@ -32,6 +32,10 @@ export const routes: Routes = [
     loadChildren: () => import('./pages/admin/admin.routes').then(m => m.routes)
   },
   { 
+    path: 'provider', 
+    loadChildren: () => import('./pages/provider/provider.routes').then(m => m.routes)
+  },
+  { 
     path: 'user-management', 
     loadComponent: () => import('./pages/user-management/user-management.component').then(m => m.UserManagementComponent)
   },

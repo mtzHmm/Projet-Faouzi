@@ -1,0 +1,155 @@
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2>Provider Panel</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a routerLink="/provider" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item">
+        <span class="nav-icon">⚡</span>
+        <span class="nav-text">Dashboard</span>
+      </a>
+      <a routerLink="/provider/products" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📦</span>
+        <span class="nav-text">Products</span>
+      </a>
+      <a routerLink="/provider/orders" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📋</span>
+        <span class="nav-text">Orders</span>
+      </a>
+      <a routerLink="/provider/inventory" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📊</span>
+        <span class="nav-text">Inventory</span>
+      </a>
+      <a routerLink="/provider/reports" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📈</span>
+        <span class="nav-text">Reports</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Header -->
+    <div class="provider-header">
+      <h1><i class="fas fa-store"></i> Provider Dashboard</h1>
+      <p>Manage your store and products</p>
+    </div>
+
+    <!-- Statistiques principales -->
+    <div class="stats-grid">
+      <div class="stat-card products-stock">
+        <div class="stat-content">
+          <div class="stat-info">
+            <p class="stat-label">Products in catalog</p>
+            <h3 class="stat-value">{{ stats.totalProducts }}</h3>
+            <div class="stat-bottom">
+              <span class="stat-trend positive">+8%</span>
+              <a href="#" class="view-link">View Details</a>
+            </div>
+          </div>
+          <div class="stat-icon">
+            <i class="fas fa-boxes"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card total-orders">
+        <div class="stat-content">
+          <div class="stat-info">
+            <p class="stat-label">Total orders</p>
+            <h3 class="stat-value">{{ stats.totalOrders }}</h3>
+            <div class="stat-bottom">
+              <span class="stat-trend positive">+12%</span>
+              <a href="#" class="view-link">View Orders</a>
+            </div>
+          </div>
+          <div class="stat-icon">
+            <i class="fas fa-shopping-cart"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card revenue">
+        <div class="stat-content">
+          <div class="stat-info">
+            <p class="stat-label">Total revenue</p>
+            <h3 class="stat-value">€{{ stats.totalRevenue | number }}</h3>
+            <div class="stat-bottom">
+              <span class="stat-trend positive">+15%</span>
+              <a href="#" class="view-link">View Report</a>
+            </div>
+          </div>
+          <div class="stat-icon">
+            <i class="fas fa-euro-sign"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card pending-orders">
+        <div class="stat-content">
+          <div class="stat-info">
+            <p class="stat-label">Pending orders</p>
+            <h3 class="stat-value">{{ stats.pendingOrders }}</h3>
+            <div class="stat-bottom">
+              <span class="stat-trend negative">-5%</span>
+              <a href="#" class="view-link">Process Now</a>
+            </div>
+          </div>
+          <div class="stat-icon">
+            <i class="fas fa-clock"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="quick-actions-section">
+      <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
+      <div class="quick-actions">
+        <a 
+          *ngFor="let action of quickActions" 
+          [routerLink]="action.route" 
+          class="action-btn"
+          [style.background]="action.color">
+          <i [class]="action.icon"></i>
+          <span>{{ action.title }}</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Recent Orders -->
+    <div class="recent-orders-section">
+      <div class="section-header">
+        <h2><i class="fas fa-clock"></i> Recent Orders</h2>
+        <a routerLink="/provider/orders" class="view-all-btn">View All</a>
+      </div>
+      
+      <div class="orders-table">
+        <div class="table-header">
+          <div class="col-id">Order ID</div>
+          <div class="col-customer">Customer</div>
+          <div class="col-items">Items</div>
+          <div class="col-total">Total</div>
+          <div class="col-status">Status</div>
+          <div class="col-time">Time</div>
+        </div>
+        
+        <div class="table-row" *ngFor="let order of recentOrders">
+          <div class="col-id">#{{ order.id }}</div>
+          <div class="col-customer">{{ order.customerName }}</div>
+          <div class="col-items">{{ order.items }} item(s)</div>
+          <div class="col-total">€{{ order.total }}</div>
+          <div class="col-status">
+            <span 
+              class="status-badge" 
+              [style.background-color]="getStatusColor(order.status)">
+              {{ getStatusText(order.status) }}
+            </span>
+          </div>
+          <div class="col-time">{{ order.createdAt | date:'HH:mm' }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
