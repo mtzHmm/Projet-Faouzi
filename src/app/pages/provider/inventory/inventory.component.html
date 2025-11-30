@@ -1,0 +1,182 @@
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2>Provider Panel</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a [routerLink]="['/provider']" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-text">Dashboard</span>
+      </a>
+      <a [routerLink]="['/provider/products']" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📦</span>
+        <span class="nav-text">Products</span>
+      </a>
+      <a [routerLink]="['/provider/orders']" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📋</span>
+        <span class="nav-text">Orders</span>
+      </a>
+      <a [routerLink]="['/provider/inventory']" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📊</span>
+        <span class="nav-text">Inventory</span>
+      </a>
+      <a [routerLink]="['/provider/reports']" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📈</span>
+        <span class="nav-text">Reports</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="page-header">
+      <h1>📊 Inventory Management</h1>
+      <p>Monitor stock levels and manage inventory</p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon in-stock">📦</div>
+        <div class="stat-info">
+          <h3>{{ inStockCount }}</h3>
+          <p>In Stock</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon low-stock">⚠️</div>
+        <div class="stat-info">
+          <h3>{{ lowStockCount }}</h3>
+          <p>Low Stock</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon out-of-stock">❌</div>
+        <div class="stat-info">
+          <h3>{{ outOfStockCount }}</h3>
+          <p>Out of Stock</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon total">📈</div>
+        <div class="stat-info">
+          <h3>{{ totalInventoryValue | number:'1.2-2' }} DT</h3>
+          <p>Total Value</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters and Controls -->
+    <div class="controls-section">
+      <div class="search-filters">
+        <input 
+          type="text" 
+          [(ngModel)]="searchTerm" 
+          (input)="filterInventory()"
+          placeholder="Search inventory..." 
+          class="search-input">
+        
+        <select 
+          [(ngModel)]="selectedCategory" 
+          (change)="filterInventory()" 
+          class="filter-select">
+          <option value="">All Categories</option>
+          <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+        </select>
+
+        <select 
+          [(ngModel)]="selectedStatus" 
+          (change)="filterInventory()" 
+          class="filter-select">
+          <option value="">All Status</option>
+          <option *ngFor="let status of statuses" [value]="status">{{ status | titlecase }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Inventory Grid -->
+    <div class="inventory-grid">
+      <div *ngFor="let item of filteredInventory" class="inventory-card">
+        <div class="card-header">
+          <div class="item-info">
+            <h3>{{ item.name }}</h3>
+            <span class="item-id">{{ item.id }}</span>
+          </div>
+          <div class="status-badge" [style.background-color]="getStatusColor(item.status)">
+            {{ item.status | titlecase }}
+          </div>
+        </div>
+
+        <div class="card-content">
+          <div class="stock-info">
+            <div class="stock-level">
+              <div class="stock-bar">
+                <div class="stock-fill" 
+                     [style.width.%]="getStockPercentage(item)"
+                     [style.background-color]="getStatusColor(item.status)">
+                </div>
+              </div>
+              <div class="stock-numbers">
+                <span class="current-stock">{{ item.currentStock }}</span>
+                <span class="max-stock">/ {{ item.maxStock }}</span>
+              </div>
+            </div>
+
+            <div class="stock-details">
+              <div class="detail-row">
+                <span class="label">Min Stock:</span>
+                <span class="value">{{ item.minStock }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Category:</span>
+                <span class="value">{{ item.category }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Price:</span>
+                <span class="value price">{{ item.price }} DT</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Supplier:</span>
+                <span class="value">{{ item.supplier }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Updated:</span>
+                <span class="value">{{ item.lastUpdated | date:'short' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="stock-update">
+            <label>Update Stock:</label>
+            <div class="update-controls">
+              <input 
+                type="number" 
+                [value]="item.currentStock"
+                (change)="updateStock(item.id, +$any($event.target).value)"
+                min="0" 
+                [max]="item.maxStock * 2"
+                class="stock-input">
+              <button (click)="reorderItem(item.id)" class="reorder-btn" [disabled]="item.status === 'in-stock'">
+                🔄 Reorder
+              </button>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            <button (click)="editItem(item.id)" class="action-btn edit">
+              ✏️ Edit
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredInventory.length === 0" class="empty-state">
+      <div class="empty-icon">📊</div>
+      <h3>No inventory items found</h3>
+      <p>Try adjusting your search criteria</p>
+    </div>
+  </div>
+</div>

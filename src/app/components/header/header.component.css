@@ -86,7 +86,7 @@
 }
 
 .navigation a.provider-link {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
   color: white;
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
@@ -96,9 +96,9 @@
 }
 
 .navigation a.provider-link:hover {
-  background: linear-gradient(135deg, #d97706, #b45309);
+  background: linear-gradient(135deg, #4f46e5, #4338ca);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
 .navigation a.provider-link.active::after {

@@ -9,7 +9,7 @@
 /* Sidebar */
 .sidebar {
   width: 280px;
-  background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+  background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%);
   padding: 0;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
   position: sticky;
@@ -75,7 +75,7 @@
 .main-content {
   flex: 1;
   padding: 2rem;
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   color: white;
   min-height: calc(100vh - 4rem);
 }
@@ -94,7 +94,7 @@
 
 .provider-header h1 i {
   margin-right: 1rem;
-  color: #fbbf24;
+  color: #a5b4fc;
 }
 
 .provider-header p {
@@ -187,14 +187,14 @@
 }
 
 .view-link {
-  color: #fbbf24;
+  color: #a5b4fc;
   text-decoration: none;
   font-size: 0.85rem;
   font-weight: 500;
 }
 
 .view-link:hover {
-  color: rgba(251, 191, 36, 1);
+  color: #c7d2fe;
   text-decoration: underline;
 }
 
@@ -279,14 +279,14 @@
 }
 
 .view-all-btn {
-  color: #fbbf24;
+  color: #a5b4fc;
   text-decoration: none;
   font-weight: 500;
   transition: color 0.3s ease;
 }
 
 .view-all-btn:hover {
-  color: #f59e0b;
+  color: #c7d2fe;
 }
 
 /* Table des commandes */
@@ -303,7 +303,7 @@
   grid-template-columns: 100px 2fr 1fr 1fr 1.5fr 1fr;
   gap: 1rem;
   padding: 1.5rem;
-  background: rgba(245, 158, 11, 0.1);
+  background: rgba(99, 102, 241, 0.1);
   font-weight: 600;
   color: #2c3e50;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
@@ -330,7 +330,7 @@
 
 .col-id {
   font-weight: 600;
-  color: #f59e0b;
+  color: #6366f1;
 }
 
 .col-customer {

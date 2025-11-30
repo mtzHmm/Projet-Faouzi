@@ -1,0 +1,124 @@
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2>Provider Panel</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a [routerLink]="['/provider']" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-text">Dashboard</span>
+      </a>
+      <a [routerLink]="['/provider/products']" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📦</span>
+        <span class="nav-text">Products</span>
+      </a>
+      <a [routerLink]="['/provider/orders']" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📋</span>
+        <span class="nav-text">Orders</span>
+      </a>
+      <a [routerLink]="['/provider/inventory']" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📊</span>
+        <span class="nav-text">Inventory</span>
+      </a>
+      <a [routerLink]="['/provider/reports']" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📈</span>
+        <span class="nav-text">Reports</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="page-header">
+      <h1>📦 Product Management</h1>
+      <p>Manage your products, inventory, and pricing</p>
+    </div>
+
+    <!-- Filters and Controls -->
+    <div class="controls-section">
+      <div class="search-filters">
+        <input 
+          type="text" 
+          [(ngModel)]="searchTerm" 
+          (input)="filterProducts()"
+          placeholder="Search products..." 
+          class="search-input">
+        
+        <select 
+          [(ngModel)]="selectedCategory" 
+          (change)="filterProducts()" 
+          class="filter-select">
+          <option value="">All Categories</option>
+          <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+        </select>
+
+        <select 
+          [(ngModel)]="selectedStatus" 
+          (change)="filterProducts()" 
+          class="filter-select">
+          <option value="">All Status</option>
+          <option *ngFor="let status of statuses" [value]="status">{{ status | titlecase }}</option>
+        </select>
+      </div>
+
+      <button (click)="addProduct()" class="add-btn">
+        ➕ Add Product
+      </button>
+    </div>
+
+    <!-- Products Grid -->
+    <div class="products-grid">
+      <div *ngFor="let product of filteredProducts" class="product-card">
+        <div class="product-image">
+          <img [src]="product.image" [alt]="product.name" onerror="this.src='/placeholder.jpg'">
+          <div class="status-badge" [class]="product.status">{{ product.status }}</div>
+        </div>
+        
+        <div class="product-info">
+          <div class="product-header">
+            <h3>{{ product.name }}</h3>
+            <span class="product-id">{{ product.id }}</span>
+          </div>
+          
+          <p class="product-description">{{ product.description }}</p>
+          
+          <div class="product-details">
+            <div class="detail-item">
+              <span class="label">Category:</span>
+              <span class="value">{{ product.category }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Price:</span>
+              <span class="value price">{{ product.price }} DT</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Stock:</span>
+              <span class="value" [class.low-stock]="product.stock < 10">{{ product.stock }} units</span>
+            </div>
+          </div>
+
+          <div class="product-actions">
+            <button (click)="editProduct(product.id)" class="action-btn edit">
+              ✏️ Edit
+            </button>
+            <button (click)="toggleStatus(product.id)" class="action-btn toggle">
+              {{ product.status === 'active' ? '⏸️ Disable' : '▶️ Enable' }}
+            </button>
+            <button (click)="deleteProduct(product.id)" class="action-btn delete">
+              🗑️ Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredProducts.length === 0" class="empty-state">
+      <div class="empty-icon">📦</div>
+      <h3>No products found</h3>
+      <p>Try adjusting your search criteria or add your first product</p>
+      <button (click)="addProduct()" class="add-btn">➕ Add Your First Product</button>
+    </div>
+  </div>
+</div>

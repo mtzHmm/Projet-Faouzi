@@ -25,7 +25,7 @@ export class ProviderDashboardComponent {
   };
 
   quickActions = [
-    { title: 'Ajouter Produit', route: '/provider/products/add', color: 'linear-gradient(135deg, #667eea, #764ba2)', icon: 'fas fa-plus' },
+    { title: 'Ajouter Produit', route: '/provider/products', color: 'linear-gradient(135deg, #667eea, #764ba2)', icon: 'fas fa-plus' },
     { title: 'Gérer Stock', route: '/provider/inventory', color: 'linear-gradient(135deg, #f093fb, #f5576c)', icon: 'fas fa-boxes' },
     { title: 'Voir Commandes', route: '/provider/orders', color: 'linear-gradient(135deg, #4facfe, #00f2fe)', icon: 'fas fa-list-alt' },
     { title: 'Rapports', route: '/provider/reports', color: 'linear-gradient(135deg, #43e97b, #38f9d7)', icon: 'fas fa-chart-bar' }

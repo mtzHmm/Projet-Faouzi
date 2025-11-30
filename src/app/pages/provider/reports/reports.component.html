@@ -1,0 +1,218 @@
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2>Provider Panel</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a [routerLink]="['/provider']" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-text">Dashboard</span>
+      </a>
+      <a [routerLink]="['/provider/products']" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📦</span>
+        <span class="nav-text">Products</span>
+      </a>
+      <a [routerLink]="['/provider/orders']" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📋</span>
+        <span class="nav-text">Orders</span>
+      </a>
+      <a [routerLink]="['/provider/inventory']" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📊</span>
+        <span class="nav-text">Inventory</span>
+      </a>
+      <a [routerLink]="['/provider/reports']" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📈</span>
+        <span class="nav-text">Reports</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="page-header">
+      <h1>📈 Business Reports</h1>
+      <p>Analytics and insights for your business</p>
+    </div>
+
+    <!-- Report Controls -->
+    <div class="report-controls">
+      <div class="control-group">
+        <label>Report Type:</label>
+        <select [(ngModel)]="selectedReport" class="control-select">
+          <option *ngFor="let type of reportTypes" [value]="type.value">{{ type.label }}</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Time Period:</label>
+        <select [(ngModel)]="selectedPeriod" class="control-select">
+          <option *ngFor="let period of periods" [value]="period.value">{{ period.label }}</option>
+        </select>
+      </div>
+
+      <div class="control-actions">
+        <button (click)="generateReport()" class="action-btn generate">
+          🔄 Generate Report
+        </button>
+        <button (click)="exportReport('pdf')" class="action-btn export">
+          📄 Export PDF
+        </button>
+        <button (click)="exportReport('excel')" class="action-btn export">
+          📊 Export Excel
+        </button>
+      </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="metrics-section">
+      <h2>📊 Key Performance Indicators</h2>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon revenue">💰</div>
+          <div class="metric-info">
+            <h3>{{ metrics.totalRevenue | number:'1.2-2' }} DT</h3>
+            <p>Total Revenue</p>
+            <div class="metric-trend positive">
+              <span class="trend-icon">{{ getTrendIcon(metrics.growthRate) }}</span>
+              <span>+{{ metrics.growthRate }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon orders">📋</div>
+          <div class="metric-info">
+            <h3>{{ metrics.totalOrders }}</h3>
+            <p>Total Orders</p>
+            <div class="metric-trend positive">
+              <span class="trend-icon">📈</span>
+              <span>+8.3%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon average">💳</div>
+          <div class="metric-info">
+            <h3>{{ metrics.averageOrderValue | number:'1.2-2' }} DT</h3>
+            <p>Average Order Value</p>
+            <div class="metric-trend positive">
+              <span class="trend-icon">📈</span>
+              <span>+5.2%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon satisfaction">⭐</div>
+          <div class="metric-info">
+            <h3>{{ metrics.customerSatisfaction }}/5</h3>
+            <p>Customer Satisfaction</p>
+            <div class="metric-trend positive">
+              <span class="trend-icon">📈</span>
+              <span>+2.1%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sales Performance -->
+    <div class="chart-section">
+      <h2>📈 Sales Performance</h2>
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3>Weekly Sales Overview</h3>
+          <div class="chart-legend">
+            <div class="legend-item">
+              <div class="legend-color revenue"></div>
+              <span>Revenue</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color orders"></div>
+              <span>Orders</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="chart-data">
+          <div *ngFor="let data of salesData" class="chart-bar">
+            <div class="bar-label">{{ data.period }}</div>
+            <div class="bar-container">
+              <div class="bar revenue" [style.height.px]="data.revenue / 20"></div>
+              <div class="bar orders" [style.height.px]="data.orders * 4"></div>
+            </div>
+            <div class="bar-values">
+              <div class="value revenue">{{ data.revenue | number:'1.0-0' }} DT</div>
+              <div class="value orders">{{ data.orders }} orders</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Products -->
+    <div class="products-section">
+      <h2>🏆 Top Performing Products</h2>
+      <div class="products-table">
+        <div class="table-header">
+          <div>Rank</div>
+          <div>Product</div>
+          <div>Category</div>
+          <div>Sales</div>
+          <div>Revenue</div>
+          <div>Performance</div>
+        </div>
+
+        <div *ngFor="let product of topProducts; let i = index" class="table-row">
+          <div class="col-rank">
+            <div class="rank-badge" [class]="'rank-' + (i + 1)">{{ i + 1 }}</div>
+          </div>
+          <div class="col-product">{{ product.name }}</div>
+          <div class="col-category">{{ product.category }}</div>
+          <div class="col-sales">{{ product.sales }}</div>
+          <div class="col-revenue">{{ product.revenue | number:'1.2-2' }} DT</div>
+          <div class="col-performance">
+            <div class="performance-bar">
+              <div class="performance-fill" [style.width.%]="(product.revenue / 25000) * 100"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Financial Summary -->
+    <div class="financial-section">
+      <h2>💼 Financial Summary</h2>
+      <div class="financial-cards">
+        <div class="financial-card profit">
+          <div class="card-header">
+            <h3>Net Profit</h3>
+            <span class="card-icon">💰</span>
+          </div>
+          <div class="card-value">3,960.19 DT</div>
+          <div class="card-change positive">+15.8% from last month</div>
+        </div>
+
+        <div class="financial-card expenses">
+          <div class="card-header">
+            <h3>Total Expenses</h3>
+            <span class="card-icon">💸</span>
+          </div>
+          <div class="card-value">11,880.56 DT</div>
+          <div class="card-change negative">+5.2% from last month</div>
+        </div>
+
+        <div class="financial-card margin">
+          <div class="card-header">
+            <h3>Profit Margin</h3>
+            <span class="card-icon">📊</span>
+          </div>
+          <div class="card-value">25.0%</div>
+          <div class="card-change positive">+2.1% from last month</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

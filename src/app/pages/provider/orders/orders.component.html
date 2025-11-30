@@ -1,0 +1,131 @@
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2>Provider Panel</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a [routerLink]="['/provider']" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-text">Dashboard</span>
+      </a>
+      <a [routerLink]="['/provider/products']" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📦</span>
+        <span class="nav-text">Products</span>
+      </a>
+      <a [routerLink]="['/provider/orders']" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📋</span>
+        <span class="nav-text">Orders</span>
+      </a>
+      <a [routerLink]="['/provider/inventory']" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📊</span>
+        <span class="nav-text">Inventory</span>
+      </a>
+      <a [routerLink]="['/provider/reports']" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📈</span>
+        <span class="nav-text">Reports</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="page-header">
+      <h1>📋 Order Management</h1>
+      <p>Track and manage customer orders</p>
+    </div>
+
+    <!-- Filters and Controls -->
+    <div class="controls-section">
+      <div class="search-filters">
+        <input 
+          type="text" 
+          [(ngModel)]="searchTerm" 
+          (input)="filterOrders()"
+          placeholder="Search orders, customers..." 
+          class="search-input">
+        
+        <select 
+          [(ngModel)]="selectedStatus" 
+          (change)="filterOrders()" 
+          class="filter-select">
+          <option value="">All Status</option>
+          <option *ngFor="let status of statuses" [value]="status">{{ status | titlecase }}</option>
+        </select>
+
+        <select 
+          [(ngModel)]="selectedPayment" 
+          (change)="filterOrders()" 
+          class="filter-select">
+          <option value="">All Payment Methods</option>
+          <option *ngFor="let method of paymentMethods" [value]="method">{{ method | titlecase }}</option>
+        </select>
+      </div>
+
+      <div class="order-stats">
+        <div class="stat-item">
+          <span class="stat-value">{{ filteredOrders.length }}</span>
+          <span class="stat-label">Orders</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">{{ totalOrderValue | number:'1.2-2' }} DT</span>
+          <span class="stat-label">Total Value</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="orders-table">
+      <div class="table-header">
+        <div>Order ID</div>
+        <div>Customer</div>
+        <div>Items</div>
+        <div>Total</div>
+        <div>Status</div>
+        <div>Date</div>
+        <div>Actions</div>
+      </div>
+
+      <div *ngFor="let order of filteredOrders" class="table-row">
+        <div class="col-id">{{ order.id }}</div>
+        <div class="col-customer">
+          <div class="customer-info">
+            <strong>{{ order.customer }}</strong>
+            <div class="customer-details">
+              <div>📞 {{ order.phone }}</div>
+              <div>📍 {{ order.address }}</div>
+              <div>💳 {{ order.paymentMethod | titlecase }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-items">{{ order.items }}</div>
+        <div class="col-total">{{ order.total }} DT</div>
+        <div class="col-status">
+          <select 
+            [value]="order.status" 
+            (change)="updateStatus(order.id, $any($event.target).value)"
+            class="status-select"
+            [style.background-color]="getStatusColor(order.status)">
+            <option *ngFor="let status of statuses" [value]="status">{{ status | titlecase }}</option>
+          </select>
+        </div>
+        <div class="col-date">{{ order.date | date:'short' }}</div>
+        <div class="col-actions">
+          <button (click)="viewOrder(order.id)" class="action-btn view" title="View Details">
+            👁️
+          </button>
+          <button (click)="printOrder(order.id)" class="action-btn print" title="Print Order">
+            🖨️
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredOrders.length === 0" class="empty-state">
+      <div class="empty-icon">📋</div>
+      <h3>No orders found</h3>
+      <p>Try adjusting your search criteria or wait for new orders to arrive</p>
+    </div>
+  </div>
+</div>
