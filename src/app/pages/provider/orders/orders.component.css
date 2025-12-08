@@ -9,7 +9,7 @@
 /* Sidebar - using new blue color scheme */
 .sidebar {
   width: 280px;
-  background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%);
+  background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%);
   padding: 0;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
   position: sticky;
@@ -26,9 +26,9 @@
 }
 
 .sidebar-header h2 {
-  color: white;
+  color: #4b5563;
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   margin: 0;
 }
 
@@ -40,25 +40,32 @@
   display: flex;
   align-items: center;
   padding: 1rem 1.5rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: #6b7280;
   text-decoration: none;
   transition: all 0.3s ease;
   margin: 0.25rem 1rem;
   border-radius: 12px;
-  font-weight: 500;
+  font-weight: 700;
   gap: 1rem;
+  cursor: pointer;
+  position: relative;
+  z-index: 10;
+  border: 1px solid transparent;
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
+  background: rgba(107, 114, 128, 0.1);
+  color: #4b5563;
   transform: translateX(4px);
+  border: 1px solid #e5e7eb;
 }
 
 .nav-item.active {
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
+  background: rgba(107, 114, 128, 0.15);
+  color: #374151;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #d1d5db;
+  font-weight: 800;
 }
 
 .nav-icon {
@@ -75,8 +82,8 @@
 .main-content {
   flex: 1;
   padding: 2rem;
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-  color: white;
+  background: #e2e8f0;
+  color: #374151;
   min-height: calc(100vh - 4rem);
 }
 
@@ -89,13 +96,14 @@
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  color: #374151;
 }
 
 .page-header p {
   font-size: 1.2rem;
-  opacity: 0.9;
+  opacity: 0.7;
   font-weight: 300;
+  color: #6b7280;
 }
 
 /* Controls Section */
@@ -298,14 +306,53 @@
   border-color: #6b7280;
 }
 
+/* Status Colors */
+.status-badge {
+  padding: 0.6rem 1.2rem;
+  border-radius: 25px;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  display: inline-block;
+  min-width: 110px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  letter-spacing: 0.5px;
+}
+
+.status-badge.en-attente {
+  background: #f59e0b;
+  color: white;
+}
+
+.status-badge.en-preparation {
+  background: #3b82f6;
+  color: white;
+}
+
+.status-badge.en-livraison {
+  background: #f97316;
+  color: white;
+}
+
+.status-badge.livre {
+  background: #10b981;
+  color: white;
+}
+
+.status-badge.annule {
+  background: #e74c3c;
+  color: white;
+}
+
 /* Empty State */
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  background: white;
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid #d1d5db;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .empty-icon {

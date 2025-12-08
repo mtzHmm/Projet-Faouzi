@@ -121,11 +121,33 @@ export class OrdersComponent {
     const colors: { [key: string]: string } = {
       'pending': '#f59e0b',
       'confirmed': '#3b82f6',
-      'preparing': '#8b5cf6',
+      'preparing': '#f97316',
       'delivered': '#10b981',
-      'cancelled': '#ef4444'
+      'cancelled': '#e74c3c'
     };
     return colors[status] || '#6b7280';
+  }
+
+  getStatusClass(status: string): string {
+    const classes: { [key: string]: string } = {
+      'pending': 'en-attente',
+      'confirmed': 'en-preparation',
+      'preparing': 'en-livraison',
+      'delivered': 'livre',
+      'cancelled': 'annule'
+    };
+    return classes[status] || '';
+  }
+
+  getStatusText(status: string): string {
+    const texts: { [key: string]: string } = {
+      'pending': 'En Attente',
+      'confirmed': 'Confirmé',
+      'preparing': 'En Préparation',
+      'delivered': 'Livré',
+      'cancelled': 'Annulé'
+    };
+    return texts[status] || status;
   }
 
   get totalOrderValue(): number {

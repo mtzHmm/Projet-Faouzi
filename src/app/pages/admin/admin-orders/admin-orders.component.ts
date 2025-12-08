@@ -170,20 +170,31 @@ export class AdminOrdersComponent {
 
   getStatusColor(status: string): string {
     switch (status) {
-      case 'en_attente': return '#f39c12';
-      case 'prepare': return '#3498db';
-      case 'en_livraison': return '#e67e22';
-      case 'livre': return '#2ecc71';
+      case 'en_attente': return '#f59e0b';
+      case 'prepare': return '#3b82f6';
+      case 'en_livraison': return '#f97316';
+      case 'livre': return '#10b981';
       case 'annule': return '#e74c3c';
       default: return '#95a5a6';
     }
   }
 
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'en_attente': return 'en-attente';
+      case 'prepare': return 'en-preparation';
+      case 'en_livraison': return 'en-livraison';
+      case 'livre': return 'livre';
+      case 'annule': return 'annule';
+      default: return '';
+    }
+  }
+
   getStatusText(status: string): string {
     switch (status) {
-      case 'en_attente': return 'En attente';
-      case 'prepare': return 'En préparation';
-      case 'en_livraison': return 'En livraison';
+      case 'en_attente': return 'En Attente';
+      case 'prepare': return 'En Préparation';
+      case 'en_livraison': return 'En Livraison';
       case 'livre': return 'Livré';
       case 'annule': return 'Annulé';
       default: return status;

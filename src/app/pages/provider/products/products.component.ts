@@ -98,4 +98,31 @@ export class ProductsComponent {
       this.filterProducts();
     }
   }
+
+  getStatusColor(status: string): string {
+    switch (status) {
+      case 'active': return '#10b981';
+      case 'inactive': return '#6b7280';
+      case 'out_of_stock': return '#e74c3c';
+      default: return '#95a5a6';
+    }
+  }
+
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'active': return 'livre';
+      case 'inactive': return 'en-attente';
+      case 'out_of_stock': return 'annule';
+      default: return '';
+    }
+  }
+
+  getStatusText(status: string): string {
+    switch (status) {
+      case 'active': return 'Actif';
+      case 'inactive': return 'Inactif';
+      case 'out_of_stock': return 'Rupture';
+      default: return status;
+    }
+  }
 }

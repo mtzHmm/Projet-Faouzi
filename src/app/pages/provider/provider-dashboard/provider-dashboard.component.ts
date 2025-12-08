@@ -60,9 +60,9 @@ export class ProviderDashboardComponent {
 
   getStatusColor(status: string): string {
     switch (status) {
-      case 'nouveau': return '#f39c12';
-      case 'prepare': return '#3498db';
-      case 'pret': return '#2ecc71';
+      case 'nouveau': return '#f59e0b';
+      case 'prepare': return '#3b82f6';
+      case 'pret': return '#10b981';
       case 'annule': return '#e74c3c';
       default: return '#95a5a6';
     }
@@ -71,10 +71,20 @@ export class ProviderDashboardComponent {
   getStatusText(status: string): string {
     switch (status) {
       case 'nouveau': return 'Nouveau';
-      case 'prepare': return 'En préparation';
+      case 'prepare': return 'En Préparation';
       case 'pret': return 'Prêt';
       case 'annule': return 'Annulé';
       default: return status;
+    }
+  }
+
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'nouveau': return 'nouveau';
+      case 'prepare': return 'en-preparation';
+      case 'pret': return 'pret';
+      case 'annule': return 'annule';
+      default: return '';
     }
   }
 }
