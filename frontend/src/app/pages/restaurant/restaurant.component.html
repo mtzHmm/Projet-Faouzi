@@ -10,6 +10,33 @@
 
   <div class="content-section">
     <div class="container">
+      <!-- Category Filters -->
+      <div class="category-filters" *ngIf="!loading && categories.length > 0">
+        <h3>Filtrer par catégorie :</h3>
+        <div class="filter-buttons">
+          <button 
+            class="filter-btn"
+            [class.active]="isSelectedCategory(null)"
+            (click)="filterByCategory(null)"
+          >
+            🍽️ Toutes
+          </button>
+          
+          <button 
+            *ngFor="let category of categories"
+            class="filter-btn"
+            [class.active]="isSelectedCategory(category.id)"
+            (click)="filterByCategory(category.id)"
+          >
+            {{ getCategoryEmoji(category.name) }} {{ category.name }}
+          </button>
+        </div>
+        
+        <div class="filter-info" *ngIf="selectedCategory">
+          <p>{{ products.length }} produit(s) dans cette catégorie</p>
+        </div>
+      </div>
+
       <!-- Loading State -->
       <div *ngIf="loading" class="loading-state">
         <div class="spinner"></div>

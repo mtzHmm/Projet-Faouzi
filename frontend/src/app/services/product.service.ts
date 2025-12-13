@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface Product {
@@ -13,6 +14,14 @@ export interface Product {
   store_id: number;
   image?: string;
   available?: boolean;
+  category_id?: number;
+  category_name?: string;
+}
+
+export interface Category {
+  id: number;
+  name: string;
+  type: string;
 }
 
 export interface ProductsResponse {
@@ -53,10 +62,6 @@ export class ProductService {
     return this.http.get<Product>(`${this.apiUrl}/${id}`);
   }
 
-  getProductsByCategory(category: string): Observable<Product[]> {
-    return this.http.get<Product[]>(`${this.apiUrl}/category/${category}`);
-  }
-
   createProduct(product: Partial<Product>): Observable<Product> {
     return this.http.post<Product>(this.apiUrl, product);
   }
@@ -80,5 +85,21 @@ export class ProductService {
 
   getBoutiqueProducts(): Observable<ProductsResponse> {
     return this.getProducts({ type: 'boutique' });
+  }
+
+  // Category methods
+  getCategories(type: string = 'restaurant'): Observable<{success: boolean, categories: Category[], total: number}> {
+    let params = new HttpParams();
+    params = params.set('type', type);
+    return this.http.get<{success: boolean, categories: Category[], total: number}>(`${this.apiUrl}/categories`, { params });
+  }
+
+  getProductsByCategory(categoryId: number, type: string = 'restaurant'): Observable<ProductsResponse> {
+    return this.getProducts({ type }).pipe(
+      map(response => ({
+        ...response,
+        products: response.products.filter(product => product.category_id === categoryId)
+      }))
+    );
   }
 }

@@ -24,9 +24,12 @@ router.get('/', async (req, res) => {
         p.prix as price,
         m.nom as restaurant,
         m.type as type,
-        m.id_magazin as store_id
+        m.id_magazin as store_id,
+        c.id as category_id,
+        c.nom as category_name
       FROM produit p
       JOIN magasin m ON p.id_magazin = m.id_magazin
+      LEFT JOIN categorie c ON p.categorie_id = c.id
       WHERE 1=1
     `;
     
@@ -129,15 +132,76 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/products/:id - Get product by ID
-router.get('/:id', (req, res) => {
-  const product = products.find(p => p.id === parseInt(req.params.id));
-  
-  if (!product) {
-    return res.status(404).json({ error: 'Product not found' });
+// GET /api/products/categories - Get all categories for a specific type
+router.get('/categories', async (req, res) => {
+  try {
+    const { type = 'restaurant' } = req.query;
+    
+    const db = getDB();
+    const result = await db.query(
+      `SELECT id, nom as name, type 
+       FROM categorie 
+       WHERE type = $1 
+       ORDER BY nom`,
+      [type]
+    );
+    
+    console.log(`📋 Categories for type "${type}":`, result.rows);
+    
+    res.json({
+      success: true,
+      categories: result.rows,
+      total: result.rows.length
+    });
+  } catch (error) {
+    console.error('❌ Error fetching categories:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch categories',
+      details: error.message 
+    });
   }
-  
-  res.json(product);
+});
+
+// GET /api/products/:id - Get product by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const db = getDB();
+    const result = await db.query(
+      `SELECT 
+        p.id_produit as id,
+        p.nom as name,
+        p.description,
+        p.prix as price,
+        m.nom as restaurant,
+        m.type as type,
+        m.id_magazin as store_id,
+        c.id as category_id,
+        c.nom as category_name
+      FROM produit p
+      JOIN magasin m ON p.id_magazin = m.id_magazin
+      LEFT JOIN categorie c ON p.categorie_id = c.id
+      WHERE p.id_produit = $1`,
+      [parseInt(req.params.id)]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    
+    const product = {
+      ...result.rows[0],
+      price: result.rows[0].price / 100
+    };
+    
+    res.json(product);
+  } catch (error) {
+    console.error('❌ Error fetching product by ID:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch product',
+      details: error.message 
+    });
+  }
 });
 
 // POST /api/products - Create new product
@@ -148,8 +212,9 @@ router.post('/', (req, res) => {
     return res.status(400).json({ error: 'Name, description, price, and category are required' });
   }
   
+  // This is a simplified implementation - full database integration would be more complex
   const newProduct = {
-    id: products.length + 1,
+    id: Math.floor(Math.random() * 10000), // Temporary ID generation
     name,
     description,
     price: parseFloat(price),
@@ -159,47 +224,99 @@ router.post('/', (req, res) => {
     stock: parseInt(stock)
   };
   
-  products.push(newProduct);
+  // TODO: Implement proper database insertion here
   
   res.status(201).json(newProduct);
 });
 
 // PUT /api/products/:id - Update product
-router.put('/:id', (req, res) => {
-  const productIndex = products.findIndex(p => p.id === parseInt(req.params.id));
-  
-  if (productIndex === -1) {
-    return res.status(404).json({ error: 'Product not found' });
+router.put('/:id', async (req, res) => {
+  try {
+    const db = getDB();
+    const checkResult = await db.query(
+      'SELECT id_produit FROM produit WHERE id_produit = $1',
+      [parseInt(req.params.id)]
+    );
+    
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    
+    // Update logic would go here - simplified for now
+    res.json({ message: 'Product update not implemented yet' });
+  } catch (error) {
+    console.error('❌ Error updating product:', error);
+    res.status(500).json({ 
+      error: 'Failed to update product',
+      details: error.message 
+    });
   }
-  
-  products[productIndex] = { ...products[productIndex], ...req.body };
-  
-  res.json(products[productIndex]);
 });
 
 // DELETE /api/products/:id - Delete product
-router.delete('/:id', (req, res) => {
-  const productIndex = products.findIndex(p => p.id === parseInt(req.params.id));
-  
-  if (productIndex === -1) {
-    return res.status(404).json({ error: 'Product not found' });
+router.delete('/:id', async (req, res) => {
+  try {
+    const db = getDB();
+    const result = await db.query(
+      'DELETE FROM produit WHERE id_produit = $1 RETURNING id_produit',
+      [parseInt(req.params.id)]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    
+    res.json({ message: 'Product deleted successfully' });
+  } catch (error) {
+    console.error('❌ Error deleting product:', error);
+    res.status(500).json({ 
+      error: 'Failed to delete product',
+      details: error.message 
+    });
   }
-  
-  products.splice(productIndex, 1);
-  
-  res.json({ message: 'Product deleted successfully' });
 });
 
 // GET /api/products/category/:category - Get products by category
-router.get('/category/:category', (req, res) => {
-  const { category } = req.params;
-  const categoryProducts = products.filter(p => p.category === category && p.available);
-  
-  res.json({
-    category,
-    products: categoryProducts,
-    total: categoryProducts.length
-  });
+router.get('/category/:category', async (req, res) => {
+  try {
+    const { category } = req.params;
+    
+    const db = getDB();
+    const result = await db.query(
+      `SELECT 
+        p.id_produit as id,
+        p.nom as name,
+        p.description,
+        p.prix as price,
+        m.nom as restaurant,
+        m.type as type,
+        m.id_magazin as store_id,
+        c.id as category_id,
+        c.nom as category_name
+      FROM produit p
+      JOIN magasin m ON p.id_magazin = m.id_magazin
+      LEFT JOIN categorie c ON p.categorie_id = c.id
+      WHERE c.nom = $1`,
+      [category]
+    );
+    
+    const categoryProducts = result.rows.map(product => ({
+      ...product,
+      price: product.price / 100 // Convert from cents to DT
+    }));
+    
+    res.json({
+      category,
+      products: categoryProducts,
+      total: categoryProducts.length
+    });
+  } catch (error) {
+    console.error('❌ Error fetching products by category:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch products by category',
+      details: error.message 
+    });
+  }
 });
 
 module.exports = router;
