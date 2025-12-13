@@ -5,15 +5,33 @@ const morgan = require('morgan');
 const compression = require('compression');
 require('dotenv').config();
 
+// Import configurations
+const appProperties = require('./config/app.properties');
+const database = require('./config/database');
+const cloudinaryConfig = require('./config/cloudinary');
+
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = appProperties.app.port;
+
+// Initialize services
+async function initializeServices() {
+  try {
+    // Initialize database
+    await database.initialize();
+    
+    // Initialize Cloudinary
+    cloudinaryConfig.initialize();
+    
+    console.log('✅ All services initialized successfully');
+  } catch (error) {
+    console.error('❌ Service initialization failed:', error.message);
+    process.exit(1);
+  }
+}
 
 // Middleware
 app.use(helmet()); // Security middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:4200', // Angular dev server
-  credentials: true
-}));
+app.use(cors(appProperties.cors));
 app.use(morgan('combined')); // Logging
 app.use(compression()); // Gzip compression
 app.use(express.json({ limit: '10mb' })); // Parse JSON bodies
@@ -34,13 +52,33 @@ app.use('/api/products', productRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    message: 'Delivery Express API is running',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  });
+app.get('/api/health', async (req, res) => {
+  try {
+    const dbHealth = await database.healthCheck();
+    const cloudinaryHealth = await cloudinaryConfig.healthCheck();
+    
+    const healthStatus = {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      services: {
+        database: dbHealth,
+        cloudinary: cloudinaryHealth,
+        api: { status: 'healthy' }
+      },
+      environment: appProperties.app.env,
+      version: appProperties.app.version
+    };
+    
+    const allHealthy = dbHealth.status === 'healthy' && cloudinaryHealth.status === 'healthy';
+    res.status(allHealthy ? 200 : 503).json(healthStatus);
+  } catch (error) {
+    res.status(503).json({
+      status: 'error',
+      message: 'Health check failed',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // Root endpoint
@@ -82,13 +120,44 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Delivery Express Server running on port ${PORT}`);
-  console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 API URL: http://localhost:${PORT}`);
-  console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:4200'}`);
-  console.log(`📊 Health Check: http://localhost:${PORT}/api/health`);
+// Start server with service initialization
+async function startServer() {
+  try {
+    // Initialize services first
+    await initializeServices();
+    
+    // Start the server
+    app.listen(PORT, () => {
+      console.log('='.repeat(50));
+      console.log(`🚀 ${appProperties.app.name} v${appProperties.app.version}`);
+      console.log(`📍 Environment: ${appProperties.app.env}`);
+      console.log(`🌐 Server: http://localhost:${PORT}`);
+      console.log(`🔗 Frontend: ${appProperties.app.frontendUrl}`);
+      console.log(`📊 Health Check: http://localhost:${PORT}/api/health`);
+      console.log(`💾 Database: NeonDB (PostgreSQL)`);
+      console.log(`☁️ Media Storage: Cloudinary`);
+      console.log('='.repeat(50));
+    });
+  } catch (error) {
+    console.error('❌ Server startup failed:', error.message);
+    process.exit(1);
+  }
+}
+
+// Handle graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  await database.close();
+  process.exit(0);
 });
+
+process.on('SIGINT', async () => {
+  console.log('SIGINT received, shutting down gracefully');
+  await database.close();
+  process.exit(0);
+});
+
+// Start the application
+startServer();
 
 module.exports = app;
