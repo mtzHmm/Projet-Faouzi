@@ -1,17 +1,26 @@
 # Node modules
 /node_modules
 
-# Angular cache
+# Angular cache and temp files
+/.angular/
 /.angular/cache
+/tmp
+/coverage
 
 # Build output
 /dist
 /out-tsc
 
 # Logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Tooling caches
+/.eslintcache
+/.rpt2_cache
+/.npm
 
 # Environment files
 .env
