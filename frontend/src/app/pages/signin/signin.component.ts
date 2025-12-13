@@ -41,6 +41,12 @@ export class SigninComponent {
         
         if (response.success && response.token) {
           this.authService.saveToken(response.token);
+          
+          // Save user data if provided
+          if (response.user) {
+            this.authService.saveUserData(response.user);
+          }
+          
           console.log('🎉 Login successful, navigating to home...');
           
           // Navigate based on user role

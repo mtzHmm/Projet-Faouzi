@@ -106,10 +106,20 @@ export class SignupComponent {
         console.log('✅ Registration response:', response);
         
         if (response.success) {
+          // Save user data and token if provided
+          if (response.user) {
+            this.authService.saveUserData(response.user);
+          }
+          if (response.token) {
+            this.authService.saveToken(response.token);
+          }
+          
           const accountTypeText = this.accountType === 'delivery' ? 'Delivery Partner' : 
                                  this.accountType === 'provider' ? 'Store Provider' : 'Customer';
-          alert(`${accountTypeText} account created successfully! Please sign in to continue.`);
-          this.router.navigate(['/signin']);
+          
+          // Show success message and redirect to home
+          alert(`Welcome! Your ${accountTypeText} account has been created successfully.`);
+          this.router.navigate(['/']);
         } else {
           this.errorMessage = response.message || 'Registration failed. Please try again.';
         }

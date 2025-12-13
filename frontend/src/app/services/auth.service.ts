@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface LoginRequest {
@@ -35,6 +35,8 @@ export interface AuthResponse {
 })
 export class AuthService {
   private apiUrl = `${environment.apiUrl}/auth`;
+  private authStatusSubject = new BehaviorSubject<boolean>(this.isLoggedIn());
+  public authStatus$ = this.authStatusSubject.asObservable();
 
   constructor(private http: HttpClient) {}
 
@@ -53,6 +55,7 @@ export class AuthService {
   // Store token in localStorage
   saveToken(token: string): void {
     localStorage.setItem('auth_token', token);
+    this.authStatusSubject.next(true);
   }
 
   // Get token from localStorage
@@ -63,10 +66,38 @@ export class AuthService {
   // Remove token from localStorage
   removeToken(): void {
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_data');
+    this.authStatusSubject.next(false);
+  }
+
+  // Store user data in localStorage
+  saveUserData(user: any): void {
+    localStorage.setItem('user_data', JSON.stringify(user));
+    this.authStatusSubject.next(true);
+  }
+
+  // Get user data from localStorage
+  getUserData(): any {
+    const userData = localStorage.getItem('user_data');
+    return userData ? JSON.parse(userData) : null;
+  }
+
+  // Get user name for display (first name only)
+  getUserName(): string {
+    const userData = this.getUserData();
+    if (userData) {
+      // Try different name fields and extract first name only
+      let fullName = userData.firstName || userData.prenom || userData.name || userData.email?.split('@')[0] || 'User';
+      
+      // Extract first name if it contains spaces (multiple words)
+      const firstName = fullName.split(' ')[0];
+      return firstName;
+    }
+    return '';
   }
 
   // Check if user is logged in
   isLoggedIn(): boolean {
-    return !!this.getToken();
+    return !!this.getToken() && !!this.getUserData();
   }
 }
