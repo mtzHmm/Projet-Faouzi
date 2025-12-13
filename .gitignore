@@ -72,14 +72,14 @@ logs
 .yarn-integrity
 
 # ===== ENVIRONMENT & SECRETS =====
-# Environment files (NEVER commit secrets!)
-.env
-.env.local
-.env.development
-.env.test
-.env.production
-.env.staging
-.env.*.local
+# Environment files - Now visible for team sharing
+# .env
+# .env.local
+# .env.development
+# .env.test
+# .env.production
+# .env.staging
+# .env.*.local
 
 # API Keys & Secrets
 secrets/
