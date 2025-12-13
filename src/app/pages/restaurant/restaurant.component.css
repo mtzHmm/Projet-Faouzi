@@ -1,11 +1,11 @@
 .restaurant-page {
   min-height: 100vh;
-  background: var(--light-gray);
+  background: #F5F0E8;
 }
 
 .header-section {
-  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--purple) 100%);
-  color: white;
+  background: #F5F0E8;
+  color: var(--dark-gray);
   padding: 3rem 0;
 }
 
@@ -22,6 +22,12 @@
 .page-header p {
   font-size: 1.2rem;
   opacity: 0.9;
+  font-weight: 400;
+  font-style: italic;
+  color: #8B4513;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  letter-spacing: 0.5px;
 }
 
 .content-section {
@@ -59,7 +65,7 @@
 }
 
 .restaurant-name {
-  color: var(--primary-blue);
+  color: #666;
   font-size: 0.9rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -89,11 +95,11 @@
 .price {
   font-size: 1.3rem;
   font-weight: 700;
-  color: var(--orange);
+  color: var(--dark-gray);
 }
 
 .add-to-cart-btn {
-  background: var(--purple);
+  background: linear-gradient(135deg, #4A90E2, #357ABD);
   color: white;
   border: none;
   padding: 0.8rem 1.5rem;
@@ -104,7 +110,7 @@
 }
 
 .add-to-cart-btn:hover {
-  background: #7B1FA2;
+  background: linear-gradient(135deg, #357ABD, #2A5F8F);
   transform: translateY(-2px);
 }
 
@@ -133,11 +139,11 @@
 
 .cart-total {
   font-weight: 700;
-  color: var(--yellow);
+  color: var(--dark-gray);
 }
 
 .checkout-btn {
-  background: var(--primary-blue);
+  background: #6c757d;
   color: white;
   border: none;
   padding: 0.7rem 1.2rem;
@@ -148,7 +154,7 @@
 }
 
 .checkout-btn:hover {
-  background: #1976D2;
+  background: #5a6268;
 }
 
 @media (max-width: 768px) {

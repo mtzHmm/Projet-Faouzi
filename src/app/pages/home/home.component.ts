@@ -17,7 +17,7 @@ interface ServiceCategory {
   styleUrl: './home.component.css'
 })
 export class HomeComponent {
-  slogan = "Whatever You Need, Delivered To Your Door.";
+  slogan = "Fast Delivery To Your Door.";
   
   serviceCategories: ServiceCategory[] = [
     {

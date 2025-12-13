@@ -1,14 +1,18 @@
 .home-container {
   min-height: 100vh;
+  background: #F5F0E8;
 }
 
 .hero-section {
-  background: linear-gradient(135deg, rgba(227, 242, 253, 0.9) 0%, rgba(232, 244, 253, 0.9) 100%),
+  background: linear-gradient(135deg, rgba(245, 240, 232, 0.95) 0%, rgba(240, 230, 220, 0.95) 100%),
+
+
+
               url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDgwMCA1MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNTAwIiBmaWxsPSIjRjBGOUZGIi8+CjwhLS0gQmFja2dyb3VuZCBzaGFwZXMgLS0+CjxwYXRoIGQ9Ik02MDAgMEg4MDBWNTAWOCA2MDAgMjAwWiIgZmlsbD0iIzg3Q0VGQSIvPgo8cGF0aCBkPSJNNzAwIDEwMEg4MDBWNDAWSCA3MDAgMzAwWiIgZmlsbD0iIzYzQjNGNiIvPgo8IS0tIERlbGl2ZXJ5IHBlcnNvbiAtLT4KPGNpcmNsZSBjeD0iMzAwIiBjeT0iMTUwIiByPSI0MCIgZmlsbD0iI0Y1OTc2NSIvPgo8cGF0aCBkPSJNMzAwIDExMEMzMjAgMTEwIDMzNSAxMjUgMzM1IDE0NUgzNDBWMTQwQzM0MiAxMzggMzQ0IDEzNiAzNDcgMTM2QzM1MCAxMzYgMzUyIDEzOCAzNTQgMTQwVjE0NUgzNjBWMTUwSDE4MFYXNDEIMJY1VjE0MENdNiAkMzggMTY4IDEzNiAxNzEgMTM2QzE3NCAxMzYgMTc2IDEzOCAxNzggMTQwVjE0NUgyNjVDMjY1IDEyNSAyODAgMTEwIDMwMCAxMTBaIiBmaWxsPSIjNEE5MEU2Ii8+CjwhLS0gQm9keSAtLT4KPHJlY3QgeD0iMjcwIiB5PSIxOTAiIHdpZHRoPSI2MCIgaGVpZ2h0PSI4MCIgZmlsbD0iIzRBOTBFNiIvPgo8IS0tIEFybXMgLS0+CjxyZWN0IHg9IjI0MCIgeT0iMjAwIiB3aWR0aD0iMzAiIGhlaWdodD0iNDAiIGZpbGw9IiNGNTk3NjUiLz4KPHJlY3QgeD0iMzMwIiB5PSIyMDAiIHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgZmlsbD0iI0Y1OTc2NSIvPgo8IS0tIExlZ3MgLS0+CjxyZWN0IHg9IjI4MCIgeT0iMjcwIiB3aWR0aD0iMTUiIGhlaWdodD0iNDAiIGZpbGw9IiMyRDU5OEEiLz4KPHJlY3QgeD0iMzA1IiB5PSIyNzAiIHdpZHRoPSIxNSIgaGVpZ2h0PSI0MCIgZmlsbD0iIzJENTk4QSIvPgo8IS0tIFBhY2thZ2VzIC0tPgo8cmVjdCB4PSIzNDAiIHk9IjIzMCIgd2lkdGg9IjMwIiBoZWlnaHQ9IjMwIiBmaWxsPSIjRUQ4QTJBIi8+CjxyZWN0IHg9IjM3MCIgeT0iMjEwIiB3aWR0aD0iMzAiIGhlaWdodD0iMzAiIGZpbGw9IiNFRDhBMkEiLz4KPCEtLSBDdXN0b21lciAtLT4KPGNpcmNsZSBjeD0iNTUwIiBjeT0iMTgwIiByPSIzNSIgZmlsbD0iI0Y1OTc2NSIvPgo8cGF0aCBkPSJNNTUwIDE0NEM1NjUgMTQ0IDU3NSAxNTQgNTc1IDE2OUg1ODFWMTczSDUzMEMdNEMgMTU0IDUzNSAxNDQgNTUwIDE0NFoiIGZpbGw9IiM4RTI0QUEiLz4KPCEtLSBCb2R5IC0tPgo8cmVjdCB4PSI1MjUiIHk9IjIxNSIgd2lkdGg9IjUwIiBoZWlnaHQ9IjcwIiBmaWxsPSIjRkZENTRGIi8+CjwhLS0gQXJtcyAtLT4KPHJlY3QgeD0iNTAwIiB5PSIyMjAiIHdpZHRoPSIyNSIgaGVpZ2h0PSIzNSIgZmlsbD0iI0Y1OTc2NSIvPgo8cmVjdCB4PSI1NzUiIHk9IjIyMCIgd2lkdGg9IjI1IiBoZWlnaHQ9IjM1IiBmaWxsPSIjRjU5NzY1Ii8+CjwhLS0gTGVncyAtLT4KPHJlY3QgeD0iNTM1IiB5PSIyODUiIHdpZHRoPSIxNSIgaGVpZ2h0PSIzNSIgZmlsbD0iIzJENTk4QSIvPgo8cmVjdCB4PSI1NTUiIHk9IjI4NSIgd2lkdGg9IjE1IiBoZWlnaHQ9IjM1IiBmaWxsPSIjMkQ1OThBIi8+CjwhLS0gUGxhbnQgZWxlbWVudHMgLS0+CjxwYXRoIGQ9Ik0xNTAgNDAwQzE2MCAzODAgMTgwIDM5MCAxOTAgNDEwQzIwMCAzOTAgMjIwIDQwMCAyMzAgNDIwSDE1MFoiIGZpbGw9IiM2MEE1RkEiLz4KPHA+dGggZD0iTTE3MCA0MDBDMTgwIDM4MCAyMDAgMzkwIDIxMCA0MTBDMjIwIDM5MCAyNDAgNDAwIDI1MCA0MjBIMTcwWiIgZmlsbD0iIzM0RDBBNyIvPgo8L3N2Zz4=');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  padding: 4rem 0;
+  padding: 1.5rem 0;
   position: relative;
   overflow: hidden;
 }
@@ -16,9 +20,9 @@
 .hero-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 3rem;
+  gap: 1rem;
   align-items: center;
-  min-height: 500px;
+  min-height: 200px;
 }
 
 .hero-text {
@@ -26,17 +30,17 @@
 }
 
 .hero-title {
-  font-size: 3rem;
+  font-size: 2.5rem;
   font-weight: 700;
   color: var(--dark-gray);
-  margin-bottom: 1.5rem;
-  line-height: 1.2;
+  margin-bottom: 0.75rem;
+  line-height: 1.1;
 }
 
 .hero-subtitle {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   color: #666;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   line-height: 1.6;
 }
 
@@ -45,7 +49,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 400px;
+  height: 200px;
   opacity: 0.8;
 }
 
@@ -137,14 +141,18 @@
 }
 
 .features-section {
-  padding: 4rem 0;
+  padding: 4rem 2rem;
   background: var(--light-gray);
+  width: 100%;
 }
 
 .features {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
+  max-width: none;
+  width: 100%;
+  margin: 0;
 }
 
 .feature {
@@ -162,12 +170,12 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 180px;
+  height: 220px;
 }
 
 .feature-image img {
-  max-width: 160px;
-  max-height: 160px;
+  max-width: 200px;
+  max-height: 200px;
   object-fit: contain;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
   transition: transform 0.3s ease;

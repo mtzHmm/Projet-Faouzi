@@ -1,5 +1,5 @@
 .header {
-  background: var(--white);
+  background: #D2B48C;
   box-shadow: var(--shadow);
   position: sticky;
   top: 0;
@@ -28,7 +28,7 @@
 }
 
 .logo h2 {
-  color: var(--primary-blue);
+  color: #5D4037;
   font-weight: 700;
   font-size: 1.5rem;
   margin: 0;
@@ -41,7 +41,7 @@
 
 .navigation a {
   text-decoration: none;
-  color: var(--dark-gray);
+  color: #5D4037;
   font-weight: 500;
   font-size: 0.85rem;
   transition: color 0.3s ease;
@@ -50,7 +50,7 @@
 
 .navigation a:hover,
 .navigation a.active {
-  color: var(--primary-blue);
+  color: #3E2723;
 }
 
 .navigation a.active::after {
@@ -60,11 +60,34 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--primary-blue);
+  background: #3E2723;
 }
 
 .navigation a.admin-link {
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  background: transparent;
+  color: #e74c3c;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  border: none;
+}
+
+.navigation a.admin-link:hover {
+  background: transparent;
+  color: #c0392b;
+  transform: translateY(-1px);
+  box-shadow: none;
+}
+
+
+
+.navigation a.admin-link.active::after {
+  display: none;
+}
+
+.navigation a.provider-link {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
   color: white;
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
@@ -73,15 +96,13 @@
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-.navigation a.admin-link:hover {
-  background: linear-gradient(135deg, #c0392b, #a93226);
+.navigation a.provider-link:hover {
+  background: linear-gradient(135deg, #4f46e5, #4338ca);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
-
-
-.navigation a.admin-link.active::after {
+.navigation a.provider-link.active::after {
   display: none;
 }
 
@@ -116,14 +137,14 @@
   align-items: center;
   gap: 0.5rem;
   text-decoration: none;
-  color: var(--dark-gray);
+  color: #5D4037;
   font-weight: 500;
   font-size: 0.9rem;
   transition: color 0.3s ease;
 }
 
 .sign-in-link:hover {
-  color: var(--primary-blue);
+  color: #3E2723;
 }
 
 .cart-link {
@@ -132,9 +153,9 @@
   gap: 0.5rem;
   text-decoration: none;
   padding: 0.5rem 1rem;
-  border: 2px solid var(--primary-blue);
+  border: 2px solid #5D4037;
   border-radius: var(--border-radius);
-  color: var(--primary-blue);
+  color: #5D4037;
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: 600;
@@ -142,8 +163,8 @@
 }
 
 .cart-link:hover {
-  background: var(--primary-blue);
-  color: var(--white);
+  background: #5D4037;
+  color: white;
 }
 
 @media (max-width: 768px) {

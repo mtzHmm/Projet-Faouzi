@@ -1,6 +1,6 @@
 .footer {
-  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
-  color: white;
+  background: linear-gradient(135deg, #D2B48C 0%, #DEB887 100%);
+  color: #5D4037;
   margin-top: 4rem;
 }
 
@@ -24,7 +24,7 @@
   font-size: 1.1rem;
   font-weight: 700;
   margin-bottom: 1.5rem;
-  color: #ccfbf1;
+  color: #3E2723;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -49,7 +49,7 @@
   font-size: 1.3rem;
   font-weight: 800;
   margin: 0;
-  color: #ccfbf1;
+  color: #3E2723;
   letter-spacing: 1px;
 }
 
@@ -58,7 +58,7 @@
   line-height: 1.6;
   opacity: 0.9;
   margin-bottom: 1.5rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(93, 64, 55, 0.85);
 }
 
 /* Social Links */
@@ -73,17 +73,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(93, 64, 55, 0.1);
   border-radius: 50%;
-  color: #ccfbf1;
+  color: #3E2723;
   transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(93, 64, 55, 0.2);
 }
 
 .social-link:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(93, 64, 55, 0.25);
   transform: translateY(-3px);
-  border-color: #ccfbf1;
+  border-color: #3E2723;
 }
 
 /* Footer Links */
@@ -97,7 +97,7 @@
 }
 
 .footer-link {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(93, 64, 55, 0.85);
   text-decoration: none;
   transition: all 0.3s ease;
   display: inline-flex;
@@ -107,8 +107,8 @@
 }
 
 .footer-link:hover {
-  color: #ccfbf1;
-  border-bottom-color: #ccfbf1;
+  color: #3E2723;
+  border-bottom-color: #3E2723;
   padding-left: 0.5rem;
 }
 
@@ -126,14 +126,14 @@
 }
 
 .contact-item svg {
-  color: #ccfbf1;
+  color: #3E2723;
   flex-shrink: 0;
   margin-top: 0.25rem;
 }
 
 .contact-item .label {
   font-size: 0.85rem;
-  color: #ccfbf1;
+  color: #3E2723;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -142,7 +142,7 @@
 
 .contact-item .value {
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(93, 64, 55, 0.85);
   margin: 0;
   line-height: 1.4;
 }
@@ -150,7 +150,7 @@
 /* Footer Divider */
 .footer-divider {
   height: 1px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(93, 64, 55, 0.2);
   margin: 2rem 0;
 }
 
@@ -171,7 +171,7 @@
 .copyright p {
   margin: 0;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(93, 64, 55, 0.75);
 }
 
 .footer-bottom-links {
@@ -181,7 +181,7 @@
 }
 
 .bottom-link {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(93, 64, 55, 0.85);
   text-decoration: none;
   font-size: 0.9rem;
   transition: color 0.3s ease;
@@ -190,8 +190,8 @@
 }
 
 .bottom-link:hover {
-  color: #ccfbf1;
-  border-bottom-color: #ccfbf1;
+  color: #3E2723;
+  border-bottom-color: #3E2723;
 }
 
 .scroll-top-btn {
@@ -200,19 +200,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(93, 64, 55, 0.1);
+  border: 1px solid rgba(93, 64, 55, 0.2);
   border-radius: 50%;
-  color: #ccfbf1;
+  color: #3E2723;
   cursor: pointer;
   transition: all 0.3s ease;
   flex-shrink: 0;
 }
 
 .scroll-top-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(93, 64, 55, 0.25);
   transform: translateY(-3px);
-  border-color: #ccfbf1;
+  border-color: #3E2723;
 }
 
 /* Responsive */

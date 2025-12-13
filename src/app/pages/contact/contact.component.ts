@@ -33,19 +33,22 @@ import { Component } from '@angular/core';
     .contact-container {
       min-height: 80vh;
       padding: 4rem 0;
-      background: var(--light-gray);
+      background: linear-gradient(135deg, #F0EBE3 0%, #E8DDD4 50%, #E0D5C7 100%);
     }
     
     h1 {
       text-align: center;
-      color: var(--dark-gray);
+      color: #8B7355;
       margin-bottom: 1rem;
+      font-family: Georgia, serif;
+      font-style: italic;
     }
     
     p {
       text-align: center;
-      color: #666;
+      color: #A68B5B;
       margin-bottom: 3rem;
+      font-family: Georgia, serif;
     }
     
     .contact-info {
@@ -56,16 +59,24 @@ import { Component } from '@angular/core';
     }
     
     .contact-method {
-      background: var(--white);
+      background: rgba(255, 255, 255, 0.9);
       padding: 2rem;
-      border-radius: var(--border-radius);
-      box-shadow: var(--shadow);
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(139, 115, 85, 0.1);
       text-align: center;
+      border: 1px solid #E8DDD4;
     }
     
     .contact-method h3 {
-      color: var(--primary-blue);
+      color: #8B7355;
       margin-bottom: 1rem;
+      font-family: Georgia, serif;
+    }
+    
+    .contact-method p {
+      color: #6B5B47;
+      margin: 0;
+      font-weight: 500;
     }
   `]
 })

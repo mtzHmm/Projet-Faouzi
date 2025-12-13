@@ -60,6 +60,24 @@
             </div>
           </div>
 
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <input 
+              type="tel" 
+              class="form-control" 
+              [(ngModel)]="phone" 
+              name="phone"
+              placeholder="Enter your phone number"
+              required
+              pattern="^[+]?[0-9\s\-\(\)]{8,}$"
+              #phoneInput="ngModel"
+            >
+            <div *ngIf="phoneInput.invalid && phoneInput.touched" class="error-message">
+              <div *ngIf="phoneInput.errors?.['required']">Phone number is required</div>
+              <div *ngIf="phoneInput.errors?.['pattern']">Please enter a valid phone number</div>
+            </div>
+          </div>
+
           <!-- Delivery Partner Specific Fields -->
           <div *ngIf="accountType === 'delivery'">
             <div class="form-group">
@@ -152,6 +170,24 @@
             >
             <div *ngIf="storeAddressInput.invalid && storeAddressInput.touched" class="error-message">
               Store address is required (minimum 5 characters)
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <input 
+              type="tel" 
+              class="form-control" 
+              [(ngModel)]="phone" 
+              name="providerPhone"
+              placeholder="Enter your phone number"
+              required
+              pattern="^[+]?[0-9\s\-\(\)]{8,}$"
+              #providerPhoneInput="ngModel"
+            >
+            <div *ngIf="providerPhoneInput.invalid && providerPhoneInput.touched" class="error-message">
+              <div *ngIf="providerPhoneInput.errors?.['required']">Phone number is required</div>
+              <div *ngIf="providerPhoneInput.errors?.['pattern']">Please enter a valid phone number</div>
             </div>
           </div>
         </div>

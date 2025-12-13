@@ -15,6 +15,7 @@ export class SignupComponent {
   lastName: string = '';
   email: string = '';
   password: string = '';
+  phone: string = '';
   accountType: 'customer' | 'delivery' | 'provider' = 'customer';
   isLoading: boolean = false;
 
@@ -42,17 +43,17 @@ export class SignupComponent {
   onSubmit() {
     // Validation based on account type
     if (this.accountType === 'provider') {
-      if (!this.storeName || !this.storeCategory || !this.address || !this.email || !this.password) {
+      if (!this.storeName || !this.storeCategory || !this.address || !this.phone || !this.email || !this.password) {
         alert('Please fill in all fields');
         return;
       }
     } else if (this.accountType === 'delivery') {
-      if (!this.firstName || !this.lastName || !this.address || !this.city || !this.availabilityTime || !this.email || !this.password) {
+      if (!this.firstName || !this.lastName || !this.address || !this.city || !this.availabilityTime || !this.phone || !this.email || !this.password) {
         alert('Please fill in all fields');
         return;
       }
     } else {
-      if (!this.firstName || !this.lastName || !this.address || !this.email || !this.password) {
+      if (!this.firstName || !this.lastName || !this.address || !this.phone || !this.email || !this.password) {
         alert('Please fill in all fields');
         return;
       }
@@ -64,7 +65,8 @@ export class SignupComponent {
       email: this.email,
       password: this.password,
       accountType: this.accountType,
-      address: this.address
+      address: this.address,
+      phone: this.phone
     };
 
     if (this.accountType === 'provider') {
