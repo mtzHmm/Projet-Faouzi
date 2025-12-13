@@ -1,13 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { ProductService, Product } from '../../services/product.service';
 
-interface Product {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
+interface BoutiqueProduct extends Product {
   category: string;
   store: string;
 }
@@ -19,101 +15,93 @@ interface Product {
   templateUrl: './boutique.component.html',
   styleUrl: './boutique.component.css'
 })
-export class BoutiqueComponent {
-  products: Product[] = [
-    {
-      id: 1,
-      name: 'T-Shirt Premium',
-      description: 'T-shirt en coton bio de haute qualité',
-      price: 29.99,
-      image: '/images/tshirt.jpg',
-      category: 'Vêtements',
-      store: 'Fashion Store'
-    },
-    {
-      id: 2,
-      name: 'Jeans Slim',
-      description: 'Jean slim fit confortable et élégant',
-      price: 79.99,
-      image: '/images/jeans.jpg',
-      category: 'Vêtements',
-      store: 'Fashion Store'
-    },
-    {
-      id: 3,
-      name: 'Sneakers Sport',
-      description: 'Baskets de sport ultra-confortables',
-      price: 89.99,
-      image: '/images/sneakers.jpg',
-      category: 'Chaussures',
-      store: 'Sports World'
-    },
-    {
-      id: 4,
-      name: 'Sac à Main',
-      description: 'Sac à main en cuir véritable',
-      price: 149.99,
-      image: '/images/handbag.jpg',
-      category: 'Accessoires',
-      store: 'Luxury Bags'
-    },
-    {
-      id: 5,
-      name: 'Montre Connectée',
-      description: 'Montre intelligente avec GPS intégré',
-      price: 199.99,
-      image: '/images/smartwatch.jpg',
-      category: 'Électronique',
-      store: 'Tech Corner'
-    },
-    {
-      id: 6,
-      name: 'Casque Audio',
-      description: 'Casque sans fil haute définition',
-      price: 129.99,
-      image: '/images/headphones.jpg',
-      category: 'Électronique',
-      store: 'Tech Corner'
-    },
-    {
-      id: 7,
-      name: 'Parfum Luxe',
-      description: 'Parfum de luxe aux notes florales',
-      price: 89.99,
-      image: '/images/perfume.jpg',
-      category: 'Beauté',
-      store: 'Beauty Palace'
-    },
-    {
-      id: 8,
-      name: 'Bijoux Élégants',
-      description: 'Collier en or avec pendentif diamant',
-      price: 299.99,
-      image: '/images/jewelry.jpg',
-      category: 'Bijoux',
-      store: 'Jewelry Store'
-    }
-  ];
+export class BoutiqueComponent implements OnInit {
+  
+  constructor(private productService: ProductService) {}
+  products: BoutiqueProduct[] = [];
+  isLoading = true;
+  error = '';
+  
+  ngOnInit() {
+    this.loadProducts();
+  }
+  
+  loadProducts() {
+    this.isLoading = true;
+    this.error = '';
+    
+    this.productService.getProducts({ type: 'boutique' }).subscribe({
+      next: (response) => {
+        console.log('✅ Boutique products loaded:', response.products);
+        this.products = response.products.map(product => ({
+          ...product,
+          category: this.mapTypeToCategory(product.type),
+          store: product.restaurant || 'Boutique Store'
+        }));
+        
+        console.log('🔍 Mapped products:', this.products);
+        console.log('🏷️ Categories found:', [...new Set(this.products.map(p => p.category))]);
+        console.log('🔄 Setting isLoading to false...');
+        
+        this.isLoading = false;
+        
+        console.log('✅ isLoading is now:', this.isLoading);
+        console.log('📊 filteredProducts count:', this.filteredProducts.length);
+      },
+      error: (error) => {
+        console.error('❌ Error loading boutique products:', error);
+        this.error = 'Erreur lors du chargement des produits';
+        this.isLoading = false;
+      }
+    });
+  }
+  
+  mapTypeToCategory(type: string): string {
+    const categoryMap: { [key: string]: string } = {
+      'boutique': 'Général',
+      'clothes': 'Vêtements', 
+      'vetements': 'Vêtements',
+      'shoes': 'Chaussures',
+      'chaussures': 'Chaussures',
+      'accessories': 'Accessoires',
+      'accessoires': 'Accessoires',
+      'electronics': 'Électronique',
+      'electronique': 'Électronique',
+      'beauty': 'Beauté',
+      'beaute': 'Beauté',
+      'jewelry': 'Bijoux',
+      'bijoux': 'Bijoux'
+    };
+    return categoryMap[type?.toLowerCase()] || 'Général';
+  }
 
-  cart: Product[] = [];
-  categories: string[] = ['Tous', 'Vêtements', 'Chaussures', 'Accessoires', 'Électronique', 'Beauté', 'Bijoux'];
+  cart: BoutiqueProduct[] = [];
+  categories: string[] = ['Tous', 'Général', 'Vêtements', 'Chaussures', 'Accessoires', 'Électronique', 'Beauté', 'Bijoux', 'Autres'];
   selectedCategory: string = 'Tous';
 
-  get filteredProducts(): Product[] {
+  get filteredProducts(): BoutiqueProduct[] {
+    console.log('🔍 Filtering - selectedCategory:', this.selectedCategory);
+    console.log('🔍 Total products:', this.products.length);
+    
     if (this.selectedCategory === 'Tous') {
+      console.log('📋 Returning all products:', this.products.length);
       return this.products;
     }
-    return this.products.filter(product => product.category === this.selectedCategory);
+    const filtered = this.products.filter(product => product.category === this.selectedCategory);
+    console.log('📋 Filtered products:', filtered.length);
+    return filtered;
   }
 
-  addToCart(product: Product): void {
+  addToCart(product: BoutiqueProduct): void {
     this.cart.push(product);
+    console.log('🛒 Product added to cart:', product.name);
   }
 
-  removeFromCart(product: Product): void {
+  removeFromCart(product: BoutiqueProduct): void {
     const index = this.cart.findIndex(item => item.id === product.id);
     if (index > -1) {
       this.cart.splice(index, 1);
+      console.log('🗑️ Product removed from cart:', product.name);
     }
   }
 
@@ -127,5 +115,19 @@ export class BoutiqueComponent {
 
   filterByCategory(category: string): void {
     this.selectedCategory = category;
+  }
+
+  getProductEmoji(category: string): string {
+    const emojiMap: { [key: string]: string } = {
+      'Général': '🛍️',
+      'Vêtements': '👕',
+      'Chaussures': '👟',
+      'Accessoires': '👜',
+      'Électronique': '📱',
+      'Beauté': '💄',
+      'Bijoux': '💎',
+      'Autres': '🏷️'
+    };
+    return emojiMap[category] || '🛒';
   }
 }

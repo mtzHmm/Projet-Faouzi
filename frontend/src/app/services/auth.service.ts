@@ -13,6 +13,14 @@ export interface RegisterRequest {
   email: string;
   password: string;
   role?: string;
+  phone?: string;
+  address?: string;
+  firstName?: string;
+  lastName?: string;
+  storeName?: string;
+  storeCategory?: string;
+  city?: string;
+  availabilityTime?: string;
 }
 
 export interface AuthResponse {

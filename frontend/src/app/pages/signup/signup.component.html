@@ -6,6 +6,11 @@
         <p>Already have an account? <a routerLink="/signin">Log in</a></p>
       </div>
 
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="alert alert-error">
+        {{ errorMessage }}
+      </div>
+
       <form (ngSubmit)="onSubmit()" #signupForm="ngForm" novalidate>
         <!-- Customer/Delivery Fields -->
         <div *ngIf="accountType !== 'provider'">
@@ -43,20 +48,67 @@
             </div>
           </div>
 
-          <div class="form-group">
+          <div class="form-group address-group">
             <label class="form-label">Address</label>
-            <input 
-              type="text" 
-              class="form-control" 
-              [(ngModel)]="address" 
-              name="address"
-              placeholder="Enter your address"
-              required
-              minlength="5"
-              #addressInput="ngModel"
-            >
-            <div *ngIf="addressInput.invalid && addressInput.touched" class="error-message">
-              Address is required (minimum 5 characters)
+            
+            <div class="address-field">
+              <input 
+                type="text" 
+                class="form-control" 
+                [(ngModel)]="rue" 
+                name="rue"
+                placeholder="Street address"
+                required
+                minlength="3"
+                #rueInput="ngModel"
+              >
+              <div *ngIf="rueInput.invalid && rueInput.touched" class="error-message">
+                Street address is required (minimum 3 characters)
+              </div>
+            </div>
+
+            <div class="address-row">
+              <div class="address-field">
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  [(ngModel)]="ville" 
+                  name="ville"
+                  placeholder="City"
+                  required
+                  minlength="2"
+                  #villeInput="ngModel"
+                >
+                <div *ngIf="villeInput.invalid && villeInput.touched" class="error-message">
+                  City is required
+                </div>
+              </div>
+
+              <div class="address-field">
+                <input 
+                  type="text" 
+                  class="form-control postal-code" 
+                  [(ngModel)]="code_postal" 
+                  name="code_postal"
+                  placeholder="Postal code"
+                  required
+                  pattern="^[0-9]{5}$"
+                  #codePostalInput="ngModel"
+                >
+                <div *ngIf="codePostalInput.invalid && codePostalInput.touched" class="error-message">
+                  Valid 5-digit postal code required
+                </div>
+              </div>
+            </div>
+
+            <div class="address-field">
+              <input 
+                type="text" 
+                class="form-control" 
+                [(ngModel)]="complement" 
+                name="complement"
+                placeholder="Additional information (optional)"
+              >
             </div>
           </div>
 
@@ -156,20 +208,67 @@
             </div>
           </div>
 
-          <div class="form-group">
+          <div class="form-group address-group">
             <label class="form-label">Store Address</label>
-            <input 
-              type="text" 
-              class="form-control" 
-              [(ngModel)]="address" 
-              name="storeAddress"
-              placeholder="Enter your store address"
-              required
-              minlength="5"
-              #storeAddressInput="ngModel"
-            >
-            <div *ngIf="storeAddressInput.invalid && storeAddressInput.touched" class="error-message">
-              Store address is required (minimum 5 characters)
+            
+            <div class="address-field">
+              <input 
+                type="text" 
+                class="form-control" 
+                [(ngModel)]="rue" 
+                name="storeRue"
+                placeholder="Store street address"
+                required
+                minlength="3"
+                #storeRueInput="ngModel"
+              >
+              <div *ngIf="storeRueInput.invalid && storeRueInput.touched" class="error-message">
+                Store street address is required (minimum 3 characters)
+              </div>
+            </div>
+
+            <div class="address-row">
+              <div class="address-field">
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  [(ngModel)]="ville" 
+                  name="storeVille"
+                  placeholder="City"
+                  required
+                  minlength="2"
+                  #storeVilleInput="ngModel"
+                >
+                <div *ngIf="storeVilleInput.invalid && storeVilleInput.touched" class="error-message">
+                  City is required
+                </div>
+              </div>
+
+              <div class="address-field">
+                <input 
+                  type="text" 
+                  class="form-control postal-code" 
+                  [(ngModel)]="code_postal" 
+                  name="storeCodePostal"
+                  placeholder="Postal code"
+                  required
+                  pattern="^[0-9]{5}$"
+                  #storeCodePostalInput="ngModel"
+                >
+                <div *ngIf="storeCodePostalInput.invalid && storeCodePostalInput.touched" class="error-message">
+                  Valid 5-digit postal code required
+                </div>
+              </div>
+            </div>
+
+            <div class="address-field">
+              <input 
+                type="text" 
+                class="form-control" 
+                [(ngModel)]="complement" 
+                name="storeComplement"
+                placeholder="Additional information (optional)"
+              >
             </div>
           </div>
 

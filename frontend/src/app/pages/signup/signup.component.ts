@@ -19,14 +19,18 @@ export class SignupComponent {
   phone: string = '';
   accountType: 'customer' | 'delivery' | 'provider' = 'customer';
   isLoading: boolean = false;
+  errorMessage: string = '';
+
+  // Address fields (matching database structure)
+  rue: string = '';           // street
+  ville: string = '';         // city
+  code_postal: string = '';   // postal code
+  complement: string = '';    // additional info
 
   // Provider specific fields
   storeName: string = '';
   storeCategory: string = '';
   storeCategories = ['restaurant', 'pharmacie', 'courses', 'boutique'];
-  
-  // Address field for all account types
-  address: string = '';
   
   // Delivery partner specific fields
   city: string = '';
@@ -45,40 +49,52 @@ export class SignupComponent {
   ) {}
 
   onSubmit() {
+    this.errorMessage = '';
+    
     // Validation based on account type
     if (this.accountType === 'provider') {
-      if (!this.storeName || !this.storeCategory || !this.address || !this.phone || !this.email || !this.password) {
-        alert('Please fill in all fields');
+      if (!this.storeName || !this.storeCategory || !this.rue || !this.ville || !this.code_postal || !this.phone || !this.email || !this.password) {
+        this.errorMessage = 'Please fill in all required fields';
         return;
       }
     } else if (this.accountType === 'delivery') {
-      if (!this.firstName || !this.lastName || !this.address || !this.city || !this.availabilityTime || !this.phone || !this.email || !this.password) {
-        alert('Please fill in all fields');
+      if (!this.firstName || !this.lastName || !this.rue || !this.ville || !this.code_postal || !this.city || !this.availabilityTime || !this.phone || !this.email || !this.password) {
+        this.errorMessage = 'Please fill in all required fields';
         return;
       }
     } else {
-      if (!this.firstName || !this.lastName || !this.address || !this.phone || !this.email || !this.password) {
-        alert('Please fill in all fields');
+      if (!this.firstName || !this.lastName || !this.rue || !this.ville || !this.code_postal || !this.phone || !this.email || !this.password) {
+        this.errorMessage = 'Please fill in all required fields';
         return;
       }
     }
 
     this.isLoading = true;
     
+    // Build comprehensive signup data with proper address structure
+    const address = `${this.rue}, ${this.ville} ${this.code_postal}${this.complement ? ', ' + this.complement : ''}`;
+    
     const signupData: any = {
       email: this.email,
       password: this.password,
-      accountType: this.accountType,
-      address: this.address,
-      phone: this.phone
+      role: this.accountType === 'delivery' ? 'livreur' : 
+            this.accountType === 'provider' ? 'provider' : 'client',
+      phone: this.phone,
+      address: address,
+      rue: this.rue,
+      ville: this.ville,
+      code_postal: this.code_postal,
+      complement: this.complement
     };
 
     if (this.accountType === 'provider') {
       signupData.storeName = this.storeName;
       signupData.storeCategory = this.storeCategory;
+      signupData.name = this.storeName;
     } else {
       signupData.firstName = this.firstName;
       signupData.lastName = this.lastName;
+      signupData.name = `${this.firstName} ${this.lastName}`;
       
       if (this.accountType === 'delivery') {
         signupData.city = this.city;
@@ -86,27 +102,40 @@ export class SignupComponent {
       }
     }
     
-    const name = this.accountType === 'provider' ? this.storeName : `${this.firstName} ${this.lastName}`;
+    console.log('📤 Sending registration data:', signupData);
+    console.log('🌐 API URL:', this.authService);
     
-    this.authService.register({
-      name: name,
-      email: this.email,
-      password: this.password,
-      role: this.accountType === 'delivery' ? 'livreur' : 'client'
-    }).subscribe({
+    this.authService.register(signupData).subscribe({
       next: (response) => {
         this.isLoading = false;
+        console.log('✅ Registration response:', response);
+        
         if (response.success) {
-          alert(`Account created successfully for ${name}!`);
+          const accountTypeText = this.accountType === 'delivery' ? 'Delivery Partner' : 
+                                 this.accountType === 'provider' ? 'Store Provider' : 'Customer';
+          alert(`${accountTypeText} account created successfully! Please sign in to continue.`);
           this.router.navigate(['/signin']);
         } else {
-          alert('Registration failed. Please try again.');
+          this.errorMessage = response.message || 'Registration failed. Please try again.';
         }
       },
       error: (error) => {
         this.isLoading = false;
-        console.error('Registration error:', error);
-        alert('Registration failed. Please try again.');
+        console.error('❌ Registration error:', error);
+        console.error('❌ Error status:', error.status);
+        console.error('❌ Error details:', error.error);
+        
+        if (error.status === 0) {
+          this.errorMessage = 'Cannot connect to server. Please check if the backend is running.';
+        } else if (error.error?.error) {
+          this.errorMessage = error.error.error;
+        } else if (error.error?.message) {
+          this.errorMessage = error.error.message;
+        } else if (error.message) {
+          this.errorMessage = error.message;
+        } else {
+          this.errorMessage = 'Registration failed. Please try again.';
+        }
       }
     });
   }
