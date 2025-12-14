@@ -69,13 +69,15 @@ export class SigninComponent {
         console.error('❌ Login error:', error);
         
         if (error.status === 0) {
-          this.errorMessage = 'Cannot connect to server. Please check your internet connection.';
+          this.errorMessage = 'Cannot connect to server. Please make sure the backend server is running.';
+        } else if (error.status === 401) {
+          this.errorMessage = 'Invalid email or password. Please check your credentials and try again.';
         } else if (error.error?.error) {
           this.errorMessage = error.error.error;
         } else if (error.error?.message) {
           this.errorMessage = error.error.message;
         } else {
-          this.errorMessage = 'Login failed. Please check your credentials and try again.';
+          this.errorMessage = 'Login failed. Please try again later.';
         }
       }
     });
