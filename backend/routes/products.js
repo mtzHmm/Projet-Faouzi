@@ -1,6 +1,24 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const database = require('../config/database');
+const cloudinaryConfig = require('../config/cloudinary');
+
+// Configure multer for file uploads
+const storage = multer.memoryStorage();
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'), false);
+    }
+  }
+});
 
 // Get database connection
 function getDB() {
@@ -10,10 +28,12 @@ function getDB() {
 // GET /api/products - Get all products from database
 router.get('/', async (req, res) => {
   try {
-    const { type, available, search, page = 1, limit = 20 } = req.query;
+    const { type, available, search, page = 1, limit = 20, store_id, restaurant } = req.query;
     
-    console.log(`🔍 Products API called with params:`, { type, available, search, page, limit });
+    console.log(`🔍 Products API called with params:`, { type, available, search, page, limit, store_id, restaurant });
     console.log(`🎯 Type filter received: "${type}" (typeof: ${typeof type})`);
+    console.log(`🏪 Store ID filter received: "${store_id}" (typeof: ${typeof store_id})`);
+    console.log(`🍽️ Restaurant filter received: "${restaurant}"`);
     
     // Build dynamic SQL query
     let query = `
@@ -22,6 +42,8 @@ router.get('/', async (req, res) => {
         p.nom as name,
         p.description,
         p.prix as price,
+        p.image_url as image,
+        p.prescription_required as prescription,
         m.nom as restaurant,
         m.type as type,
         m.id_magazin as store_id,
@@ -45,6 +67,22 @@ router.get('/', async (req, res) => {
       console.log(`📝 Adding type filter: "${typeFilter}" as parameter $${paramIndex-1}`);
     } else {
       console.log(`⚠️ No type filter applied - type is: "${type}"`);
+    }
+    
+    // Add store_id filter
+    if (store_id) {
+      query += ` AND m.id_magazin = $${paramIndex}`;
+      queryParams.push(parseInt(store_id));
+      paramIndex++;
+      console.log(`🏪 Adding store_id filter: ${store_id} as parameter $${paramIndex-1}`);
+    }
+    
+    // Add restaurant name filter
+    if (restaurant) {
+      query += ` AND LOWER(m.nom) = LOWER($${paramIndex})`;
+      queryParams.push(restaurant.trim());
+      paramIndex++;
+      console.log(`🍽️ Adding restaurant filter: "${restaurant}" as parameter $${paramIndex-1}`);
     }
     
     if (search) {
@@ -90,6 +128,18 @@ router.get('/', async (req, res) => {
       countParamIndex++;
     }
     
+    if (store_id) {
+      countQuery += ` AND m.id_magazin = $${countParamIndex}`;
+      countParams.push(parseInt(store_id));
+      countParamIndex++;
+    }
+    
+    if (restaurant) {
+      countQuery += ` AND LOWER(m.nom) = LOWER($${countParamIndex})`;
+      countParams.push(restaurant.trim());
+      countParamIndex++;
+    }
+    
     if (search) {
       countQuery += ` AND (LOWER(p.nom) LIKE LOWER($${countParamIndex}) OR LOWER(p.description) LIKE LOWER($${countParamIndex + 1}))`;
       countParams.push(`%${search}%`);
@@ -107,8 +157,8 @@ router.get('/', async (req, res) => {
     const products = result.rows.map(product => ({
       ...product,
       price: parseFloat(product.price) / 100, // Convert from cents to currency
-      image: `/images/products/${product.name.toLowerCase().replace(/\s+/g, '-')}.jpg`,
       available: true
+      // Note: image field comes from database as 'image' (mapped from image_url)
     }));
     
     console.log(`📦 Returning ${products.length} products out of ${total} total`);
@@ -173,6 +223,8 @@ router.get('/:id', async (req, res) => {
         p.nom as name,
         p.description,
         p.prix as price,
+        p.image_url as image,
+        p.prescription_required as prescription,
         m.nom as restaurant,
         m.type as type,
         m.id_magazin as store_id,
@@ -204,29 +256,135 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/products - Create new product
-router.post('/', (req, res) => {
-  const { name, description, price, category, image, stock = 0 } = req.body;
-  
-  if (!name || !description || !price || !category) {
-    return res.status(400).json({ error: 'Name, description, price, and category are required' });
+// POST /api/products - Create new product with image upload
+router.post('/', upload.single('image'), async (req, res) => {
+  try {
+    console.log('🔥 POST /api/products request received');
+    console.log('📝 Request body:', req.body);
+    console.log('📎 Request file:', req.file ? 'File uploaded' : 'No file');
+    
+    const { name, description, price, category_id, store_id, prescription = false } = req.body;
+    
+    console.log('📦 Extracted data:', { name, description, price, category_id, store_id, prescription });
+    console.log('📦 Data types:', { 
+      name: typeof name, 
+      description: typeof description, 
+      price: typeof price, 
+      category_id: typeof category_id, 
+      store_id: typeof store_id, 
+      prescription: typeof prescription 
+    });
+    
+    // Validate required fields
+    if (!name || !description || !price || !category_id || !store_id) {
+      return res.status(400).json({ 
+        error: 'Name, description, price, category_id, and store_id are required' 
+      });
+    }
+
+    let imageUrl = null;
+    
+    // Upload image to Cloudinary if provided
+    if (req.file) {
+      try {
+        console.log('📸 Uploading image to Cloudinary...');
+        
+        // Ensure Cloudinary is initialized
+        if (!cloudinaryConfig.isInitialized) {
+          cloudinaryConfig.initialize();
+        }
+        
+        const uploadResult = await cloudinaryConfig.uploadImageBuffer(req.file.buffer, {
+          folder: 'products',
+          transformation: [
+            { width: 800, height: 600, crop: 'fill' },
+            { quality: 'auto:good' }
+          ]
+        });
+        imageUrl = uploadResult.secure_url;
+        console.log('✅ Image uploaded successfully:', imageUrl);
+      } catch (uploadError) {
+        console.error('❌ Image upload failed:', uploadError);
+        return res.status(500).json({ 
+          error: 'Image upload failed', 
+          details: uploadError.message 
+        });
+      }
+    }
+
+    // Insert product into database
+    const db = getDB();
+    const insertQuery = `
+      INSERT INTO produit (nom, description, prix, id_magazin, categorie_id, image_url, prescription_required)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING id_produit, nom, description, prix, id_magazin, categorie_id, image_url, prescription_required
+    `;
+    
+    const result = await db.query(insertQuery, [
+      name,
+      description,
+      Math.round(parseFloat(price) * 100), // Convert to cents (integer)
+      parseInt(store_id),
+      parseInt(category_id),
+      imageUrl,
+      Boolean(prescription)
+    ]);
+
+    if (result.rows.length === 0) {
+      return res.status(500).json({ error: 'Failed to create product' });
+    }
+
+    const newProduct = result.rows[0];
+    
+    // Get additional product details with joins
+    const detailQuery = `
+      SELECT 
+        p.id_produit as id,
+        p.nom as name,
+        p.description,
+        p.prix as price,
+        p.image_url as image,
+        p.prescription_required as prescription,
+        m.nom as restaurant,
+        m.type as type,
+        m.id_magazin as store_id,
+        c.id as category_id,
+        c.nom as category_name
+      FROM produit p
+      JOIN magasin m ON p.id_magazin = m.id_magazin
+      LEFT JOIN categorie c ON p.categorie_id = c.id
+      WHERE p.id_produit = $1
+    `;
+    
+    const detailResult = await db.query(detailQuery, [newProduct.id_produit]);
+    
+    // Convert price back to currency format
+    const productWithPrice = {
+      ...detailResult.rows[0],
+      price: parseFloat(detailResult.rows[0].price) / 100
+    };
+    
+    console.log('✅ Product created successfully:', productWithPrice);
+    
+    res.status(201).json({
+      message: 'Product created successfully',
+      product: productWithPrice
+    });
+    
+  } catch (error) {
+    console.error('❌ Error creating product:', error);
+    console.error('❌ Error stack:', error.stack);
+    console.error('❌ Error details:', {
+      message: error.message,
+      name: error.name,
+      code: error.code
+    });
+    res.status(500).json({ 
+      error: 'Failed to create product',
+      details: error.message,
+      errorType: error.name 
+    });
   }
-  
-  // This is a simplified implementation - full database integration would be more complex
-  const newProduct = {
-    id: Math.floor(Math.random() * 10000), // Temporary ID generation
-    name,
-    description,
-    price: parseFloat(price),
-    category,
-    image: image || '/images/default-product.jpg',
-    available: true,
-    stock: parseInt(stock)
-  };
-  
-  // TODO: Implement proper database insertion here
-  
-  res.status(201).json(newProduct);
 });
 
 // PUT /api/products/:id - Update product

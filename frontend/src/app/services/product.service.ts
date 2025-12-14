@@ -52,6 +52,8 @@ export class ProductService {
     search?: string;
     page?: number;
     limit?: number;
+    store_id?: number;
+    restaurant?: string;
   }): Observable<ProductsResponse> {
     let params = new HttpParams();
     
@@ -60,6 +62,8 @@ export class ProductService {
     if (filters?.search) params = params.set('search', filters.search);
     if (filters?.page) params = params.set('page', filters.page.toString());
     if (filters?.limit) params = params.set('limit', filters.limit.toString());
+    if (filters?.store_id) params = params.set('store_id', filters.store_id.toString());
+    if (filters?.restaurant) params = params.set('restaurant', filters.restaurant);
 
     return this.http.get<ProductsResponse>(this.apiUrl, { params });
   }
@@ -68,8 +72,8 @@ export class ProductService {
     return this.http.get<Product>(`${this.apiUrl}/${id}`);
   }
 
-  createProduct(product: Partial<Product>): Observable<Product> {
-    return this.http.post<Product>(this.apiUrl, product);
+  createProduct(productData: FormData): Observable<{message: string, product: Product}> {
+    return this.http.post<{message: string, product: Product}>(`${this.apiUrl}`, productData);
   }
 
   updateProduct(id: number, product: Partial<Product>): Observable<Product> {

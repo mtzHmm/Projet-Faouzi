@@ -56,6 +56,7 @@ class CloudinaryConfig {
       return {
         publicId: result.public_id,
         url: result.secure_url,
+        secure_url: result.secure_url,
         width: result.width,
         height: result.height,
         format: result.format,
@@ -64,6 +65,48 @@ class CloudinaryConfig {
     } catch (error) {
       console.error('Image upload failed:', error);
       throw new Error(`Image upload failed: ${error.message}`);
+    }
+  }
+
+  // Upload image buffer (from multer)
+  async uploadImageBuffer(buffer, options = {}) {
+    try {
+      if (!this.isInitialized) {
+        this.initialize();
+      }
+
+      const defaultOptions = {
+        folder: appProperties.cloudinary.folders.products,
+        resource_type: 'image',
+        format: 'webp',
+        quality: 'auto:good',
+        fetch_format: 'auto'
+      };
+
+      const uploadOptions = { ...defaultOptions, ...options };
+      
+      return new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
+          if (error) {
+            console.error('Buffer upload failed:', error);
+            reject(new Error(`Buffer upload failed: ${error.message}`));
+          } else {
+            console.log('Buffer uploaded successfully:', result.public_id);
+            resolve({
+              publicId: result.public_id,
+              url: result.secure_url,
+              secure_url: result.secure_url,
+              width: result.width,
+              height: result.height,
+              format: result.format,
+              size: result.bytes
+            });
+          }
+        }).end(buffer);
+      });
+    } catch (error) {
+      console.error('Buffer upload failed:', error);
+      throw new Error(`Buffer upload failed: ${error.message}`);
     }
   }
 

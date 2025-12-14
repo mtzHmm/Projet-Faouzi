@@ -32,7 +32,22 @@
   <div class="main-content">
     <div class="page-header">
       <h1>📦 Product Management</h1>
-      <p>Manage your products, inventory, and pricing</p>
+      <p *ngIf="currentStore">Managing products for: <strong>{{ currentStore.storeName || currentStore.name }}</strong> ({{ storeType | titlecase }})</p>
+      <p *ngIf="!currentStore">Manage your products, inventory, and pricing</p>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Loading products...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error" class="error-state">
+      <div class="error-icon">❌</div>
+      <h3>Failed to Load Products</h3>
+      <p>{{ error }}</p>
+      <button (click)="loadProducts()" class="retry-btn">🔄 Retry</button>
     </div>
 
     <!-- Filters and Controls -->
@@ -50,7 +65,7 @@
           (change)="filterProducts()" 
           class="filter-select">
           <option value="">All Categories</option>
-          <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+          <option *ngFor="let category of categories" [value]="category.name">{{ category.name }}</option>
         </select>
 
         <select 
@@ -68,17 +83,31 @@
     </div>
 
     <!-- Products Grid -->
-    <div class="products-grid">
+    <div *ngIf="!loading && !error" class="products-grid">
       <div *ngFor="let product of filteredProducts" class="product-card">
-        <div class="product-image">
-          <img [src]="product.image" [alt]="product.name" onerror="this.src='/placeholder.jpg'">
-          <div class="status-badge" [class]="product.status">{{ product.status }}</div>
+        <div class="product-header-with-status">
+          <div class="status-badge" [class]="getProductStatus(product)">{{ getProductStatus(product) }}</div>
+        </div>
+
+        <!-- Product Image -->
+        <div class="product-image-container">
+          <img 
+            *ngIf="product.image && product.image.trim() !== ''" 
+            [src]="product.image" 
+            [alt]="product.name"
+            class="product-image"
+            (error)="onImageError($event)"
+            (load)="onImageLoad($event, product)">
+          <div *ngIf="!product.image || product.image.trim() === ''" class="product-image-placeholder">
+            <div class="image-placeholder-icon">📦</div>
+            <span>No Image</span>
+          </div>
         </div>
         
         <div class="product-info">
           <div class="product-header">
             <h3>{{ product.name }}</h3>
-            <span class="product-id">{{ product.id }}</span>
+            <span class="product-id">#{{ product.id }}</span>
           </div>
           
           <p class="product-description">{{ product.description }}</p>
@@ -86,15 +115,19 @@
           <div class="product-details">
             <div class="detail-item">
               <span class="label">Category:</span>
-              <span class="value">{{ product.category }}</span>
+              <span class="value">{{ getProductCategory(product) }}</span>
             </div>
             <div class="detail-item">
               <span class="label">Price:</span>
               <span class="value price">{{ product.price }} DT</span>
             </div>
             <div class="detail-item">
-              <span class="label">Stock:</span>
-              <span class="value" [class.low-stock]="product.stock < 10">{{ product.stock }} units</span>
+              <span class="label">Restaurant:</span>
+              <span class="value">{{ product.restaurant }}</span>
+            </div>
+            <div *ngIf="product.prescription" class="detail-item">
+              <span class="label">Prescription:</span>
+              <span class="value prescription">Required</span>
             </div>
           </div>
 
@@ -103,7 +136,7 @@
               ✏️ Edit
             </button>
             <button (click)="toggleStatus(product.id)" class="action-btn toggle">
-              {{ product.status === 'active' ? '⏸️ Disable' : '▶️ Enable' }}
+              {{ getProductStatus(product) === 'active' ? '⏸️ Disable' : '▶️ Enable' }}
             </button>
             <button (click)="deleteProduct(product.id)" class="action-btn delete">
               🗑️ Delete
@@ -114,11 +147,122 @@
     </div>
 
     <!-- Empty State -->
-    <div *ngIf="filteredProducts.length === 0" class="empty-state">
+    <div *ngIf="!loading && !error && filteredProducts.length === 0" class="empty-state">
       <div class="empty-icon">📦</div>
       <h3>No products found</h3>
-      <p>Try adjusting your search criteria or add your first product</p>
-      <button (click)="addProduct()" class="add-btn">➕ Add Your First Product</button>
+      <p *ngIf="searchTerm || selectedCategory || selectedStatus">Try adjusting your search criteria</p>
+      <p *ngIf="!searchTerm && !selectedCategory && !selectedStatus && currentStore">No products found for {{ currentStore.storeName || currentStore.name }}. Add your first product to get started!</p>
+      <button (click)="addProduct()" class="add-btn">➕ Add Product</button>
     </div>
+  </div>
+</div>
+
+<!-- Add Product Modal -->
+<div *ngIf="showAddProductModal" class="modal-overlay" (click)="closeAddProductModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>➕ Add New Product</h2>
+      <button class="close-btn" (click)="closeAddProductModal()">✕</button>
+    </div>
+
+    <form (ngSubmit)="onSubmitProduct()" class="add-product-form">
+      <div class="form-group">
+        <label for="productName">Product Name *</label>
+        <input 
+          type="text" 
+          id="productName"
+          [(ngModel)]="newProduct.name"
+          name="productName"
+          required
+          placeholder="Enter product name"
+          class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label for="productDescription">Description *</label>
+        <textarea 
+          id="productDescription"
+          [(ngModel)]="newProduct.description"
+          name="productDescription"
+          required
+          placeholder="Enter product description"
+          rows="3"
+          class="form-textarea"></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="productPrice">Price *</label>
+          <input 
+            type="number" 
+            id="productPrice"
+            [(ngModel)]="newProduct.price"
+            name="productPrice"
+            required
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+            class="form-input">
+        </div>
+
+        <div class="form-group">
+          <label for="productCategory">Category *</label>
+          <select 
+            id="productCategory"
+            [(ngModel)]="newProduct.category_id"
+            name="productCategory"
+            required
+            class="form-select">
+            <option value="">Select Category</option>
+            <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div *ngIf="storeType === 'pharmacie'" class="form-group">
+        <label class="checkbox-label">
+          <input 
+            type="checkbox" 
+            [(ngModel)]="newProduct.prescription"
+            name="productPrescription"
+            class="checkbox-input">
+          <span class="checkbox-text">Requires Prescription</span>
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label for="productImage">Product Image</label>
+        <div class="image-upload-area">
+          <input 
+            type="file" 
+            id="productImage"
+            #fileInput
+            (change)="onFileSelect($event)"
+            accept="image/*"
+            class="file-input">
+          
+          <div *ngIf="!imagePreview" class="upload-placeholder" (click)="fileInput.click()">
+            <div class="upload-icon">📷</div>
+            <p>Click to upload image</p>
+            <p class="upload-hint">PNG, JPG up to 10MB</p>
+          </div>
+
+          <div *ngIf="imagePreview" class="image-preview">
+            <img [src]="imagePreview" alt="Preview" class="preview-image">
+            <button type="button" class="remove-image-btn" (click)="removeImage()">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="cancel-btn" (click)="closeAddProductModal()" [disabled]="addingProduct">
+          Cancel
+        </button>
+        <button type="submit" class="submit-btn" [disabled]="addingProduct">
+          <span *ngIf="!addingProduct">➕ Add Product</span>
+          <span *ngIf="addingProduct">Adding Product...</span>
+        </button>
+      </div>
+    </form>
   </div>
 </div>

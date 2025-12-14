@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../../services/auth.service';
 
 interface Stats {
   totalProducts: number;
@@ -16,13 +17,30 @@ interface Stats {
   templateUrl: './provider-dashboard.component.html',
   styleUrl: './provider-dashboard.component.css'
 })
-export class ProviderDashboardComponent {
+export class ProviderDashboardComponent implements OnInit {
+  userName = '';
+  storeName = '';
   stats: Stats = {
     totalProducts: 156,
     totalOrders: 324,
     totalRevenue: 15840,
     pendingOrders: 23
   };
+
+  constructor(private authService: AuthService) {}
+
+  ngOnInit() {
+    this.loadUserData();
+  }
+
+  loadUserData() {
+    const userData = this.authService.getUserData();
+    if (userData) {
+      this.userName = this.authService.getUserName();
+      // For providers, the store name might be in different fields
+      this.storeName = userData.storeName || userData.name || userData.nom || 'My Store';
+    }
+  }
 
   quickActions = [
     { title: 'Ajouter Produit', route: '/provider/products', color: 'linear-gradient(135deg, #667eea, #764ba2)', icon: 'fas fa-plus' },

@@ -86,8 +86,43 @@ export class AuthService {
   getUserName(): string {
     const userData = this.getUserData();
     if (userData) {
-      // Return only firstName field, fallback to extracting from name or email
-      return userData.firstName || userData.prenom || userData.name?.split(' ')[0] || userData.email?.split('@')[0] || 'User';
+      // Try firstName first, then extract from name, then fallback to email
+      const firstName = userData.firstName || userData.prenom;
+      if (firstName) {
+        return firstName;
+      }
+      
+      if (userData.name) {
+        return userData.name.split(' ')[0];
+      }
+      
+      if (userData.email) {
+        return userData.email.split('@')[0];
+      }
+      
+      return 'User';
+    }
+    return '';
+  }
+
+  // Get full user name for display
+  getFullUserName(): string {
+    const userData = this.getUserData();
+    if (userData) {
+      const firstName = userData.firstName || userData.prenom || '';
+      const lastName = userData.lastName || userData.nom || '';
+      
+      if (firstName && lastName) {
+        return `${firstName} ${lastName}`;
+      } else if (firstName) {
+        return firstName;
+      } else if (userData.name) {
+        return userData.name;
+      } else if (userData.email) {
+        return userData.email.split('@')[0];
+      }
+      
+      return 'User';
     }
     return '';
   }

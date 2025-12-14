@@ -137,28 +137,29 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Vehicle Type (Optional)</label>
+            <label class="form-label">Vehicle Type (Optional - Currently Disabled)</label>
             <select 
               class="form-control" 
               [(ngModel)]="vehicule" 
               name="vehicule"
+              disabled
             >
-              <option value="">Select vehicle type</option>
-              <option value="bike">Bike</option>
-              <option value="motorcycle">Motorcycle</option>
-              <option value="car">Car</option>
-              <option value="van">Van</option>
+              <option value="">Vehicle selection temporarily disabled</option>
+              <option *ngFor="let option of vehiculeOptions" [value]="option">{{ option }}</option>
             </select>
+            <small class="text-muted">Vehicle type can be set later in your profile</small>
           </div>
 
           <div class="form-group">
             <label class="form-label">Availability Time (Optional)</label>
-            <input 
-              type="time" 
+            <select 
               class="form-control" 
               [(ngModel)]="disponibilite" 
               name="disponibilite"
             >
+              <option value="">Select availability time</option>
+              <option *ngFor="let time of disponibiliteOptions" [value]="time">{{ time }}</option>
+            </select>
           </div>
         </div>
 

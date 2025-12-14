@@ -36,7 +36,7 @@ export class SignupComponent {
   ville_livraison: string = ''; // ville_livraison in livreur table
   disponibilite: string = '';   // disponibilite in livreur table
   
-  vehiculeOptions = ['Scooter', 'Moto', 'Voiture', 'Vélo'];
+  vehiculeOptions = ['SCOOTER', 'CAR'];
   disponibiliteOptions = [
     '06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
     '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
@@ -59,8 +59,14 @@ export class SignupComponent {
         this.errorMessage = 'Please fill in all required fields (Store Name, Email, Password)';
         return;
       }
+    } else if (this.accountType === 'delivery') {
+      // Livreurs need: nom, prenom, email, password (all other fields are optional)
+      if (!this.firstName || !this.lastName || !this.email || !this.password) {
+        this.errorMessage = 'Please fill in all required fields (First Name, Last Name, Email, Password)';
+        return;
+      }
     } else {
-      // Clients and livreurs need: nom, prenom, email, password (tel, gouvernorat, ville are optional)
+      // Clients need: nom, prenom, email, password (tel, gouvernorat, ville are optional)
       if (!this.firstName || !this.lastName || !this.email || !this.password) {
         this.errorMessage = 'Please fill in all required fields (First Name, Last Name, Email, Password)';
         return;
@@ -86,12 +92,15 @@ export class SignupComponent {
       signupData.ville = this.ville || null;
       signupData.complement = this.gouvernorat || null; // Backend uses complement for gouv_magasin
     } else if (this.accountType === 'delivery') {
-      // livreur table fields - backend expects name or firstName, lastName, city
+      // livreur table fields - backend expects name or firstName, lastName, ville_livraison
       signupData.name = `${this.firstName} ${this.lastName}`;
       signupData.firstName = this.firstName;
       signupData.lastName = this.lastName;
-      signupData.city = this.ville_livraison || null;
-      signupData.availabilityTime = this.disponibilite || null;
+      signupData.ville_livraison = this.ville_livraison || null;
+      // Skip vehicule for now due to constraint issues
+      signupData.vehicule = null; // this.vehicule || null;
+      signupData.disponibilite = this.disponibilite || null;
+      signupData.gouvernorat = this.gouvernorat || null;
     } else if (this.accountType === 'customer') {
       // client table fields - backend expects name or firstName, lastName, ville, complement
       signupData.name = `${this.firstName} ${this.lastName}`;

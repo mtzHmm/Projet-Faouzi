@@ -3,6 +3,13 @@
   <div class="sidebar">
     <div class="sidebar-header">
       <h2>Provider Panel</h2>
+      <div class="user-info" *ngIf="userName">
+        <div class="user-avatar">👤</div>
+        <div class="user-details">
+          <div class="user-name">{{ userName }}</div>
+          <div class="store-name">{{ storeName }}</div>
+        </div>
+      </div>
     </div>
     <nav class="sidebar-nav">
       <a [routerLink]="['/provider']" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item">
@@ -32,8 +39,9 @@
   <div class="main-content">
     <!-- Header -->
     <div class="provider-header">
-      <h1><i class="fas fa-store"></i> Provider Dashboard</h1>
-      <p>Manage your store and products</p>
+      <h1><i class="fas fa-store"></i> {{ storeName }} Dashboard</h1>
+      <p *ngIf="userName">Welcome back, {{ userName }}! Manage your store and products</p>
+      <p *ngIf="!userName">Manage your store and products</p>
     </div>
 
     <!-- Statistiques principales -->

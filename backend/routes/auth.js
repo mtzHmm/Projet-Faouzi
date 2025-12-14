@@ -216,13 +216,14 @@ router.post('/register', async (req, res) => {
     // Insert based on role
     if (role === 'livreur') {
       // Insert into livreur table
+      const { ville_livraison, vehicule, disponibilite, gouvernorat } = req.body;
       const deliveryName = name || `${firstName} ${lastName}`;
       const [prenom, ...nomParts] = deliveryName.split(' ');
       const nom = nomParts.join(' ') || deliveryName;
       
       const result = await db.query(
-        'INSERT INTO livreur (nom, prenom, email, mot_de_passe, tel, ville_livraison) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-        [nom, firstName || prenom, email, hashedPassword, phone || null, city || null]
+        'INSERT INTO livreur (nom, prenom, email, mot_de_passe, tel, ville_livraison, vehicule, disponibilite, gouv_livreur) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+        [nom, firstName || prenom, email, hashedPassword, phone || null, ville_livraison || null, vehicule || null, disponibilite || null, gouvernorat || null]
       );
       userId = result.rows[0].id_liv;
       userRecord = {
@@ -233,7 +234,10 @@ router.post('/register', async (req, res) => {
         email,
         role: 'livreur',
         phone: result.rows[0].tel,
-        city: result.rows[0].ville_livraison
+        city: result.rows[0].ville_livraison,
+        vehicle: result.rows[0].vehicule,
+        availability: result.rows[0].disponibilite,
+        governorate: result.rows[0].gouv_livreur
       };
     } else if (role === 'provider') {
       // Insert into magasin table

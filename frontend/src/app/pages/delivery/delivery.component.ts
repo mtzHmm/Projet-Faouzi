@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../services/auth.service';
 
 interface Order {
   id: string;
@@ -22,11 +23,24 @@ interface Order {
   templateUrl: './delivery.component.html',
   styleUrls: ['./delivery.component.css']
 })
-export class DeliveryComponent {
+export class DeliveryComponent implements OnInit {
   deliveryName = 'Ahmed Ben Ali';
   totalEarnings = 1250.50;
   completedDeliveries = 24;
   rating = 4.8;
+
+  constructor(private authService: AuthService) {}
+
+  ngOnInit() {
+    this.loadUserData();
+  }
+
+  loadUserData() {
+    const userData = this.authService.getUserData();
+    if (userData) {
+      this.deliveryName = this.authService.getFullUserName() || 'Delivery Partner';
+    }
+  }
 
   selectedTab: 'pending' | 'accepted' | 'delivered' = 'pending';
   selectedOrder: Order | null = null;

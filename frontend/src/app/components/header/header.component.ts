@@ -31,7 +31,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
       (isAuthenticated: boolean) => {
         this.isLoggedIn = isAuthenticated;
         if (isAuthenticated) {
-          this.userName = this.authService.getUserName();
+          this.userName = this.authService.getFullUserName();
         } else {
           this.userName = '';
         }
@@ -46,7 +46,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   checkAuthStatus() {
     this.isLoggedIn = this.authService.isLoggedIn();
     if (this.isLoggedIn) {
-      this.userName = this.authService.getUserName();
+      this.userName = this.authService.getFullUserName();
     }
   }
 
