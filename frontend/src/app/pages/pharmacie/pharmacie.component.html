@@ -42,7 +42,7 @@
     <div class="product-card" *ngFor="let product of filteredProducts">
       <div class="product-image">
         <div class="product-placeholder" *ngIf="!product.image">
-          <span class="product-emoji">{{ getProductEmoji(product.category_name ?? 'Médicaments') }}</span>
+          <span class="product-emoji">{{ getProductEmoji(product.category_name || 'Médicaments') }}</span>
         </div>
         <img *ngIf="product.image" [src]="product.image" [alt]="product.name" />
         <div class="prescription-badge" *ngIf="product.prescription">
