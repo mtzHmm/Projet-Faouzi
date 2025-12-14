@@ -31,6 +31,11 @@ export interface ProductsResponse {
   page: number;
   totalPages: number;
   hasMore: boolean;
+  store?: {
+    id: number;
+    name: string;
+    type: string;
+  };
 }
 
 @Injectable({

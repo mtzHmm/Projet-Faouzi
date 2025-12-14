@@ -64,6 +64,12 @@ export class RestaurantComponent implements OnInit {
       },
       error: (error: any) => {
         console.error('❌ Error loading products from API:', error);
+        console.error('❌ Error details:', error?.error);
+        
+        if (error?.error?.details?.includes('created_at')) {
+          console.log('🔧 Database schema issue detected. Using fallback products.');
+        }
+        
         console.log('🔄 Falling back to static products');
         this.allProducts = this.staticProducts;
         this.products = this.staticProducts;
