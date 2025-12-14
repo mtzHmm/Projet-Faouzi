@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
@@ -19,14 +19,18 @@ export class SigninComponent {
 
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   onSubmit() {
     this.errorMessage = '';
     
     if (!this.email || !this.password) {
-      this.errorMessage = 'Please fill in all fields';
+      setTimeout(() => {
+        this.errorMessage = 'Please fill in all fields';
+        this.cdr.detectChanges();
+      });
       return;
     }
 
@@ -61,24 +65,31 @@ export class SigninComponent {
             this.router.navigate(['/']);
           }
         } else {
-          this.errorMessage = response.message || 'Login failed. Please try again.';
+          setTimeout(() => {
+            this.errorMessage = response.message || 'Login failed. Please try again.';
+            this.cdr.detectChanges();
+          });
         }
       },
       error: (error) => {
         this.isLoading = false;
         console.error('❌ Login error:', error);
         
-        if (error.status === 0) {
-          this.errorMessage = 'Cannot connect to server. Please make sure the backend server is running.';
-        } else if (error.status === 401) {
-          this.errorMessage = 'Invalid email or password. Please check your credentials and try again.';
-        } else if (error.error?.error) {
-          this.errorMessage = error.error.error;
-        } else if (error.error?.message) {
-          this.errorMessage = error.error.message;
-        } else {
-          this.errorMessage = 'Login failed. Please try again later.';
-        }
+        // Use setTimeout to defer the error message update to avoid ExpressionChangedAfterItHasBeenCheckedError
+        setTimeout(() => {
+          if (error.status === 0) {
+            this.errorMessage = 'Cannot connect to server. Please make sure the backend server is running.';
+          } else if (error.status === 401) {
+            this.errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+          } else if (error.error?.error) {
+            this.errorMessage = error.error.error;
+          } else if (error.error?.message) {
+            this.errorMessage = error.error.message;
+          } else {
+            this.errorMessage = 'Login failed. Please try again later.';
+          }
+          this.cdr.detectChanges();
+        });
       }
     });
   }

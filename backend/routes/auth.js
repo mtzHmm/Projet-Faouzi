@@ -65,7 +65,7 @@ router.post('/login', async (req, res) => {
     if (!user) {
       try {
         const livreurResult = await db.query(
-          'SELECT id_liv as id, nom as name, email, mot_de_passe, tel, ville, role FROM livreur WHERE email = $1',
+          'SELECT id_liv as id, nom as name, email, mot_de_passe, tel, ville_livraison as ville, gouv_livreur FROM livreur WHERE email = $1',
           [email]
         );
         
