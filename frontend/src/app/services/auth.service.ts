@@ -86,12 +86,8 @@ export class AuthService {
   getUserName(): string {
     const userData = this.getUserData();
     if (userData) {
-      // Try different name fields and extract first name only
-      let fullName = userData.firstName || userData.prenom || userData.name || userData.email?.split('@')[0] || 'User';
-      
-      // Extract first name if it contains spaces (multiple words)
-      const firstName = fullName.split(' ')[0];
-      return firstName;
+      // Return only firstName field, fallback to extracting from name or email
+      return userData.firstName || userData.prenom || userData.name?.split(' ')[0] || userData.email?.split('@')[0] || 'User';
     }
     return '';
   }

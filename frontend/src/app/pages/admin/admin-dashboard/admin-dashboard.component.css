@@ -357,9 +357,25 @@
   border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Status Colors - Matching Orders Page */
-.status-badge.en-livraison {
-  background: #f97316;
+/* Status Colors - Order Status */
+.status-badge.en-cours {
+  background: #f59e0b;
+  color: white;
+}
+
+.status-badge.livree {
+  background: #10b981;
+  color: white;
+}
+
+.status-badge.annulee {
+  background: #e74c3c;
+  color: white;
+}
+
+/* Delivery Status Colors */
+.status-badge.en-attente {
+  background: #f59e0b;
   color: white;
 }
 
@@ -368,17 +384,22 @@
   color: white;
 }
 
-.status-badge.en-attente {
-  background: #f59e0b;
+.status-badge.preparee {
+  background: #8b5cf6;
   color: white;
 }
 
-.status-badge.livre {
+.status-badge.en-livraison {
+  background: #f97316;
+  color: white;
+}
+
+.status-badge.livree {
   background: #10b981;
   color: white;
 }
 
-.status-badge.annule {
+.status-badge.annulee {
   background: #e74c3c;
   color: white;
 }

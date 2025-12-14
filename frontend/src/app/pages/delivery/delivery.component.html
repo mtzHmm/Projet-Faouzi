@@ -164,11 +164,11 @@
         </div>
 
         <div class="order-actions">
-          <button *ngIf="order.status === 'accepted'" class="btn btn-pickup" (click)="pickupOrder(order.id)">
-            Mark as Picked Up
+          <button *ngIf="order.status === 'en_préparation' || order.status === 'préparée'" class="btn btn-pickup" (click)="pickupOrder(order.id)">
+            Marquer comme En Livraison
           </button>
-          <button *ngIf="order.status === 'picked_up'" class="btn btn-deliver" (click)="completeDelivery(order.id)">
-            Mark as Delivered
+          <button *ngIf="order.status === 'en_livraison'" class="btn btn-deliver" (click)="completeDelivery(order.id)">
+            Marquer comme Livrée
           </button>
         </div>
       </div>

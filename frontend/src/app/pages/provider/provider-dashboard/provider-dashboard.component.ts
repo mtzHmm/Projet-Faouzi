@@ -37,7 +37,7 @@ export class ProviderDashboardComponent {
       customerName: 'Marie Dubois',
       items: 3,
       total: 45.90,
-      status: 'prepare',
+      status: 'en_cours',
       createdAt: new Date('2025-11-28T10:30:00')
     },
     {
@@ -45,7 +45,7 @@ export class ProviderDashboardComponent {
       customerName: 'Jean Martin',
       items: 2,
       total: 28.50,
-      status: 'nouveau',
+      status: 'en_cours',
       createdAt: new Date('2025-11-28T09:15:00')
     },
     {
@@ -53,37 +53,34 @@ export class ProviderDashboardComponent {
       customerName: 'Sophie Laurent',
       items: 5,
       total: 67.20,
-      status: 'prepare',
+      status: 'livrée',
       createdAt: new Date('2025-11-28T08:45:00')
     }
   ];
 
   getStatusColor(status: string): string {
     switch (status) {
-      case 'nouveau': return '#f59e0b';
-      case 'prepare': return '#3b82f6';
-      case 'pret': return '#10b981';
-      case 'annule': return '#e74c3c';
+      case 'en_cours': return '#f59e0b';
+      case 'livrée': return '#10b981';
+      case 'annulée': return '#e74c3c';
       default: return '#95a5a6';
     }
   }
 
   getStatusText(status: string): string {
     switch (status) {
-      case 'nouveau': return 'Nouveau';
-      case 'prepare': return 'En Préparation';
-      case 'pret': return 'Prêt';
-      case 'annule': return 'Annulé';
+      case 'en_cours': return 'En Cours';
+      case 'livrée': return 'Livrée';
+      case 'annulée': return 'Annulée';
       default: return status;
     }
   }
 
   getStatusClass(status: string): string {
     switch (status) {
-      case 'nouveau': return 'nouveau';
-      case 'prepare': return 'en-preparation';
-      case 'pret': return 'pret';
-      case 'annule': return 'annule';
+      case 'en_cours': return 'en-cours';
+      case 'livrée': return 'livree';
+      case 'annulée': return 'annulee';
       default: return '';
     }
   }

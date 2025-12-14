@@ -24,7 +24,8 @@
       <div class="header-actions">
         <!-- Show user info when logged in -->
         <div *ngIf="isLoggedIn" class="user-info">
-          <span class="welcome-text">Hello, {{ userName }}!</span>
+          <span class="user-icon">👤</span>
+          <span class="welcome-text">{{ userName }}</span>
           <button class="logout-btn" (click)="logout()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>

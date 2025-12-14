@@ -18,9 +18,17 @@ interface Order {
   userId: number;
   userName: string;
   total: number;
-  status: 'en_attente' | 'prepare' | 'en_livraison' | 'livre' | 'annule';
+  status: 'en_cours' | 'livrée' | 'annulée';
   createdAt: Date;
   items: number;
+}
+
+interface Delivery {
+  id: number;
+  orderId: number;
+  livreurId: number;
+  status: 'en_attente' | 'en_préparation' | 'préparée' | 'annulée' | 'en_livraison' | 'livrée';
+  createdAt: Date;
 }
 
 interface Stats {
@@ -55,7 +63,7 @@ export class AdminDashboardComponent implements OnInit {
       userId: 123,
       userName: 'Sophie Martin',
       total: 45.80,
-      status: 'en_livraison',
+      status: 'en_cours',
       createdAt: new Date('2025-11-28T14:30:00'),
       items: 3
     },
@@ -64,7 +72,7 @@ export class AdminDashboardComponent implements OnInit {
       userId: 456,
       userName: 'Marc Dubois',
       total: 28.90,
-      status: 'prepare',
+      status: 'en_cours',
       createdAt: new Date('2025-11-28T14:25:00'),
       items: 2
     },
@@ -73,7 +81,7 @@ export class AdminDashboardComponent implements OnInit {
       userId: 789,
       userName: 'Laura Petit',
       total: 67.30,
-      status: 'en_attente',
+      status: 'en_cours',
       createdAt: new Date('2025-11-28T14:20:00'),
       items: 5
     },
@@ -82,7 +90,7 @@ export class AdminDashboardComponent implements OnInit {
       userId: 321,
       userName: 'Thomas Bernard',
       total: 15.40,
-      status: 'livre',
+      status: 'livrée',
       createdAt: new Date('2025-11-28T13:45:00'),
       items: 1
     },
@@ -91,7 +99,7 @@ export class AdminDashboardComponent implements OnInit {
       userId: 654,
       userName: 'Emma Rousseau',
       total: 92.10,
-      status: 'en_livraison',
+      status: 'annulée',
       createdAt: new Date('2025-11-28T13:30:00'),
       items: 7
     }
@@ -136,22 +144,42 @@ export class AdminDashboardComponent implements OnInit {
 
   getStatusColor(status: string): string {
     switch (status) {
+      case 'en_cours': return '#f59e0b';
+      case 'livrée': return '#10b981';
+      case 'annulée': return '#e74c3c';
+      default: return '#95a5a6';
+    }
+  }
+
+  getDeliveryStatusColor(status: string): string {
+    switch (status) {
       case 'en_attente': return '#f59e0b';
-      case 'prepare': return '#3b82f6';
+      case 'en_préparation': return '#3b82f6';
+      case 'préparée': return '#8b5cf6';
       case 'en_livraison': return '#f97316';
-      case 'livre': return '#10b981';
-      case 'annule': return '#e74c3c';
+      case 'livrée': return '#10b981';
+      case 'annulée': return '#e74c3c';
       default: return '#95a5a6';
     }
   }
 
   getStatusText(status: string): string {
     switch (status) {
+      case 'en_cours': return 'En Cours';
+      case 'livrée': return 'Livrée';
+      case 'annulée': return 'Annulée';
+      default: return status;
+    }
+  }
+
+  getDeliveryStatusText(status: string): string {
+    switch (status) {
       case 'en_attente': return 'En Attente';
-      case 'prepare': return 'En Préparation';
+      case 'en_préparation': return 'En Préparation';
+      case 'préparée': return 'Préparée';
       case 'en_livraison': return 'En Livraison';
-      case 'livre': return 'Livré';
-      case 'annule': return 'Annulé';
+      case 'livrée': return 'Livrée';
+      case 'annulée': return 'Annulée';
       default: return status;
     }
   }
@@ -167,11 +195,21 @@ export class AdminDashboardComponent implements OnInit {
 
   getStatusClass(status: string): string {
     switch (status) {
+      case 'en_cours': return 'en-cours';
+      case 'livrée': return 'livree';
+      case 'annulée': return 'annulee';
+      default: return '';
+    }
+  }
+
+  getDeliveryStatusClass(status: string): string {
+    switch (status) {
       case 'en_attente': return 'en-attente';
-      case 'prepare': return 'en-preparation';
+      case 'en_préparation': return 'en-preparation';
+      case 'préparée': return 'preparee';
       case 'en_livraison': return 'en-livraison';
-      case 'livre': return 'livre';
-      case 'annule': return 'annule';
+      case 'livrée': return 'livree';
+      case 'annulée': return 'annulee';
       default: return '';
     }
   }

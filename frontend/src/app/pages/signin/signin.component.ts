@@ -24,6 +24,7 @@ export class SigninComponent {
   ) {}
 
   onSubmit() {
+    console.log('🔵 Sign in form submitted!');
     this.errorMessage = '';
     
     if (!this.email || !this.password) {
@@ -35,13 +36,23 @@ export class SigninComponent {
     }
 
     this.isLoading = true;
-    
     console.log('🔐 Attempting login for:', this.email);
+    console.log('⏳ Sending login request...');
+    
+    // Safety timeout - force stop loading after 30 seconds
+    const timeoutId = setTimeout(() => {
+      if (this.isLoading) {
+        console.error('⏰ Request timeout - forcing stop');
+        this.isLoading = false;
+        this.errorMessage = 'Request timeout. Please check if the backend server is running.';
+      }
+    }, 30000);
     
     this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: (response) => {
+        clearTimeout(timeoutId);
+        console.log('✅ Login response received:', response);
         this.isLoading = false;
-        console.log('✅ Login response:', response);
         
         if (response.success && response.token) {
           this.authService.saveToken(response.token);
@@ -72,8 +83,11 @@ export class SigninComponent {
         }
       },
       error: (error) => {
+        clearTimeout(timeoutId);
         this.isLoading = false;
         console.error('❌ Login error:', error);
+        console.error('❌ Error status:', error.status);
+        console.error('❌ Error body:', error.error);
         
         // Use setTimeout to defer the error message update to avoid ExpressionChangedAfterItHasBeenCheckedError
         setTimeout(() => {

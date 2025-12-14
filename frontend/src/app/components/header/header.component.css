@@ -180,33 +180,48 @@
 .user-info {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.4rem;
+}
+
+.user-icon {
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
 }
 
 .welcome-text {
   color: #5D4037;
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.3px;
+  text-transform: capitalize;
 }
 
 .logout-btn {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.3rem;
   background: none;
-  border: 1px solid #5D4037;
+  border: none;
   color: #5D4037;
-  padding: 0.4rem 0.8rem;
-  border-radius: var(--border-radius);
+  padding: 0;
+  margin-left: 0.8rem;
   font-weight: 500;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  text-decoration: none;
+  letter-spacing: 0.5px;
+}
+
+.logout-btn svg {
+  width: 12px;
+  height: 12px;
 }
 
 .logout-btn:hover {
-  background: #5D4037;
-  color: white;
+  color: #3E2723;
+  opacity: 0.8;
 }
 
 /* Large PC screens */

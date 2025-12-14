@@ -10,7 +10,7 @@ interface Order {
   phone: string;
   address: string;
   items: string[];
-  status: 'pending' | 'accepted' | 'picked_up' | 'delivered';
+  status: 'en_attente' | 'en_préparation' | 'préparée' | 'annulée' | 'en_livraison' | 'livrée';
   amount: number;
   createdAt: Date;
 }
@@ -41,7 +41,7 @@ export class DeliveryComponent {
       phone: '+216 XX XXX XXX',
       address: '123 Main St, Tunis',
       items: ['Burger x2', 'Pizza x1', 'Drinks x3'],
-      status: 'pending',
+      status: 'en_attente',
       amount: 45.50,
       createdAt: new Date('2025-11-30T10:00:00')
     },
@@ -53,7 +53,7 @@ export class DeliveryComponent {
       phone: '+216 XX XXX XXX',
       address: '456 Oak Ave, Sfax',
       items: ['Sandwich x3'],
-      status: 'pending',
+      status: 'en_attente',
       amount: 32.00,
       createdAt: new Date('2025-11-30T10:15:00')
     },
@@ -65,7 +65,7 @@ export class DeliveryComponent {
       phone: '+216 XX XXX XXX',
       address: '789 Pine Rd, Sousse',
       items: ['Kebab x2', 'Salad x1'],
-      status: 'accepted',
+      status: 'en_préparation',
       amount: 28.75,
       createdAt: new Date('2025-11-30T09:30:00')
     },
@@ -77,7 +77,7 @@ export class DeliveryComponent {
       phone: '+216 XX XXX XXX',
       address: '321 Elm St, Kairouan',
       items: ['Tacos x4'],
-      status: 'picked_up',
+      status: 'en_livraison',
       amount: 55.00,
       createdAt: new Date('2025-11-30T08:45:00')
     },
@@ -89,42 +89,42 @@ export class DeliveryComponent {
       phone: '+216 XX XXX XXX',
       address: '654 Maple Ln, Djerba',
       items: ['Burger x1', 'Fries x2'],
-      status: 'delivered',
+      status: 'livrée',
       amount: 38.50,
       createdAt: new Date('2025-11-30T07:00:00')
     }
   ];
 
   get pendingOrders(): Order[] {
-    return this.orders.filter(o => o.status === 'pending');
+    return this.orders.filter(o => o.status === 'en_attente');
   }
 
   get acceptedOrders(): Order[] {
-    return this.orders.filter(o => o.status === 'accepted' || o.status === 'picked_up');
+    return this.orders.filter(o => o.status === 'en_préparation' || o.status === 'préparée' || o.status === 'en_livraison');
   }
 
   get deliveredOrders(): Order[] {
-    return this.orders.filter(o => o.status === 'delivered');
+    return this.orders.filter(o => o.status === 'livrée');
   }
 
   acceptOrder(orderId: string) {
     const order = this.orders.find(o => o.id === orderId);
     if (order) {
-      order.status = 'accepted';
+      order.status = 'en_préparation';
     }
   }
 
   pickupOrder(orderId: string) {
     const order = this.orders.find(o => o.id === orderId);
     if (order) {
-      order.status = 'picked_up';
+      order.status = 'en_livraison';
     }
   }
 
   completeDelivery(orderId: string) {
     const order = this.orders.find(o => o.id === orderId);
     if (order) {
-      order.status = 'delivered';
+      order.status = 'livrée';
       this.completedDeliveries++;
       this.totalEarnings += order.amount * 0.15; // 15% commission
     }
@@ -136,20 +136,24 @@ export class DeliveryComponent {
 
   getStatusBadgeClass(status: string): string {
     switch(status) {
-      case 'pending': return 'badge-pending';
-      case 'accepted': return 'badge-accepted';
-      case 'picked_up': return 'badge-picked';
-      case 'delivered': return 'badge-delivered';
+      case 'en_attente': return 'badge-pending';
+      case 'en_préparation': return 'badge-accepted';
+      case 'préparée': return 'badge-ready';
+      case 'en_livraison': return 'badge-picked';
+      case 'livrée': return 'badge-delivered';
+      case 'annulée': return 'badge-cancelled';
       default: return '';
     }
   }
 
   getStatusLabel(status: string): string {
     switch(status) {
-      case 'pending': return 'Pending';
-      case 'accepted': return 'Accepted';
-      case 'picked_up': return 'Picked Up';
-      case 'delivered': return 'Delivered';
+      case 'en_attente': return 'En Attente';
+      case 'en_préparation': return 'En Préparation';
+      case 'préparée': return 'Préparée';
+      case 'en_livraison': return 'En Livraison';
+      case 'livrée': return 'Livrée';
+      case 'annulée': return 'Annulée';
       default: return status;
     }
   }
