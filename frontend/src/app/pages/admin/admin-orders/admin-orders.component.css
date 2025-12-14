@@ -379,24 +379,19 @@
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
 }
 
-/* Status Colors */
-.status-select.en-livraison {
-  background: #f97316;
-  color: white;
-}
-
-.status-select.en-preparation {
-  background: #3b82f6;
-  color: white;
-}
-
-.status-select.en-attente {
+/* Status Colors - Order Status */
+.status-select.en-cours {
   background: #f59e0b;
   color: white;
 }
 
-.status-select.livre {
+.status-select.livree {
   background: #10b981;
+  color: white;
+}
+
+.status-select.annulee {
+  background: #e74c3c;
   color: white;
 }
 

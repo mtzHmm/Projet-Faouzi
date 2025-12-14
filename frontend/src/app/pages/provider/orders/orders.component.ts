@@ -29,7 +29,7 @@ export class OrdersComponent {
       customer: 'Ahmed Ben Ali',
       items: 'Pizza Margherita x2, Coca Cola x3',
       total: 45.50,
-      status: 'pending',
+      status: 'en_cours',
       date: new Date('2024-11-30T10:30:00'),
       address: '123 Rue de la République, Tunis',
       phone: '+216 20 123 456',
@@ -40,7 +40,7 @@ export class OrdersComponent {
       customer: 'Fatma Trabelsi',
       items: 'Samsung Galaxy S24, Protective Case',
       total: 1299.00,
-      status: 'confirmed',
+      status: 'en_cours',
       date: new Date('2024-11-30T09:15:00'),
       address: '456 Avenue Habib Bourguiba, Sfax',
       phone: '+216 25 987 654',
@@ -51,7 +51,7 @@ export class OrdersComponent {
       customer: 'Mohamed Gharbi',
       items: 'Paracetamol x2, Vitamin C x1',
       total: 15.80,
-      status: 'delivered',
+      status: 'livrée',
       date: new Date('2024-11-29T16:45:00'),
       address: '789 Rue Mongi Slim, Sousse',
       phone: '+216 22 456 789',
@@ -62,7 +62,7 @@ export class OrdersComponent {
       customer: 'Leila Mansouri',
       items: 'Fresh Vegetables, Organic Fruits',
       total: 28.75,
-      status: 'preparing',
+      status: 'en_cours',
       date: new Date('2024-11-30T14:20:00'),
       address: '321 Boulevard du 7 Novembre, Monastir',
       phone: '+216 29 654 321',
@@ -73,7 +73,7 @@ export class OrdersComponent {
       customer: 'Karim Bouaziz',
       items: 'Laptop Dell, Wireless Mouse',
       total: 1850.00,
-      status: 'cancelled',
+      status: 'annulée',
       date: new Date('2024-11-29T11:30:00'),
       address: '654 Rue Ibn Khaldoun, Bizerte',
       phone: '+216 24 789 123',
@@ -86,7 +86,7 @@ export class OrdersComponent {
   selectedStatus = '';
   selectedPayment = '';
 
-  statuses = ['pending', 'confirmed', 'preparing', 'delivered', 'cancelled'];
+  statuses = ['en_cours', 'livrée', 'annulée'];
   paymentMethods = ['card', 'cash'];
 
   filterOrders() {
@@ -119,33 +119,27 @@ export class OrdersComponent {
 
   getStatusColor(status: string): string {
     const colors: { [key: string]: string } = {
-      'pending': '#f59e0b',
-      'confirmed': '#3b82f6',
-      'preparing': '#f97316',
-      'delivered': '#10b981',
-      'cancelled': '#e74c3c'
+      'en_cours': '#f59e0b',
+      'livrée': '#10b981',
+      'annulée': '#e74c3c'
     };
     return colors[status] || '#6b7280';
   }
 
   getStatusClass(status: string): string {
     const classes: { [key: string]: string } = {
-      'pending': 'en-attente',
-      'confirmed': 'en-preparation',
-      'preparing': 'en-livraison',
-      'delivered': 'livre',
-      'cancelled': 'annule'
+      'en_cours': 'en-cours',
+      'livrée': 'livree',
+      'annulée': 'annulee'
     };
     return classes[status] || '';
   }
 
   getStatusText(status: string): string {
     const texts: { [key: string]: string } = {
-      'pending': 'En Attente',
-      'confirmed': 'Confirmé',
-      'preparing': 'En Préparation',
-      'delivered': 'Livré',
-      'cancelled': 'Annulé'
+      'en_cours': 'En Cours',
+      'livrée': 'Livrée',
+      'annulée': 'Annulée'
     };
     return texts[status] || status;
   }

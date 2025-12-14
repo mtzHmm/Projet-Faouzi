@@ -320,27 +320,18 @@
   letter-spacing: 0.5px;
 }
 
-.status-badge.en-attente {
+/* Order Status */
+.status-badge.en-cours {
   background: #f59e0b;
   color: white;
 }
 
-.status-badge.en-preparation {
-  background: #3b82f6;
-  color: white;
-}
-
-.status-badge.en-livraison {
-  background: #f97316;
-  color: white;
-}
-
-.status-badge.livre {
+.status-badge.livree {
   background: #10b981;
   color: white;
 }
 
-.status-badge.annule {
+.status-badge.annulee {
   background: #e74c3c;
   color: white;
 }
