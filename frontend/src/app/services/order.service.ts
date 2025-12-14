@@ -9,14 +9,18 @@ export interface OrderItem {
   quantity: number;
   price: number;
 }
-
+export type OrderStatus =
+  | 'en_cours'
+  | 'livrée'
+  | 'annulée'
+;
 export interface Order {
   id: number;
   userId: number;
   userName: string;
   items: OrderItem[];
   total: number;
-  status: string;
+  status: OrderStatus;
   createdAt: Date;
 }
 

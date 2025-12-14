@@ -48,6 +48,7 @@ export class AdminDashboardComponent implements OnInit {
   };
 
   isLoading = true;
+<<<<<<< Updated upstream
 
   recentOrders: Order[] = [
     {
@@ -97,6 +98,9 @@ export class AdminDashboardComponent implements OnInit {
     }
   ];
 
+=======
+  recentOrders: Order[] = [];
+>>>>>>> Stashed changes
   recentUsers: User[] = [];
 
   constructor(private adminService: AdminService) {}

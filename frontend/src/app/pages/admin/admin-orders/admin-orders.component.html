@@ -31,12 +31,18 @@
       <div class="page-header">
         <div class="header-content">
           <h1><i class="fas fa-clipboard-list"></i> Gestion des Commandes</h1>
-          <p>Suivez et gérez toutes les commandes</p>
+          <p>Suivez et gérez toutes les commandes depuis la base de données</p>
         </div>
-        <a routerLink="/admin" class="back-btn">
-          <i class="fas fa-arrow-left"></i>
-          Retour au tableau de bord
-        </a>
+        <div class="header-actions">
+          <button (click)="loadOrders()" class="refresh-btn" [disabled]="loading">
+            <i class="fas fa-sync-alt" [class.spinning]="loading"></i>
+            Actualiser
+          </button>
+          <a routerLink="/admin" class="back-btn">
+            <i class="fas fa-arrow-left"></i>
+            Retour au tableau de bord
+          </a>
+        </div>
       </div>
 
   <!-- Filtres et recherche -->
@@ -63,8 +69,19 @@
     </div>
   </div>
 
+  <!-- Message de chargement -->
+  <div *ngIf="loading" class="loading-container">
+    <p>Chargement des commandes...</p>
+  </div>
+
+  <!-- Message d'erreur -->
+  <div *ngIf="error" class="error-container">
+    <p>{{ error }}</p>
+    <button (click)="loadOrders()" class="retry-btn">Réessayer</button>
+  </div>
+
   <!-- Table des commandes -->
-  <div class="orders-container">
+  <div class="orders-container" *ngIf="!loading && !error">
     <div class="orders-table">
       <div class="table-header">
         <div class="col-id">ID</div>
@@ -102,11 +119,9 @@
             (change)="updateOrderStatusFromEvent(order.id, $event)"
             class="status-select"
             [ngClass]="getStatusClass(order.status)">
-            <option value="en_attente">En Attente</option>
-            <option value="prepare">En Préparation</option>
-            <option value="en_livraison">En Livraison</option>
-            <option value="livre">Livré</option>
-            <option value="annule">Annulé</option>
+            <option value="en_cours">En cours</option>
+            <option value="livrée">Livrée</option>
+            <option value="annulée">Annulée</option>
           </select>
         </div>
         

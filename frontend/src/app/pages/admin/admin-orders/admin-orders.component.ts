@@ -1,17 +1,18 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { OrderService, Order as ServiceOrder, OrderItem as ServiceOrderItem } from '../../../services/order.service';
 
 interface Order {
   id: number;
   userId: number;
   userName: string;
-  userEmail: string;
+  userEmail?: string;
   total: number;
-  status: 'en_attente' | 'prepare' | 'en_livraison' | 'livre' | 'annule';
+  status: 'en_cours' | 'livrée' | 'annulée';
   createdAt: Date;
-  deliveryAddress: string;
+  deliveryAddress?: string;
   items: OrderItem[];
   deliveryTime?: Date;
   livreurId?: number;
@@ -23,7 +24,7 @@ interface OrderItem {
   name: string;
   price: number;
   quantity: number;
-  category: string;
+  category?: string;
 }
 
 @Component({
@@ -33,93 +34,52 @@ interface OrderItem {
   templateUrl: './admin-orders.component.html',
   styleUrl: './admin-orders.component.css'
 })
-export class AdminOrdersComponent {
-  orders: Order[] = [
-    {
-      id: 1001,
-      userId: 123,
-      userName: 'Sophie Martin',
-      userEmail: 'sophie.martin@email.com',
-      total: 45.80,
-      status: 'en_livraison',
-      createdAt: new Date('2025-11-28T14:30:00'),
-      deliveryAddress: '123 Rue de la Paix, 75001 Paris',
-      deliveryTime: new Date('2025-11-28T15:30:00'),
-      livreurId: 456,
-      livreurName: 'Marc Dubois',
-      items: [
-        { id: 1, name: 'Pizza Margherita', price: 12.50, quantity: 2, category: 'Restaurant' },
-        { id: 2, name: 'Coca Cola', price: 2.50, quantity: 2, category: 'Boissons' },
-        { id: 3, name: 'Tiramisu', price: 6.80, quantity: 1, category: 'Desserts' }
-      ]
-    },
-    {
-      id: 1002,
-      userId: 789,
-      userName: 'Laura Petit',
-      userEmail: 'laura.petit@email.com',
-      total: 67.30,
-      status: 'prepare',
-      createdAt: new Date('2025-11-28T14:20:00'),
-      deliveryAddress: '456 Avenue des Champs, 75008 Paris',
-      items: [
-        { id: 4, name: 'Salade César', price: 8.90, quantity: 1, category: 'Restaurant' },
-        { id: 5, name: 'Saumon grillé', price: 18.50, quantity: 2, category: 'Restaurant' },
-        { id: 6, name: 'Vin blanc', price: 15.40, quantity: 1, category: 'Boissons' }
-      ]
-    },
-    {
-      id: 1003,
-      userId: 321,
-      userName: 'Thomas Bernard',
-      userEmail: 'thomas.bernard@email.com',
-      total: 28.90,
-      status: 'en_attente',
-      createdAt: new Date('2025-11-28T13:45:00'),
-      deliveryAddress: '789 Boulevard Saint-Germain, 75006 Paris',
-      items: [
-        { id: 7, name: 'Burger Bacon', price: 14.90, quantity: 1, category: 'Restaurant' },
-        { id: 8, name: 'Frites', price: 4.50, quantity: 2, category: 'Restaurant' },
-        { id: 9, name: 'Milkshake', price: 5.50, quantity: 1, category: 'Boissons' }
-      ]
-    },
-    {
-      id: 1004,
-      userId: 654,
-      userName: 'Emma Rousseau',
-      userEmail: 'emma.rousseau@email.com',
-      total: 92.10,
-      status: 'livre',
-      createdAt: new Date('2025-11-28T12:30:00'),
-      deliveryAddress: '321 Rue de Rivoli, 75004 Paris',
-      deliveryTime: new Date('2025-11-28T13:45:00'),
-      livreurId: 789,
-      livreurName: 'Pierre Martin',
-      items: [
-        { id: 10, name: 'Sushi Mix', price: 25.90, quantity: 2, category: 'Restaurant' },
-        { id: 11, name: 'Miso Soup', price: 4.50, quantity: 2, category: 'Restaurant' },
-        { id: 12, name: 'Saké', price: 12.80, quantity: 1, category: 'Boissons' }
-      ]
-    }
-  ];
-
-  filteredOrders: Order[] = [...this.orders];
+export class AdminOrdersComponent implements OnInit {
+  orders: Order[] = [];
+  filteredOrders: Order[] = [];
   selectedStatus: string = '';
   searchTerm: string = '';
   selectedOrder: Order | null = null;
   showOrderDetails: boolean = false;
+  loading: boolean = false;
+  error: string = '';
+
+  constructor(private orderService: OrderService) {}
 
   statusOptions = [
     { value: '', label: 'Tous les statuts' },
-    { value: 'en_attente', label: 'En attente' },
-    { value: 'prepare', label: 'En préparation' },
-    { value: 'en_livraison', label: 'En livraison' },
-    { value: 'livre', label: 'Livré' },
-    { value: 'annule', label: 'Annulé' }
+    { value: 'en_cours', label: 'En cours' },
+    { value: 'livrée', label: 'Livrée' },
+    { value: 'annulée', label: 'Annulée' }
   ];
 
   ngOnInit() {
-    this.filterOrders();
+    this.loadOrders();
+  }
+
+  loadOrders() {
+    this.loading = true;
+    this.error = '';
+    
+    const filters: any = { limit: 100 };
+    
+    this.orderService.getOrders(filters).subscribe({
+      next: (response) => {
+        this.orders = response.orders.map(order => ({
+          ...order,
+          userEmail: order.userName + '@email.com',  // Temporal fix until backend provides email
+          deliveryAddress: 'Adresse non disponible',
+          createdAt: new Date(order.createdAt)
+        }));
+        this.filterOrders();
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des commandes:', error);
+        this.error = 'Erreur lors du chargement des commandes. Veuillez réessayer.';
+        this.loading = false;
+      }
+    });
   }
 
   filterOrders() {
@@ -128,14 +88,46 @@ export class AdminOrdersComponent {
       const matchesSearch = !this.searchTerm || 
         order.userName.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         order.id.toString().includes(this.searchTerm) ||
-        order.userEmail.toLowerCase().includes(this.searchTerm.toLowerCase());
+        (order.userEmail && order.userEmail.toLowerCase().includes(this.searchTerm.toLowerCase()));
       
       return matchesStatus && matchesSearch;
     });
   }
 
   onStatusChange() {
-    this.filterOrders();
+    if (this.selectedStatus) {
+      this.loadOrdersByStatus();
+    } else {
+      this.loadOrders();
+    }
+  }
+
+  loadOrdersByStatus() {
+    this.loading = true;
+    this.error = '';
+    
+    const filters: any = { 
+      status: this.selectedStatus,
+      limit: 100 
+    };
+    
+    this.orderService.getOrders(filters).subscribe({
+      next: (response) => {
+        this.orders = response.orders.map(order => ({
+          ...order,
+          userEmail: order.userName + '@email.com',
+          deliveryAddress: 'Adresse non disponible',
+          createdAt: new Date(order.createdAt)
+        }));
+        this.filterOrders();
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des commandes:', error);
+        this.error = 'Erreur lors du chargement des commandes. Veuillez réessayer.';
+        this.loading = false;
+      }
+    });
   }
 
   onSearchChange() {
@@ -143,11 +135,20 @@ export class AdminOrdersComponent {
   }
 
   updateOrderStatus(orderId: number, newStatus: string) {
-    const order = this.orders.find(o => o.id === orderId);
-    if (order) {
-      order.status = newStatus as any;
-      this.filterOrders();
-    }
+    this.orderService.updateOrderStatus(orderId, newStatus).subscribe({
+      next: (updatedOrder) => {
+        const order = this.orders.find(o => o.id === orderId);
+        if (order) {
+          order.status = newStatus as any;
+          this.filterOrders();
+        }
+        console.log('Statut de la commande mis à jour:', updatedOrder);
+      },
+      error: (error) => {
+        console.error('Erreur lors de la mise à jour du statut:', error);
+        alert('Erreur lors de la mise à jour du statut de la commande');
+      }
+    });
   }
 
   updateOrderStatusFromEvent(orderId: number, event: Event) {
