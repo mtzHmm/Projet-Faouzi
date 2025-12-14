@@ -144,18 +144,25 @@ async function startServer() {
   }
 }
 
-// Handle graceful shutdown
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  await database.close();
-  process.exit(0);
-});
+let isShuttingDown = false;
 
-process.on('SIGINT', async () => {
-  console.log('SIGINT received, shutting down gracefully');
-  await database.close();
-  process.exit(0);
-});
+const shutdown = async (signal) => {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
+  console.log(`${signal} received, shutting down gracefully`);
+
+  try {
+    await database.close();
+  } catch (err) {
+    console.error('Error while closing database:', err);
+  } finally {
+    process.exit(0);
+  }
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 
 // Start the application
 startServer();
