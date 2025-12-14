@@ -314,6 +314,32 @@ router.post('/', upload.single('image'), async (req, res) => {
 
     // Insert product into database
     const db = getDB();
+    
+    // Validate that the category exists and matches the store type
+    const categoryValidation = await db.query(`
+      SELECT c.id, c.type as category_type, m.type as store_type 
+      FROM categorie c
+      CROSS JOIN magasin m
+      WHERE c.id = $1 AND m.id_magazin = $2
+    `, [parseInt(category_id), parseInt(store_id)]);
+    
+    if (categoryValidation.rows.length === 0) {
+      return res.status(400).json({ error: 'Invalid category or store' });
+    }
+    
+    const { category_type, store_type } = categoryValidation.rows[0];
+    
+    // Category type should match store type exactly
+    const expectedCategoryType = store_type;
+    
+    if (category_type !== expectedCategoryType) {
+      return res.status(400).json({ 
+        error: `Category type mismatch. Selected category is for ${category_type} but store is ${store_type}` 
+      });
+    }
+    
+    console.log(`✅ Category validation passed: ${category_type} matches ${store_type}`);
+    
     const insertQuery = `
       INSERT INTO produit (nom, description, prix, id_magazin, categorie_id, image_url, prescription_required)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -463,6 +489,31 @@ router.put('/:id', upload.single('image'), async (req, res) => {
       // If no new image and not keeping current, set to null
       imageUrl = null;
     }
+
+    // Validate that the category exists and matches the store type
+    const categoryValidation = await db.query(`
+      SELECT c.id, c.type as category_type, m.type as store_type 
+      FROM categorie c
+      CROSS JOIN magasin m
+      WHERE c.id = $1 AND m.id_magazin = $2
+    `, [parseInt(category_id), parseInt(store_id)]);
+    
+    if (categoryValidation.rows.length === 0) {
+      return res.status(400).json({ error: 'Invalid category or store' });
+    }
+    
+    const { category_type, store_type } = categoryValidation.rows[0];
+    
+    // Category type should match store type exactly
+    const expectedCategoryType = store_type;
+    
+    if (category_type !== expectedCategoryType) {
+      return res.status(400).json({ 
+        error: `Category type mismatch. Selected category is for ${category_type} but store is ${store_type}` 
+      });
+    }
+    
+    console.log(`✅ Category validation passed for update: ${category_type} matches ${store_type}`);
 
     // Update product in database
     const updateQuery = `

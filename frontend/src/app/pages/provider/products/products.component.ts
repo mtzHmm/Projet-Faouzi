@@ -82,21 +82,34 @@ export class ProductsComponent implements OnInit {
       };
       this.storeType = this.currentStore.storeType;
       console.log('🏪 Store info:', this.currentStore);
+      console.log('🏷️ Detected store type:', this.storeType);
+      console.log('🏷️ Store type (lowercase):', this.storeType.toLowerCase());
       this.setProductCategories();
     }
   }
 
   setProductCategories() {
     // Load categories from database based on store type
-    const storeTypeForApi = this.storeType.toLowerCase() === 'pharmacie' ? 'pharmacy' : this.storeType.toLowerCase();
+    let storeTypeForApi = this.storeType.toLowerCase();
+    
+    // Map "pharmacy" to "pharmacie" for database enum compatibility
+    if (storeTypeForApi === 'pharmacy') {
+      storeTypeForApi = 'pharmacie';
+    }
+    
+    console.log('🏪 Store type:', this.storeType);
+    console.log('🔄 Requesting categories for type:', storeTypeForApi);
     
     this.productService.getCategories(storeTypeForApi).subscribe({
       next: (response) => {
+        console.log('📋 Categories API response:', response);
         if (response.success && response.categories) {
           this.categories = response.categories;
           this.categoryNames = response.categories.map(cat => cat.name);
-          console.log('📋 Categories loaded:', this.categories);
+          console.log('✅ Categories loaded:', this.categories);
+          console.log('📋 Category names:', this.categoryNames);
         } else {
+          console.log('⚠️ Invalid API response, using fallback categories');
           // Fallback to default categories if API fails
           this.setFallbackCategories();
         }
@@ -343,6 +356,17 @@ export class ProductsComponent implements OnInit {
       return;
     }
 
+    // Validate that the selected category exists and belongs to the current store type
+    const selectedCategory = this.categories.find(cat => cat.id.toString() === this.newProduct.category_id);
+    if (!selectedCategory) {
+      alert(`Invalid category selected. Please select a valid category for ${this.storeType}.`);
+      console.error('❌ Invalid category_id:', this.newProduct.category_id);
+      console.log('📋 Available categories:', this.categories);
+      return;
+    }
+    
+    console.log('✅ Valid category selected:', selectedCategory);
+
     this.addingProduct = true;
 
     // Create FormData for file upload
@@ -401,6 +425,17 @@ export class ProductsComponent implements OnInit {
       alert('Invalid product or store information');
       return;
     }
+
+    // Validate that the selected category exists and belongs to the current store type
+    const selectedCategory = this.categories.find(cat => cat.id.toString() === this.editProduct_data.category_id);
+    if (!selectedCategory) {
+      alert(`Invalid category selected. Please select a valid category for ${this.storeType}.`);
+      console.error('❌ Invalid category_id:', this.editProduct_data.category_id);
+      console.log('📋 Available categories:', this.categories);
+      return;
+    }
+    
+    console.log('✅ Valid category selected for edit:', selectedCategory);
 
     console.log('✅ Starting product update...');
     this.editingProduct = true;

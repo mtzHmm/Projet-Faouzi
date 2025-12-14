@@ -1,10 +1,11 @@
-const pool = require('./config/database');
+const database = require('./config/database');
 
 async function addSamplePharmacieData() {
-  const client = await pool.connect();
+  await database.initialize();
+  const db = database.getPool();
   
   try {
-    await client.query('BEGIN');
+    await db.query('BEGIN');
     
     console.log('🏗️ Adding sample pharmacie data...');
     
@@ -22,10 +23,10 @@ async function addSamplePharmacieData() {
     const categoryIds = [];
     
     for (const category of categoriesData) {
-      const result = await client.query(`
-        INSERT INTO categories (name, type) 
+      const result = await db.query(`
+        INSERT INTO categorie (nom, type) 
         VALUES ($1, $2) 
-        ON CONFLICT (name, type) DO UPDATE SET name = EXCLUDED.name
+        ON CONFLICT (nom, type) DO UPDATE SET nom = EXCLUDED.nom
         RETURNING id
       `, [category.name, category.type]);
       
@@ -101,7 +102,7 @@ async function addSamplePharmacieData() {
     
     for (const product of productsData) {
       // Find category ID
-      const categoryResult = await client.query(
+      const categoryResult = await db.query(
         'SELECT id FROM categories WHERE name = $1 AND type = $2',
         [product.category, 'pharmacie']
       );
@@ -110,7 +111,7 @@ async function addSamplePharmacieData() {
         const categoryId = categoryResult.rows[0].id;
         
         // Insert product
-        await client.query(`
+        await db.query(`
           INSERT INTO products (
             name, description, price, restaurant, type, category_id, available, image
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -130,16 +131,16 @@ async function addSamplePharmacieData() {
       }
     }
     
-    await client.query('COMMIT');
+    await db.query('COMMIT');
     console.log('🎉 Sample pharmacie data added successfully!');
     
     // Verify the data
-    const categoryCount = await client.query(
+    const categoryCount = await db.query(
       'SELECT COUNT(*) FROM categories WHERE type = $1',
       ['pharmacie']
     );
     
-    const productCount = await client.query(
+    const productCount = await db.query(
       'SELECT COUNT(*) FROM products WHERE type = $1',
       ['pharmacie']
     );
@@ -148,11 +149,11 @@ async function addSamplePharmacieData() {
     console.log(`📊 Total pharmacie products: ${productCount.rows[0].count}`);
     
   } catch (error) {
-    await client.query('ROLLBACK');
+    await db.query('ROLLBACK');
     console.error('❌ Error adding sample data:', error);
     throw error;
   } finally {
-    client.release();
+    await database.close();
   }
 }
 

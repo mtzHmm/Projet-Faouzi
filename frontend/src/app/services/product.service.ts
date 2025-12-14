@@ -90,7 +90,7 @@ export class ProductService {
   }
 
   getPharmacyProducts(): Observable<ProductsResponse> {
-    return this.getProducts({ type: 'pharmacy' });
+    return this.getProducts({ type: 'pharmacie' });
   }
 
   getBoutiqueProducts(): Observable<ProductsResponse> {
