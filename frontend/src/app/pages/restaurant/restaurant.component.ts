@@ -53,6 +53,12 @@ export class RestaurantComponent implements OnInit {
         if (response && response.products && Array.isArray(response.products)) {
           // API returned products with proper structure
           console.log('✅ Loaded products from database:', response.products.length, 'products');
+          
+          // Debug: Log first few products with their images
+          response.products.slice(0, 3).forEach((product: any) => {
+            console.log(`📸 Product "${product.name}": image = "${product.image}"`);
+          });
+          
           this.allProducts = response.products.map((product: any) => ({
             ...product,
             price: typeof product.price === 'number' ? product.price / 100 : product.price // Convert from cents to DT if needed
@@ -135,7 +141,7 @@ export class RestaurantComponent implements OnInit {
       name: "Pizza Margherita",
       description: "Pizza classique avec tomates, mozzarella et basilic frais",
       price: 18.50,
-      image: "🍕",
+      image: "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg", // Sample Cloudinary image
       type: "restaurant",
       restaurant: "Bella Italia",
       store_id: 1,
@@ -147,7 +153,7 @@ export class RestaurantComponent implements OnInit {
       name: "Burger Royal",
       description: "Burger avec steak, fromage, salade, tomate et sauce spéciale",
       price: 22.00,
-      image: "🍔",
+      image: "https://res.cloudinary.com/demo/image/upload/v1571218039/burger_isg1az.jpg", // Sample Cloudinary image
       type: "restaurant",
       restaurant: "Fast Gourmet",
       store_id: 2,
@@ -159,7 +165,7 @@ export class RestaurantComponent implements OnInit {
       name: "Sushi Mix",
       description: "Assortiment de 12 sushi variés avec wasabi et gingembre",
       price: 28.00,
-      image: "🍣",
+      // No image URL - will show emoji fallback
       type: "restaurant",
       restaurant: "Tokyo Express",
       store_id: 3,
@@ -305,9 +311,5 @@ export class RestaurantComponent implements OnInit {
     if (name.includes('pasta') || name.includes('pâte')) return '🍝';
     
     return '🍴'; // Emoji par défaut
-  }
-
-  goToCart() {
-    this.router.navigate(['/cart']);
   }
 }

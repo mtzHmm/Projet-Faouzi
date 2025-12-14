@@ -59,7 +59,21 @@
 
         <!-- Products -->
         <div *ngFor="let product of products" class="product-card">
-          <div class="product-image">{{ getProductEmoji(product.name) }}</div>
+          <div class="product-image">
+            <img 
+              *ngIf="product.image; else noImage" 
+              [src]="product.image" 
+              [alt]="product.name"
+              class="product-img"
+              (error)="onImageError($event)"
+              loading="lazy"
+            />
+            <ng-template #noImage>
+              <div class="no-image-placeholder">
+                {{ getProductEmoji(product.name) }}
+              </div>
+            </ng-template>
+          </div>
           
           <div class="product-info">
             <span class="restaurant-name">{{ product.restaurant }}</span>
