@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ProductService, Product } from '../../services/product.service';
+import { CartService } from '../../services/cart.service';
 
 interface PharmacieProduct extends Product {
   prescription?: boolean;
@@ -18,6 +19,7 @@ export class PharmacieComponent implements OnInit {
   
   constructor(
     private productService: ProductService,
+    private cartService: CartService,
     private cdr: ChangeDetectorRef
   ) {}
   
@@ -119,9 +121,10 @@ export class PharmacieComponent implements OnInit {
     }
   ];
 
-  cart: PharmacieProduct[] = [];
+  cartCount = 0;
   categories: string[] = ['All', 'Médicaments', 'Vitamines', 'Matériel Médical', 'Protection', 'Hygiène', 'Cosmétiques'];
   selectedCategory: string = 'All';
+  cart: any[] = []; // Cart items for display in template
 
   ngOnInit() {
     console.log('🚀 Initializing pharmacie component');
@@ -134,6 +137,14 @@ export class PharmacieComponent implements OnInit {
     
     // Load database categories in parallel (won't affect product display)
     this.loadPharmacieCategoriesFromDB();
+    
+    // Subscribe to cart changes
+    this.cartService.cart$.subscribe(() => {
+      this.updateCartCount();
+    });
+    
+    // Initialize cart count
+    this.updateCartCount();
   }
 
   loadPharmacieCategoriesFromDB() {
@@ -262,24 +273,33 @@ export class PharmacieComponent implements OnInit {
       alert('Ce médicament nécessite une ordonnance. Veuillez consulter votre médecin.');
       return;
     }
-    this.cart.push(product);
-    console.log('🛒 Product added to cart:', product.name);
+    this.cartService.addToCart(product, 'pharmacie');
+    this.updateCartCount();
   }
 
-  removeFromCart(product: PharmacieProduct): void {
-    const index = this.cart.findIndex(item => item.id === product.id);
-    if (index > -1) {
-      this.cart.splice(index, 1);
-      console.log('🗑️ Product removed from cart:', product.name);
-    }
+  removeFromCart(item: any): void {
+    this.cartService.removeFromCart(item.id);
+    this.updateCartCount();
+  }
+
+  updateCartCount(): void {
+    // Count only pharmacie items
+    const allItems = this.cartService.getCartItems();
+    this.cartCount = allItems
+      .filter(item => item.type === 'pharmacie')
+      .reduce((sum, item) => sum + item.quantity, 0);
   }
 
   getTotalPrice(): number {
-    return this.cart.reduce((total, product) => total + product.price, 0);
+    // Calculate total only for pharmacie items
+    const allItems = this.cartService.getCartItems();
+    return allItems
+      .filter(item => item.type === 'pharmacie')
+      .reduce((sum, item) => sum + (item.price * item.quantity), 0);
   }
 
   getTotalItems(): number {
-    return this.cart.length;
+    return this.cartCount;
   }
 
   filterByCategory(category: string): void {

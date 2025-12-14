@@ -8,6 +8,10 @@ export const routes: Routes = [
   { path: 'signin', component: SigninComponent },
   { path: 'signup', component: SignupComponent },
   { path: 'cart', loadChildren: () => import('./pages/cart/cart.routes').then(m => m.routes) },
+  { 
+    path: 'checkout', 
+    loadComponent: () => import('./pages/checkout/checkout.component').then(m => m.CheckoutComponent)
+  },
   { path: 'delivery', loadChildren: () => import('./pages/delivery/delivery.routes').then(m => m.routes) },
   { path: 'shop', loadChildren: () => import('./pages/shop/shop.routes').then(m => m.routes) },
   { path: 'contact', loadChildren: () => import('./pages/contact/contact.routes').then(m => m.routes) },

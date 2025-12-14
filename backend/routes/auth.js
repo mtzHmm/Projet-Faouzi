@@ -103,22 +103,42 @@ router.post('/login', async (req, res) => {
       });
     }
     
-    // Generate JWT token
+    // Generate JWT token with unique timestamp
+    const tokenPayload = { 
+      id: user.id, 
+      email: user.email, 
+      role: user.role?.toLowerCase() || userType,
+      userType,
+      iat: Math.floor(Date.now() / 1000) // issued at timestamp
+    };
+    
     const token = jwt.sign(
-      { 
-        id: user.id, 
-        email: user.email, 
-        role: user.role?.toLowerCase() || userType,
-        userType 
-      },
+      tokenPayload,
       process.env.JWT_SECRET || 'fallback-secret-key',
       { expiresIn: '24h' }
     );
     
+    // Create server-side session
+    req.session.userId = user.id;
+    req.session.userEmail = user.email;
+    req.session.userRole = user.role?.toLowerCase() || userType;
+    req.session.loginTime = new Date();
+    
+    // Set cookie with token
+    res.cookie('auth_token', token, {
+      httpOnly: true, // Not accessible via JavaScript
+      secure: false, // Set to true in production with HTTPS
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'lax'
+    });
+    
     // Remove password from response
     delete user.mot_de_passe;
     
-    console.log('✅ Login successful:', { id: user.id, email: user.email, role: user.role });
+    console.log('🎫 Token generated for user:', { id: user.id, email: user.email, role: user.role });
+    console.log('🔑 Token preview:', token.substring(0, 20) + '...');
+    console.log('🍪 Session created → userId:', user.id, '→ Cookie set');
+    console.log('⏰ Token expires in: 24 hours');
     
     res.json({
       success: true,
@@ -134,7 +154,8 @@ router.post('/login', async (req, res) => {
         ...(userType === 'provider' && { storeType: user.type }),
         ...(userType === 'livreur' && { city: user.ville })
       },
-      token
+      token,
+      sessionId: req.session.id
     });
     
   } catch (error) {
@@ -327,10 +348,47 @@ router.post('/register', async (req, res) => {
 
 // POST /api/auth/logout
 router.post('/logout', (req, res) => {
+  const userId = req.session.userId;
+  
+  // Destroy session
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('❌ Error destroying session:', err);
+    } else {
+      console.log('🚪 User logged out:', userId, '→ Session destroyed');
+    }
+  });
+  
+  // Clear auth cookie
+  res.clearCookie('auth_token');
+  
   res.json({
     success: true,
     message: 'Logout successful'
   });
+});
+
+// GET /api/auth/session - Check current session
+router.get('/session', (req, res) => {
+  if (req.session.userId) {
+    console.log('✅ Active session found for user:', req.session.userId);
+    res.json({
+      success: true,
+      authenticated: true,
+      session: {
+        userId: req.session.userId,
+        userEmail: req.session.userEmail,
+        userRole: req.session.userRole,
+        loginTime: req.session.loginTime
+      }
+    });
+  } else {
+    res.json({
+      success: true,
+      authenticated: false,
+      message: 'No active session'
+    });
+  }
 });
 
 module.exports = router;

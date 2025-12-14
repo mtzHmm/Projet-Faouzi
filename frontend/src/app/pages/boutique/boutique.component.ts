@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ProductService, Product } from '../../services/product.service';
+import { CartService } from '../../services/cart.service';
 
 interface BoutiqueProduct extends Product {
   // Extends Product with all base properties
@@ -18,6 +19,7 @@ export class BoutiqueComponent implements OnInit {
   
   constructor(
     private productService: ProductService,
+    private cartService: CartService,
     private cdr: ChangeDetectorRef
   ) {}
   products: BoutiqueProduct[] = [];
@@ -46,6 +48,14 @@ export class BoutiqueComponent implements OnInit {
     
     // Load database categories in parallel (won't affect product display)
     this.loadBoutiqueCategoriesFromDB();
+    
+    // Subscribe to cart changes
+    this.cartService.cart$.subscribe(() => {
+      this.updateCartCount();
+    });
+    
+    // Initialize cart count
+    this.updateCartCount();
   }
   
   loadBoutiqueCategoriesFromDB() {
@@ -154,9 +164,10 @@ export class BoutiqueComponent implements OnInit {
     return categoryMap[type?.toLowerCase()] || 'Général';
   }
 
-  cart: BoutiqueProduct[] = [];
   categories: string[] = [];  // Start empty, will be populated after loading
   selectedCategory: string = 'All';
+  cartCount = 0;
+  cart: any[] = []; // Cart items for display in template
 
   get filteredProducts(): BoutiqueProduct[] {
     console.log('🔍 Filtering - selectedCategory:', this.selectedCategory);
@@ -181,24 +192,33 @@ export class BoutiqueComponent implements OnInit {
   }
 
   addToCart(product: BoutiqueProduct): void {
-    this.cart.push(product);
-    console.log('🛒 Product added to cart:', product.name);
+    this.cartService.addToCart(product, 'boutique');
+    this.updateCartCount();
   }
 
-  removeFromCart(product: BoutiqueProduct): void {
-    const index = this.cart.findIndex(item => item.id === product.id);
-    if (index > -1) {
-      this.cart.splice(index, 1);
-      console.log('🗑️ Product removed from cart:', product.name);
-    }
+  removeFromCart(item: any): void {
+    this.cartService.removeFromCart(item.id);
+    this.updateCartCount();
   }
 
-  getTotalPrice(): number {
-    return this.cart.reduce((total, product) => total + product.price, 0);
+  updateCartCount(): void {
+    // Count only boutique items
+    const allItems = this.cartService.getCartItems();
+    this.cartCount = allItems
+      .filter(item => item.type === 'boutique')
+      .reduce((sum, item) => sum + item.quantity, 0);
   }
 
   getTotalItems(): number {
-    return this.cart.length;
+    return this.cartCount;
+  }
+
+  getTotalPrice(): number {
+    // Calculate total only for boutique items
+    const allItems = this.cartService.getCartItems();
+    return allItems
+      .filter(item => item.type === 'boutique')
+      .reduce((sum, item) => sum + (item.price * item.quantity), 0);
   }
 
   filterByCategory(category: string): void {

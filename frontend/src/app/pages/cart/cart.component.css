@@ -113,14 +113,19 @@
 
 .cart-item {
   display: grid;
-  grid-template-columns: 100px 1fr auto auto auto;
-  gap: 1.5rem;
+  grid-template-columns: 40px 100px 1fr auto auto auto;
+  gap: 1rem;
   align-items: center;
   padding: 1.5rem;
   border: 1px solid #f0f9f8;
   border-radius: 10px;
   background: linear-gradient(135deg, #f0fdfa 0%, #ffffff 100%);
   transition: all 0.3s ease;
+}
+
+.item-emoji {
+  font-size: 2rem;
+  text-align: center;
 }
 
 .cart-item:hover {

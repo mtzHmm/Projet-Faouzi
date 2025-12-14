@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ProductService, Product } from '../../services/product.service';
+import { CartService } from '../../services/cart.service';
 
 interface CoursesProduct extends Product {
   unit?: string;
@@ -19,6 +20,7 @@ export class CoursesComponent implements OnInit {
   
   constructor(
     private productService: ProductService,
+    private cartService: CartService,
     private cdr: ChangeDetectorRef
   ) {}
   
@@ -160,9 +162,10 @@ export class CoursesComponent implements OnInit {
     }
   ];
 
-  cart: CoursesProduct[] = [];
+  cartCount = 0;
   categories: string[] = ['All', 'Fruits', 'Légumes', 'Viandes', 'Poissons', 'Produits Laitiers', 'Fromages', 'Boulangerie', 'Épicerie'];
   selectedCategory: string = 'All';
+  cart: any[] = []; // Cart items for display in template
 
   ngOnInit() {
     console.log('🚀 Initializing courses component');
@@ -172,6 +175,14 @@ export class CoursesComponent implements OnInit {
     
     // Load products immediately - categories are already initialized
     this.loadAllCoursesProducts();
+    
+    // Subscribe to cart changes
+    this.cartService.cart$.subscribe(() => {
+      this.updateCartCount();
+    });
+    
+    // Initialize cart count
+    this.updateCartCount();
     
     // Load database categories in parallel (won't affect product display)
     this.loadCoursesCategoriesFromDB();
@@ -287,24 +298,33 @@ export class CoursesComponent implements OnInit {
       alert('Ce produit n\'est pas disponible en stock.');
       return;
     }
-    this.cart.push(product);
-    console.log('🛒 Product added to cart:', product.name);
+    this.cartService.addToCart(product, 'courses');
+    this.updateCartCount();
   }
 
-  removeFromCart(product: CoursesProduct): void {
-    const index = this.cart.findIndex(item => item.id === product.id);
-    if (index > -1) {
-      this.cart.splice(index, 1);
-      console.log('🗑️ Product removed from cart:', product.name);
-    }
+  removeFromCart(item: any): void {
+    this.cartService.removeFromCart(item.id);
+    this.updateCartCount();
+  }
+
+  updateCartCount(): void {
+    // Count only courses items
+    const allItems = this.cartService.getCartItems();
+    this.cartCount = allItems
+      .filter(item => item.type === 'courses')
+      .reduce((sum, item) => sum + item.quantity, 0);
   }
 
   getTotalPrice(): number {
-    return this.cart.reduce((total, product) => total + product.price, 0);
+    // Calculate total only for courses items
+    const allItems = this.cartService.getCartItems();
+    return allItems
+      .filter(item => item.type === 'courses')
+      .reduce((sum, item) => sum + (item.price * item.quantity), 0);
   }
 
   getTotalItems(): number {
-    return this.cart.length;
+    return this.cartCount;
   }
 
   filterByCategory(category: string): void {

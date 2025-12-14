@@ -153,13 +153,32 @@ router.get('/', async (req, res) => {
     const countResult = await db.query(countQuery, countParams);
     const total = parseInt(countResult.rows[0].total);
     
-    // Format products with proper price conversion
-    const products = result.rows.map(product => ({
-      ...product,
-      price: parseFloat(product.price) / 100, // Convert from cents to currency
-      available: true
-      // Note: image field comes from database as 'image' (mapped from image_url)
-    }));
+    // Default images by type
+    const defaultImages = {
+      'restaurant': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
+      'boutique': 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&h=400&fit=crop',
+      'pharmacie': 'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=400&h=400&fit=crop',
+      'courses': 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=400&fit=crop'
+    };
+    
+    // Format products with proper price conversion and fix invalid images
+    const products = result.rows.map(product => {
+      let imageUrl = product.image;
+      
+      // Replace invalid placeholder URLs with real images
+      if (!imageUrl || imageUrl.includes('via.placeholder.com') || imageUrl.includes('placeholder')) {
+        const productType = (product.type || 'restaurant').toLowerCase();
+        imageUrl = defaultImages[productType] || defaultImages['restaurant'];
+        console.log(`🖼️ Replaced invalid image for "${product.name}" with default ${productType} image`);
+      }
+      
+      return {
+        ...product,
+        image: imageUrl,
+        price: parseFloat(product.price) / 100, // Convert from cents to currency
+        available: true
+      };
+    });
     
     console.log(`📦 Returning ${products.length} products out of ${total} total`);
     
@@ -241,8 +260,23 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Product not found' });
     }
     
+    // Default images by type
+    const defaultImages = {
+      'restaurant': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
+      'boutique': 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&h=400&fit=crop',
+      'pharmacie': 'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=400&h=400&fit=crop',
+      'courses': 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=400&fit=crop'
+    };
+    
+    let imageUrl = result.rows[0].image;
+    if (!imageUrl || imageUrl.includes('via.placeholder.com') || imageUrl.includes('placeholder')) {
+      const productType = (result.rows[0].type || 'restaurant').toLowerCase();
+      imageUrl = defaultImages[productType] || defaultImages['restaurant'];
+    }
+    
     const product = {
       ...result.rows[0],
+      image: imageUrl,
       price: result.rows[0].price / 100
     };
     

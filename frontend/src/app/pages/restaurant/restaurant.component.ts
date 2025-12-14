@@ -1,18 +1,19 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { HttpClientModule } from '@angular/common/http';
 import { ProductService, Product, Category } from '../../services/product.service';
+import { CartService } from '../../services/cart.service';
 
 @Component({
   selector: 'app-restaurant',
   standalone: true,
-  imports: [CommonModule, HttpClientModule],
+  imports: [CommonModule, HttpClientModule, RouterLink],
   templateUrl: './restaurant.component.html',
   styleUrl: './restaurant.component.css'
 })
 export class RestaurantComponent implements OnInit {
-  cartItems: Product[] = [];
+  cartCount = 0;
   products: Product[] = [];
   allProducts: Product[] = [];
   categories: Category[] = [];
@@ -23,12 +24,22 @@ export class RestaurantComponent implements OnInit {
 
   constructor(
     private productService: ProductService,
-    private cdr: ChangeDetectorRef
+    private cartService: CartService,
+    private cdr: ChangeDetectorRef,
+    private router: Router
   ) {}
 
   ngOnInit() {
     this.loadProducts();
     this.loadCategories();
+    
+    // Subscribe to cart changes
+    this.cartService.cart$.subscribe(() => {
+      this.updateCartCount();
+    });
+    
+    // Initialize cart count
+    this.updateCartCount();
   }
 
   loadProducts() {
@@ -218,12 +229,24 @@ export class RestaurantComponent implements OnInit {
   ];
 
   addToCart(product: Product) {
-    this.cartItems.push(product);
-    alert(`${product.name} ajouté au panier !`);
+    this.cartService.addToCart(product, 'restaurant');
+    this.updateCartCount();
+  }
+
+  updateCartCount(): void {
+    // Count only restaurant items
+    const allItems = this.cartService.getCartItems();
+    this.cartCount = allItems
+      .filter(item => item.type === 'restaurant')
+      .reduce((sum, item) => sum + item.quantity, 0);
   }
 
   getTotalPrice(): number {
-    return this.cartItems.reduce((total, item) => total + item.price, 0);
+    // Calculate total only for restaurant items
+    const allItems = this.cartService.getCartItems();
+    return allItems
+      .filter(item => item.type === 'restaurant')
+      .reduce((sum, item) => sum + (item.price * item.quantity), 0);
   }
 
   filterByCategory(categoryId: number | null) {
@@ -282,5 +305,9 @@ export class RestaurantComponent implements OnInit {
     if (name.includes('pasta') || name.includes('pâte')) return '🍝';
     
     return '🍴'; // Emoji par défaut
+  }
+
+  goToCart() {
+    this.router.navigate(['/cart']);
   }
 }

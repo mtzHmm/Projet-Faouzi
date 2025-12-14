@@ -1,15 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-
-interface CartItem {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
-  image: string;
-  category: string;
-}
+import { CartService, CartItem } from '../../services/cart.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-cart',
@@ -18,69 +11,86 @@ interface CartItem {
   templateUrl: './cart.component.html',
   styleUrls: ['./cart.component.css']
 })
-export class CartComponent {
-  cartItems: CartItem[] = [
-    {
-      id: 1,
-      name: 'Deluxe Burger',
-      price: 12.99,
-      quantity: 2,
-      image: 'https://via.placeholder.com/100?text=Burger',
-      category: 'Restaurant'
-    },
-    {
-      id: 2,
-      name: 'T-Shirt Premium',
-      price: 29.99,
-      quantity: 1,
-      image: 'https://via.placeholder.com/100?text=Tshirt',
-      category: 'Boutique'
-    },
-    {
-      id: 3,
-      name: 'Vitamins Pack',
-      price: 19.99,
-      quantity: 1,
-      image: 'https://via.placeholder.com/100?text=Vitamins',
-      category: 'Pharmacie'
-    }
-  ];
+export class CartComponent implements OnInit {
+  cartItems: CartItem[] = [];
+  isLoggedIn = false;
+  userName = '';
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private cartService: CartService,
+    private authService: AuthService
+  ) {}
+
+  ngOnInit() {
+    // Check if user is logged in
+    this.isLoggedIn = this.authService.isLoggedIn();
+    this.userName = this.authService.getFullUserName();
+
+    // Subscribe to cart changes
+    this.cartService.cart$.subscribe(items => {
+      this.cartItems = items;
+      console.log('🛒 Cart updated:', this.cartItems.length, 'items');
+    });
+
+    // Load initial cart items
+    this.cartItems = this.cartService.getCartItems();
+  }
 
   updateQuantity(itemId: number, newQuantity: number) {
-    if (newQuantity < 1) {
-      this.removeItem(itemId);
-      return;
-    }
-    const item = this.cartItems.find(i => i.id === itemId);
-    if (item) {
-      item.quantity = newQuantity;
-    }
+    this.cartService.updateQuantity(itemId, newQuantity);
   }
 
   removeItem(itemId: number) {
-    this.cartItems = this.cartItems.filter(i => i.id !== itemId);
+    this.cartService.removeFromCart(itemId);
   }
 
   get subtotal(): number {
-    return this.cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    return this.cartService.getSubtotal();
   }
 
   get tax(): number {
-    return this.subtotal * 0.1;
+    return this.cartService.getTax();
   }
 
   get total(): number {
-    return this.subtotal + this.tax;
+    return this.cartService.getTotal();
+  }
+
+  clearCart() {
+    if (confirm('Êtes-vous sûr de vouloir vider le panier ?')) {
+      this.cartService.clearCart();
+    }
   }
 
   checkout() {
-    alert('Proceeding to checkout with total: ' + this.total.toFixed(2) + ' DT');
+    if (!this.isLoggedIn) {
+      alert('Veuillez vous connecter pour passer commande');
+      this.router.navigate(['/signin']);
+      return;
+    }
+
+    if (this.cartItems.length === 0) {
+      alert('Votre panier est vide');
+      return;
+    }
+
+    // Rediriger vers la page de checkout
+    this.router.navigate(['/checkout']);
   }
 
   continueShopping() {
     // Navigate back to home
     this.router.navigate(['/']);
+  }
+
+  getCategoryEmoji(type: string): string {
+    const emojiMap: { [key: string]: string } = {
+      'boutique': '👕',
+      'restaurant': '🍔',
+      'pharmacie': '💊',
+      'courses': '🛒'
+    };
+    return emojiMap[type?.toLowerCase()] || '🛍️';
   }
 }

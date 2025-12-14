@@ -3,6 +3,7 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
+import { CartService } from '../../services/cart.service';
 
 @Component({
   selector: 'app-header',
@@ -12,14 +13,17 @@ import { AuthService } from '../../services/auth.service';
   styleUrl: './header.component.css'
 })
 export class HeaderComponent implements OnInit, OnDestroy {
-  cartItemCount = 3;
-  totalPrice = 12530;
+  cartItemCount = 0;
+  totalPrice = 0;
   isLoggedIn = false;
   userName = '';
+  userId = '';
   private authSubscription: Subscription = new Subscription();
+  private cartSubscription: Subscription = new Subscription();
 
   constructor(
     private authService: AuthService,
+    private cartService: CartService,
     private router: Router
   ) {}
 
@@ -29,18 +33,42 @@ export class HeaderComponent implements OnInit, OnDestroy {
     // Subscribe to authentication status changes
     this.authSubscription = this.authService.authStatus$.subscribe(
       (isAuthenticated: boolean) => {
+        console.log('🔐 Auth status changed:', isAuthenticated);
         this.isLoggedIn = isAuthenticated;
         if (isAuthenticated) {
+          const userData = this.authService.getUserData();
+          console.log('👤 User data:', userData);
           this.userName = this.authService.getFullUserName();
+          this.userId = userData?.id || userData?.user_id || '';
+          console.log('✅ Header - User:', this.userName, 'ID:', this.userId);
         } else {
           this.userName = '';
+          this.userId = '';
         }
       }
     );
+
+    // Subscribe to cart changes
+    this.cartSubscription = this.cartService.cart$.subscribe(() => {
+      this.updateCartInfo();
+    });
+
+    // Initialize cart info
+    this.updateCartInfo();
   }
 
   ngOnDestroy() {
     this.authSubscription.unsubscribe();
+    this.cartSubscription.unsubscribe();
+  }
+
+  updateCartInfo() {
+    this.cartItemCount = this.cartService.getCartCount();
+    const userData = this.authService.getUserData();
+    console.log('🔍 Checking auth - User data:', userData);
+    this.userName = this.authService.getFullUserName();
+    this.userId = userData?.id || userData?.user_id || '';
+    console.log('✅ Auth check - User:', this.userName, 'ID:', this.userId);
   }
 
   checkAuthStatus() {

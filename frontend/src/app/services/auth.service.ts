@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface LoginRequest {
@@ -28,6 +29,7 @@ export interface AuthResponse {
   message: string;
   user?: any;
   token?: string;
+  sessionId?: string;
 }
 
 @Injectable({
@@ -41,20 +43,45 @@ export class AuthService {
   constructor(private http: HttpClient) {}
 
   login(credentials: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, credentials);
+    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, credentials, {
+      withCredentials: true // Enable cookies
+    }).pipe(
+      tap(response => {
+        if (response.success && response.sessionId) {
+          console.log('🍪 Session established → ID:', response.sessionId);
+        }
+      })
+    );
   }
 
   register(data: RegisterRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, data);
+    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, data, {
+      withCredentials: true // Enable cookies
+    });
   }
 
   logout(): Observable<any> {
-    return this.http.post(`${this.apiUrl}/logout`, {});
+    return this.http.post(`${this.apiUrl}/logout`, {}, {
+      withCredentials: true // Send cookies with logout request
+    });
+  }
+
+  // Check server-side session
+  checkSession(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/session`, {
+      withCredentials: true
+    });
   }
 
   // Store token in localStorage
   saveToken(token: string): void {
+    const oldToken = localStorage.getItem('auth_token');
     localStorage.setItem('auth_token', token);
+    console.log('🎫 Token saved to localStorage');
+    console.log('🔑 Token preview:', token.substring(0, 30) + '...');
+    if (oldToken && oldToken !== token) {
+      console.log('🔄 New token generated (different from previous session)');
+    }
     this.authStatusSubject.next(true);
   }
 

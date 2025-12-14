@@ -82,11 +82,11 @@
   </div>
 
   <!-- Panier flottant -->
-  <div class="floating-cart" *ngIf="cartItems.length > 0">
+  <div class="floating-cart" *ngIf="cartCount > 0">
     <div class="cart-summary">
-      <span class="cart-count">{{ cartItems.length }} article(s)</span>
+      <span class="cart-count">{{ cartCount }} article(s)</span>
       <span class="cart-total">{{ getTotalPrice() | number:'1.2-2' }} DT</span>
-      <button class="checkout-btn">Commander</button>
+      <button class="checkout-btn" routerLink="/cart">Commander</button>
     </div>
   </div>
 </div>

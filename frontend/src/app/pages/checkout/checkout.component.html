@@ -1,0 +1,187 @@
+<div class="checkout-container">
+  <div class="checkout-header">
+    <button class="btn-back" (click)="goBack()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Retour au panier
+    </button>
+    <h1>📋 Finaliser la commande</h1>
+  </div>
+
+  <div class="checkout-content">
+    <!-- Informations de livraison -->
+    <div class="delivery-section">
+      <div class="section-card">
+        <h2>📍 Informations de livraison</h2>
+        
+        <form class="delivery-form">
+          <div class="form-group">
+            <label for="fullName">
+              Nom complet <span class="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="fullName"
+              [(ngModel)]="deliveryInfo.fullName"
+              name="fullName"
+              placeholder="Votre nom complet"
+              required
+            >
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="email">
+                Email <span class="required">*</span>
+              </label>
+              <input
+                type="email"
+                id="email"
+                [(ngModel)]="deliveryInfo.email"
+                name="email"
+                placeholder="votre@email.com"
+                required
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="phone">
+                Téléphone <span class="required">*</span>
+              </label>
+              <input
+                type="tel"
+                id="phone"
+                [(ngModel)]="deliveryInfo.phone"
+                name="phone"
+                placeholder="+216 XX XXX XXX"
+                required
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="address">
+              Adresse <span class="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="address"
+              [(ngModel)]="deliveryInfo.address"
+              name="address"
+              placeholder="Rue, numéro, bâtiment..."
+              required
+            >
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="city">
+                Ville <span class="required">*</span>
+              </label>
+              <input
+                type="text"
+                id="city"
+                [(ngModel)]="deliveryInfo.city"
+                name="city"
+                placeholder="Tunis, Sousse, Sfax..."
+                required
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="postalCode">Code postal</label>
+              <input
+                type="text"
+                id="postalCode"
+                [(ngModel)]="deliveryInfo.postalCode"
+                name="postalCode"
+                placeholder="1000"
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="notes">Notes additionnelles</label>
+            <textarea
+              id="notes"
+              [(ngModel)]="deliveryInfo.additionalNotes"
+              name="notes"
+              rows="3"
+              placeholder="Instructions de livraison, code d'accès..."
+            ></textarea>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Résumé de la commande -->
+    <div class="summary-section">
+      <div class="section-card">
+        <h2>📦 Résumé de la commande</h2>
+        
+        <div class="order-items">
+          <div *ngFor="let item of cartItems" class="order-item">
+            <span class="item-emoji">{{ getCategoryEmoji(item.type) }}</span>
+            <div class="item-info">
+              <h4>{{ item.name }}</h4>
+              <p class="item-qty">Quantité: {{ item.quantity }}</p>
+            </div>
+            <div class="item-price">
+              {{ (item.price * item.quantity) | number:'1.2-2' }} DT
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-divider"></div>
+
+        <div class="summary-row">
+          <span>Sous-total</span>
+          <span>{{ subtotal | number:'1.2-2' }} DT</span>
+        </div>
+
+        <div class="summary-row">
+          <span>Taxe (10%)</span>
+          <span>{{ tax | number:'1.2-2' }} DT</span>
+        </div>
+
+        <div class="summary-row">
+          <span>Frais de livraison</span>
+          <span *ngIf="deliveryFee === 0" class="free-delivery">GRATUIT 🎉</span>
+          <span *ngIf="deliveryFee > 0">{{ deliveryFee | number:'1.2-2' }} DT</span>
+        </div>
+
+        <div class="summary-divider"></div>
+
+        <div class="summary-row total">
+          <span>Total à payer</span>
+          <span>{{ total | number:'1.2-2' }} DT</span>
+        </div>
+
+        <div class="delivery-note" *ngIf="subtotal < 50">
+          💡 Plus que {{ (50 - subtotal) | number:'1.2-2' }} DT pour la livraison gratuite !
+        </div>
+
+        <button 
+          class="btn btn-primary btn-confirm"
+          (click)="confirmOrder()"
+          [disabled]="!isFormValid() || isProcessing"
+          [class.processing]="isProcessing"
+        >
+          <span *ngIf="!isProcessing">✅ Confirmer la commande</span>
+          <span *ngIf="isProcessing">
+            <span class="spinner"></span> Traitement...
+          </span>
+        </button>
+
+        <div class="payment-info">
+          <p>💳 <strong>Paiement:</strong> Paiement à la livraison (en espèces)</p>
+          <p class="small-text">
+            En confirmant, vous acceptez nos conditions générales de vente
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
