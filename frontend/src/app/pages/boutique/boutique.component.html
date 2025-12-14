@@ -42,7 +42,7 @@
     <div class="product-card" *ngFor="let product of filteredProducts">
       <div class="product-image">
         <div class="product-placeholder">
-          <span class="product-emoji">{{ getProductEmoji(product.category) }}</span>
+          <span class="product-emoji">{{ getProductEmoji(product.category_name || 'Vêtements') }}</span>
         </div>
         <div class="product-overlay">
           <button class="quick-view-btn">
@@ -52,11 +52,11 @@
       </div>
       
       <div class="product-info">
-        <div class="product-store">{{ product.store }}</div>
+        <div class="product-store">{{ product.restaurant }}</div>
         <h3 class="product-name">{{ product.name }}</h3>
         <p class="product-description">{{ product.description }}</p>
         <div class="product-meta">
-          <span class="product-category">{{ product.category }}</span>
+          <span class="product-category">{{ product.category_name || 'Vêtements' }}</span>
           <div class="product-price">{{ product.price | currency:'EUR':'symbol':'1.2-2' }}</div>
         </div>
         

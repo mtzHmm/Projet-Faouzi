@@ -4,8 +4,7 @@ import { RouterLink } from '@angular/router';
 import { ProductService, Product } from '../../services/product.service';
 
 interface BoutiqueProduct extends Product {
-  category: string;
-  store: string;
+  // Extends Product with all base properties
 }
 
 @Component({
@@ -91,9 +90,7 @@ export class BoutiqueComponent implements OnInit {
         
         if (response && response.products) {
           this.products = response.products.map(product => ({
-            ...product,
-            category: product.category_name || this.mapTypeToCategory(product.type),
-            store: product.restaurant || 'Boutique Store'
+            ...product
           }));
           
           console.log('🔍 Mapped products count:', this.products.length);
@@ -177,7 +174,7 @@ export class BoutiqueComponent implements OnInit {
     }
     
     const filtered = this.products.filter(product => {
-      return product.category === this.selectedCategory;
+      return product.category_name === this.selectedCategory;
     });
     console.log('📋 Filtered products:', filtered.length);
     return filtered;

@@ -16,6 +16,7 @@ export interface Product {
   available?: boolean;
   category_id?: number;
   category_name?: string;
+  prescription?: boolean;
 }
 
 export interface Category {
