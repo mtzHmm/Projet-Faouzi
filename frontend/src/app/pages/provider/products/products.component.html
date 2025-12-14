@@ -132,7 +132,7 @@
           </div>
 
           <div class="product-actions">
-            <button (click)="editProduct(product.id)" class="action-btn edit">
+            <button (click)="editProduct(product.id)" class="action-btn edit" type="button">
               ✏️ Edit
             </button>
             <button (click)="toggleStatus(product.id)" class="action-btn toggle">
@@ -261,6 +261,123 @@
         <button type="submit" class="submit-btn" [disabled]="addingProduct">
           <span *ngIf="!addingProduct">➕ Add Product</span>
           <span *ngIf="addingProduct">Adding Product...</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Product Modal -->
+<div *ngIf="showEditProductModal" class="modal-overlay" (click)="closeEditProductModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>✏️ Edit Product</h2>
+      <button class="close-btn" (click)="closeEditProductModal()">✕</button>
+    </div>
+
+    <form (ngSubmit)="onSubmitEditProduct()" class="add-product-form">
+      <div class="form-group">
+        <label for="editProductName">Product Name *</label>
+        <input 
+          type="text" 
+          id="editProductName"
+          [(ngModel)]="editProduct_data.name"
+          name="editProductName"
+          required
+          placeholder="Enter product name"
+          class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label for="editProductDescription">Description *</label>
+        <textarea 
+          id="editProductDescription"
+          [(ngModel)]="editProduct_data.description"
+          name="editProductDescription"
+          required
+          placeholder="Enter product description"
+          rows="3"
+          class="form-textarea"></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="editProductPrice">Price *</label>
+          <input 
+            type="number" 
+            id="editProductPrice"
+            [(ngModel)]="editProduct_data.price"
+            name="editProductPrice"
+            required
+            step="0.01"
+            min="0.01"
+            placeholder="0.00"
+            class="form-input"
+            [value]="editProduct_data.price">
+        </div>
+
+        <div class="form-group">
+          <label for="editProductCategory">Category *</label>
+          <select 
+            id="editProductCategory"
+            [(ngModel)]="editProduct_data.category_id"
+            name="editProductCategory"
+            required
+            class="form-select">
+            <option value="">Select Category</option>
+            <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div *ngIf="storeType === 'pharmacie'" class="form-group">
+        <label class="checkbox-label">
+          <input 
+            type="checkbox" 
+            [(ngModel)]="editProduct_data.prescription"
+            name="editProductPrescription"
+            class="checkbox-input">
+          <span class="checkbox-text">Requires Prescription</span>
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label for="editProductImage">Product Image</label>
+        <div class="image-upload-area">
+          <input 
+            type="file" 
+            id="editProductImage"
+            #editFileInput
+            (change)="onFileSelect($event)"
+            accept="image/*"
+            class="file-input">
+          
+          <div *ngIf="!imagePreview" class="upload-placeholder" (click)="editFileInput.click()">
+            <div class="upload-icon">📷</div>
+            <p>Click to upload new image</p>
+            <p class="upload-hint">PNG, JPG up to 10MB</p>
+          </div>
+
+          <div *ngIf="imagePreview" class="image-preview">
+            <img [src]="imagePreview" alt="Preview" class="preview-image">
+            <button type="button" class="remove-image-btn" (click)="removeImage()">✕</button>
+            <div class="image-status" *ngIf="!selectedFile && editProduct_data.currentImage">
+              <small>Current image (no changes)</small>
+            </div>
+            <div class="image-status" *ngIf="selectedFile">
+              <small>New image selected</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="cancel-btn" (click)="closeEditProductModal()" [disabled]="editingProduct">
+          Cancel
+        </button>
+        <button type="submit" class="submit-btn" [disabled]="editingProduct">
+          <span *ngIf="!editingProduct">💾 Update Product</span>
+          <span *ngIf="editingProduct">Updating Product...</span>
         </button>
       </div>
     </form>

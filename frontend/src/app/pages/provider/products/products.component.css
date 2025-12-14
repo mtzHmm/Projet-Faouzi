@@ -817,6 +817,17 @@
   background: rgba(220, 38, 38, 0.8);
 }
 
+.image-status {
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.image-status small {
+  color: #6b7280;
+  font-style: italic;
+  font-size: 0.8rem;
+}
+
 /* Form Actions */
 .form-actions {
   display: flex;

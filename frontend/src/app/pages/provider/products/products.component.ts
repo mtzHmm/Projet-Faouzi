@@ -35,6 +35,11 @@ export class ProductsComponent implements OnInit {
   selectedFile: File | null = null;
   imagePreview: string | null = null;
   
+  // Edit Product Modal
+  showEditProductModal = false;
+  editingProduct = false;
+  editingProductId: number | null = null;
+  
   // New Product Form Data
   newProduct = {
     name: '',
@@ -42,6 +47,16 @@ export class ProductsComponent implements OnInit {
     price: 0,
     category_id: '',
     prescription: false
+  };
+  
+  // Edit Product Form Data
+  editProduct_data = {
+    name: '',
+    description: '',
+    price: 0,
+    category_id: '',
+    prescription: false,
+    currentImage: ''
   };
 
   constructor(
@@ -245,6 +260,25 @@ export class ProductsComponent implements OnInit {
     this.imagePreview = null;
   }
 
+  closeEditProductModal() {
+    this.showEditProductModal = false;
+    this.resetEditProductForm();
+  }
+
+  resetEditProductForm() {
+    this.editProduct_data = {
+      name: '',
+      description: '',
+      price: 0,
+      category_id: '',
+      prescription: false,
+      currentImage: ''
+    };
+    this.selectedFile = null;
+    this.imagePreview = null;
+    this.editingProductId = null;
+  }
+
   onFileSelect(event: any) {
     const file = event.target.files[0];
     if (file) {
@@ -274,6 +308,12 @@ export class ProductsComponent implements OnInit {
   removeImage() {
     this.selectedFile = null;
     this.imagePreview = null;
+    
+    // If in edit mode and there was a current image, show placeholder
+    if (this.showEditProductModal && this.editProduct_data.currentImage) {
+      // Reset to show placeholder (no image preview)
+      this.imagePreview = null;
+    }
   }
 
   onImageLoad(event: any, product: any) {
@@ -345,8 +385,110 @@ export class ProductsComponent implements OnInit {
     });
   }
 
+  onSubmitEditProduct() {
+    console.log('📝 Edit product form submitted');
+    console.log('📝 Form data:', this.editProduct_data);
+    console.log('📝 Editing product ID:', this.editingProductId);
+    
+    if (!this.editProduct_data.name || !this.editProduct_data.description || this.editProduct_data.price <= 0 || !this.editProduct_data.category_id) {
+      console.log('❌ Missing required fields');
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    if (!this.editingProductId || !this.currentStore) {
+      console.log('❌ Invalid product or store information');
+      alert('Invalid product or store information');
+      return;
+    }
+
+    console.log('✅ Starting product update...');
+    this.editingProduct = true;
+
+    // Create FormData for file upload (similar to add product)
+    const formData = new FormData();
+    formData.append('name', this.editProduct_data.name);
+    formData.append('description', this.editProduct_data.description);
+    formData.append('price', this.editProduct_data.price.toString());
+    formData.append('category_id', this.editProduct_data.category_id);
+    formData.append('store_id', this.currentStore.id.toString());
+    formData.append('prescription', this.editProduct_data.prescription.toString());
+    
+    // Only append image if a new one was selected
+    if (this.selectedFile) {
+      formData.append('image', this.selectedFile);
+    }
+    
+    // Keep existing image if no new image selected
+    if (!this.selectedFile && this.editProduct_data.currentImage) {
+      formData.append('keepCurrentImage', 'true');
+    }
+
+    console.log('🔧 Updating product:', {
+      id: this.editingProductId,
+      name: this.editProduct_data.name,
+      description: this.editProduct_data.description,
+      price: this.editProduct_data.price,
+      category_id: this.editProduct_data.category_id,
+      store_id: this.currentStore.id,
+      prescription: this.editProduct_data.prescription,
+      hasNewImage: !!this.selectedFile,
+      keepCurrentImage: !this.selectedFile && !!this.editProduct_data.currentImage
+    });
+
+    this.productService.updateProduct(this.editingProductId, formData).subscribe({
+      next: (response) => {
+        console.log('✅ Product updated successfully:', response);
+        alert('Product updated successfully!');
+        this.closeEditProductModal();
+        this.loadProducts(); // Refresh the products list
+      },
+      error: (error) => {
+        console.error('❌ Error updating product:', error);
+        alert(`Failed to update product: ${error.error?.error || error.message}`);
+      },
+      complete: () => {
+        this.editingProduct = false;
+      }
+    });
+  }
+
   editProduct(productId: number) {
-    console.log('Edit product:', productId);
+    console.log('🔧 Edit product clicked for ID:', productId);
+    
+    // Find the product to edit
+    const product = this.products.find(p => p.id === productId);
+    if (!product) {
+      console.error('❌ Product not found with ID:', productId);
+      alert('Product not found');
+      return;
+    }
+    
+    console.log('📦 Found product to edit:', product);
+    
+    // Reset form state first
+    this.resetEditProductForm();
+    
+    // Populate form with existing product data
+    this.editingProductId = productId;
+    this.editProduct_data = {
+      name: product.name || '',
+      description: product.description || '',
+      price: Number(product.price) || 0,
+      category_id: product.category_id?.toString() || '',
+      prescription: Boolean(product.prescription),
+      currentImage: product.image || ''
+    };
+    
+    // Set current image as preview if exists and is valid URL
+    if (product.image && product.image.trim() !== '') {
+      this.imagePreview = product.image;
+      console.log('🖼️ Setting image preview:', product.image);
+    }
+    
+    console.log('📝 Edit form data:', this.editProduct_data);
+    console.log('🔧 Opening edit modal...');
+    this.showEditProductModal = true;
   }
 
   deleteProduct(productId: number) {

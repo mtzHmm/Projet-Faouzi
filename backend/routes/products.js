@@ -156,7 +156,7 @@ router.get('/', async (req, res) => {
     // Format products with proper price conversion
     const products = result.rows.map(product => ({
       ...product,
-      price: parseFloat(product.price) / 100, // Convert from cents to currency
+      price: parseFloat(product.price), // Keep price as stored (no conversion needed)
       available: true
       // Note: image field comes from database as 'image' (mapped from image_url)
     }));
@@ -243,7 +243,7 @@ router.get('/:id', async (req, res) => {
     
     const product = {
       ...result.rows[0],
-      price: result.rows[0].price / 100
+      price: parseFloat(result.rows[0].price)
     };
     
     res.json(product);
@@ -323,7 +323,7 @@ router.post('/', upload.single('image'), async (req, res) => {
     const result = await db.query(insertQuery, [
       name,
       description,
-      Math.round(parseFloat(price) * 100), // Convert to cents (integer)
+      parseFloat(price), // Store as actual price value
       parseInt(store_id),
       parseInt(category_id),
       imageUrl,
@@ -358,10 +358,10 @@ router.post('/', upload.single('image'), async (req, res) => {
     
     const detailResult = await db.query(detailQuery, [newProduct.id_produit]);
     
-    // Convert price back to currency format
+    // Keep price as stored (no conversion needed)
     const productWithPrice = {
       ...detailResult.rows[0],
-      price: parseFloat(detailResult.rows[0].price) / 100
+      price: parseFloat(detailResult.rows[0].price)
     };
     
     console.log('✅ Product created successfully:', productWithPrice);
@@ -388,20 +388,141 @@ router.post('/', upload.single('image'), async (req, res) => {
 });
 
 // PUT /api/products/:id - Update product
-router.put('/:id', async (req, res) => {
+router.put('/:id', upload.single('image'), async (req, res) => {
   try {
+    console.log('📝 Updating product with ID:', req.params.id);
+    console.log('📝 Request body:', req.body);
+    console.log('📎 Request file:', req.file ? 'File uploaded' : 'No file');
+    
+    const productId = parseInt(req.params.id);
+    const { name, description, price, category_id, store_id, prescription = false, keepCurrentImage } = req.body;
+    
+    // Validate required fields
+    if (!name || !description || !price || !category_id || !store_id) {
+      return res.status(400).json({ 
+        error: 'Name, description, price, category_id, and store_id are required' 
+      });
+    }
+
     const db = getDB();
+    
+    // Check if product exists and belongs to the store
     const checkResult = await db.query(
-      'SELECT id_produit FROM produit WHERE id_produit = $1',
-      [parseInt(req.params.id)]
+      'SELECT id_produit, image_url FROM produit WHERE id_produit = $1 AND id_magazin = $2',
+      [productId, parseInt(store_id)]
     );
     
     if (checkResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Product not found' });
+      return res.status(404).json({ error: 'Product not found or unauthorized' });
     }
+
+    const currentProduct = checkResult.rows[0];
+    let imageUrl = currentProduct.image_url; // Keep current image by default
     
-    // Update logic would go here - simplified for now
-    res.json({ message: 'Product update not implemented yet' });
+    // Handle image upload if provided
+    if (req.file) {
+      try {
+        console.log('📸 Uploading new image to Cloudinary...');
+        
+        // Ensure Cloudinary is initialized
+        if (!cloudinaryConfig.isInitialized) {
+          cloudinaryConfig.initialize();
+        }
+        
+        const uploadResult = await cloudinaryConfig.uploadImageBuffer(req.file.buffer, {
+          folder: 'products',
+          transformation: [
+            { width: 800, height: 600, crop: 'fill' },
+            { quality: 'auto:good' }
+          ]
+        });
+        imageUrl = uploadResult.secure_url;
+        console.log('✅ New image uploaded successfully:', imageUrl);
+        
+        // Delete old image if it exists and is different
+        if (currentProduct.image_url && currentProduct.image_url !== imageUrl) {
+          try {
+            // Extract public ID from Cloudinary URL to delete old image
+            const publicIdMatch = currentProduct.image_url.match(/\/products\/([^/]+)\./);
+            if (publicIdMatch) {
+              await cloudinaryConfig.deleteImage(`products/${publicIdMatch[1]}`);
+              console.log('🗑️ Old image deleted from Cloudinary');
+            }
+          } catch (deleteError) {
+            console.warn('⚠️ Could not delete old image:', deleteError.message);
+          }
+        }
+      } catch (uploadError) {
+        console.error('❌ Image upload failed:', uploadError);
+        return res.status(500).json({ 
+          error: 'Image upload failed', 
+          details: uploadError.message 
+        });
+      }
+    } else if (keepCurrentImage !== 'true') {
+      // If no new image and not keeping current, set to null
+      imageUrl = null;
+    }
+
+    // Update product in database
+    const updateQuery = `
+      UPDATE produit 
+      SET nom = $1, description = $2, prix = $3, categorie_id = $4, image_url = $5, prescription_required = $6
+      WHERE id_produit = $7 AND id_magazin = $8
+      RETURNING id_produit, nom, description, prix, id_magazin, categorie_id, image_url, prescription_required
+    `;
+    
+    // Store price as entered (not multiplied by 100) since the frontend handles the display format
+    const updateResult = await db.query(updateQuery, [
+      name,
+      description,
+      parseFloat(price), // Store as the actual price value
+      parseInt(category_id),
+      imageUrl,
+      Boolean(prescription),
+      productId,
+      parseInt(store_id)
+    ]);
+
+    if (updateResult.rows.length === 0) {
+      return res.status(500).json({ error: 'Failed to update product' });
+    }
+
+    const updatedProduct = updateResult.rows[0];
+    
+    // Get additional product details with joins
+    const detailQuery = `
+      SELECT 
+        p.id_produit as id,
+        p.nom as name,
+        p.description,
+        p.prix as price,
+        p.image_url as image,
+        p.prescription_required as prescription,
+        m.nom as restaurant,
+        m.type as type,
+        m.id_magazin as store_id,
+        c.id as category_id,
+        c.nom as category_name
+      FROM produit p
+      JOIN magasin m ON p.id_magazin = m.id_magazin
+      LEFT JOIN categorie c ON p.categorie_id = c.id
+      WHERE p.id_produit = $1
+    `;
+    
+    const detailResult = await db.query(detailQuery, [productId]);
+    const productDetails = detailResult.rows[0];
+    
+    // Keep price as is (already in correct format)
+    productDetails.price = parseFloat(productDetails.price);
+
+    console.log('✅ Product updated successfully:', productDetails);
+    
+    res.json({
+      message: 'Product updated successfully',
+      product: productDetails
+    });
+    
   } catch (error) {
     console.error('❌ Error updating product:', error);
     res.status(500).json({ 
@@ -460,7 +581,7 @@ router.get('/category/:category', async (req, res) => {
     
     const categoryProducts = result.rows.map(product => ({
       ...product,
-      price: product.price / 100 // Convert from cents to DT
+      price: parseFloat(product.price) // Keep price as stored
     }));
     
     res.json({
