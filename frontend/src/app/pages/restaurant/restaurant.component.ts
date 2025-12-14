@@ -312,4 +312,9 @@ export class RestaurantComponent implements OnInit {
     
     return '🍴'; // Emoji par défaut
   }
+
+  onImageError(event: any): void {
+    console.log('❌ Image failed to load:', event.target.src);
+    event.target.style.display = 'none';
+  }
 }
