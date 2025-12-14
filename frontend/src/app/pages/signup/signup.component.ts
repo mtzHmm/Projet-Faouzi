@@ -101,7 +101,8 @@ export class SignupComponent {
       signupData.complement = this.gouvernorat || null; // Backend uses complement for gouv_client
     }
     
-    console.log('📤 Sending registration data:', signupData);
+    console.log('📤 Sending registration data:');
+    console.log(JSON.stringify(signupData, null, 2));
     console.log('🌐 API URL:', `${window.location.protocol}//${window.location.hostname}:5000/api/auth/register`);
     console.log('⏳ Starting request...');
     
@@ -135,16 +136,22 @@ export class SignupComponent {
         console.error('❌ Error status:', error.status);
         console.error('❌ Error details:', error.error);
         
+        // Handle specific error cases
         if (error.status === 0) {
-          this.errorMessage = 'Cannot connect to server. Please check if the backend is running.';
+          this.errorMessage = 'Impossible de se connecter au serveur. Vérifiez que le backend est actif.';
+        } else if (error.status === 409) {
+          // Email already exists (conflict)
+          this.errorMessage = error.error?.error || 'Cet email est déjà utilisé. Veuillez utiliser un autre email ou vous connecter.';
         } else if (error.error?.error) {
           this.errorMessage = error.error.error;
         } else if (error.error?.message) {
           this.errorMessage = error.error.message;
         } else if (error.message) {
           this.errorMessage = error.message;
+        } else if (error.status === 500) {
+          this.errorMessage = 'Erreur serveur. Veuillez réessayer.';
         } else {
-          this.errorMessage = 'Registration failed. Please try again.';
+          this.errorMessage = 'Erreur lors de l\'inscription. Veuillez réessayer.';
         }
       }
     });

@@ -80,16 +80,23 @@ router.post('/login', async (req, res) => {
     }
     
     if (!user) {
+      console.log('❌ User not found in any table');
       return res.status(401).json({
         success: false,
         error: 'Invalid email or password'
       });
     }
     
+    console.log('✅ User found:', { id: user.id, email: user.email, userType });
+    console.log('🔐 Comparing passwords...');
+    
     // Verify password
     const passwordMatch = await bcrypt.compare(password, user.mot_de_passe);
     
+    console.log('🔑 Password match:', passwordMatch);
+    
     if (!passwordMatch) {
+      console.log('❌ Password mismatch for user:', email);
       return res.status(401).json({
         success: false,
         error: 'Invalid email or password'
@@ -177,6 +184,27 @@ router.post('/register', async (req, res) => {
     
     const db = getDB();
     console.log('🔌 Database connection acquired');
+    
+    // Check if email already exists in any table
+    try {
+      const clientCheck = await db.query('SELECT email FROM client WHERE email = $1', [email]);
+      const magasinCheck = await db.query('SELECT email FROM magasin WHERE email = $1', [email]);
+      const livreurCheck = await db.query('SELECT email FROM livreur WHERE email = $1', [email]);
+      
+      if (clientCheck.rows.length > 0 || magasinCheck.rows.length > 0 || livreurCheck.rows.length > 0) {
+        console.log('❌ Email already exists:', email);
+        return res.status(409).json({
+          success: false,
+          error: 'Cet email est déjà utilisé. Veuillez utiliser un autre email ou vous connecter.'
+        });
+      }
+    } catch (checkError) {
+      console.error('❌ Error checking email:', checkError);
+      return res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la vérification de l\'email'
+      });
+    }
     
     // Hash password
     const saltRounds = 10;
