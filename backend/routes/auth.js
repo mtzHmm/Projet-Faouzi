@@ -120,6 +120,8 @@ router.post('/login', async (req, res) => {
         id: user.id,
         email: user.email,
         name: user.name,
+        firstName: user.prenom || user.name?.split(' ')[0],
+        lastName: user.nom || user.name?.split(' ')[1],
         role: user.role?.toLowerCase() || userType,
         phone: user.tel,
         ...(userType === 'provider' && { storeType: user.type }),
@@ -198,6 +200,8 @@ router.post('/register', async (req, res) => {
       userRecord = {
         id: userId,
         name: `${result.rows[0].prenom} ${result.rows[0].nom}`,
+        firstName: result.rows[0].prenom,
+        lastName: result.rows[0].nom,
         email,
         role: 'livreur',
         phone: result.rows[0].tel,
@@ -242,18 +246,32 @@ router.post('/register', async (req, res) => {
       userRecord = {
         id: userId,
         name: `${result.rows[0].prenom} ${result.rows[0].nom}`,
+        firstName: result.rows[0].prenom,
+        lastName: result.rows[0].nom,
         email,
         role: 'client',
         phone: result.rows[0].tel
       };
     }
     
+    // Generate JWT token for auto-login after registration
+    const token = jwt.sign(
+      { 
+        id: userRecord.id, 
+        email: userRecord.email, 
+        role: userRecord.role
+      },
+      process.env.JWT_SECRET || 'fallback-secret-key',
+      { expiresIn: '24h' }
+    );
+    
     console.log('✅ User registered successfully:', userRecord);
     
     res.status(201).json({
       success: true,
       message: 'Registration successful',
-      user: userRecord
+      user: userRecord,
+      token
     });
     
   } catch (error) {

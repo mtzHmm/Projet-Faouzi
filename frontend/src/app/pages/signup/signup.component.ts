@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-signup',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './signup.component.html',
   styleUrl: './signup.component.css'
 })
@@ -49,6 +49,7 @@ export class SignupComponent {
   ) {}
 
   onSubmit() {
+    console.log('🔵 Form submitted!');
     this.errorMessage = '';
     
     // Basic validation for different account types
@@ -73,24 +74,27 @@ export class SignupComponent {
       email: this.email,
       password: this.password,
       phone: this.phone || null,
-      role: this.accountType === 'customer' ? 'client' : this.accountType
+      role: this.accountType === 'customer' ? 'client' : this.accountType === 'delivery' ? 'livreur' : 'provider'
     };
 
     // Add fields based on account type matching backend expectations
     if (this.accountType === 'provider') {
-      // magasin table fields - backend expects storeName and storeCategory
+      // magasin table fields - backend expects name or storeName and storeCategory
+      signupData.name = this.storeName;
       signupData.storeName = this.storeName;
       signupData.storeCategory = this.storeType || 'restaurant';
       signupData.ville = this.ville || null;
       signupData.complement = this.gouvernorat || null; // Backend uses complement for gouv_magasin
     } else if (this.accountType === 'delivery') {
-      // livreur table fields - backend expects firstName, lastName, city
+      // livreur table fields - backend expects name or firstName, lastName, city
+      signupData.name = `${this.firstName} ${this.lastName}`;
       signupData.firstName = this.firstName;
       signupData.lastName = this.lastName;
       signupData.city = this.ville_livraison || null;
       signupData.availabilityTime = this.disponibilite || null;
     } else if (this.accountType === 'customer') {
-      // client table fields - backend expects firstName, lastName, ville, complement
+      // client table fields - backend expects name or firstName, lastName, ville, complement
+      signupData.name = `${this.firstName} ${this.lastName}`;
       signupData.firstName = this.firstName;
       signupData.lastName = this.lastName;
       signupData.ville = this.ville || null;
@@ -98,27 +102,28 @@ export class SignupComponent {
     }
     
     console.log('📤 Sending registration data:', signupData);
-    console.log('🌐 API URL:', this.authService);
+    console.log('🌐 API URL:', `${window.location.protocol}//${window.location.hostname}:5000/api/auth/register`);
+    console.log('⏳ Starting request...');
     
     this.authService.register(signupData).subscribe({
       next: (response) => {
+        console.log('✅ Registration response received:', response);
         this.isLoading = false;
-        console.log('✅ Registration response:', response);
         
         if (response.success) {
-          // Save user data and token if provided
-          if (response.user) {
-            this.authService.saveUserData(response.user);
-          }
+          // Save user data and token for auto-login
           if (response.token) {
             this.authService.saveToken(response.token);
+          }
+          if (response.user) {
+            this.authService.saveUserData(response.user);
           }
           
           const accountTypeText = this.accountType === 'delivery' ? 'Delivery Partner' : 
                                  this.accountType === 'provider' ? 'Store Provider' : 'Customer';
           
-          // Show success message and redirect to home
-          alert(`Welcome! Your ${accountTypeText} account has been created successfully.`);
+          // Show success message and redirect to home page
+          alert(`Welcome ${response.user?.name || ''}! Your ${accountTypeText} account has been created successfully.`);
           this.router.navigate(['/']);
         } else {
           this.errorMessage = response.message || 'Registration failed. Please try again.';
