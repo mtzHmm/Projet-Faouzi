@@ -12,12 +12,19 @@
       class="filter-btn"
       [class.active]="selectedCategory === category"
       (click)="filterByCategory(category)">
+      <span class="product-emoji">{{ getProductEmoji(category || 'Épicerie') }}</span>
       {{ category }}
     </button>
   </div>
 
+  <!-- Loading state -->
+  <div class="loading-state" *ngIf="isLoading && !dataLoaded">
+    <div class="loading-spinner"></div>
+    <p>Chargement des produits courses...</p>
+  </div>
+
   <!-- Grille de produits -->
-  <div class="products-grid">
+  <div class="products-grid" *ngIf="!isLoading || dataLoaded">
     <div class="product-card" *ngFor="let product of filteredProducts">
       <div class="product-image">
         <img [src]="product.image" [alt]="product.name" />
@@ -33,11 +40,11 @@
       </div>
       
       <div class="product-info">
-        <div class="product-store">{{ product.store }}</div>
+        <div class="product-store">{{ product.restaurant }}</div>
         <h3 class="product-name">{{ product.name }}</h3>
         <p class="product-description">{{ product.description }}</p>
         <div class="product-meta">
-          <span class="product-category">{{ product.category }}</span>
+          <span class="product-category">{{ product.category_name || 'Épicerie' }}</span>
           <div class="product-price-unit">
             <div class="product-price">{{ product.price | currency:'EUR':'symbol':'1.2-2' }}</div>
             <div class="product-unit" *ngIf="product.unit">/ {{ product.unit }}</div>
@@ -95,7 +102,7 @@
   </div>
 
   <!-- Message si aucun produit -->
-  <div class="empty-state" *ngIf="filteredProducts.length === 0">
+  <div class="empty-state" *ngIf="filteredProducts.length === 0 && !isLoading && dataLoaded">
     <i class="fas fa-shopping-basket"></i>
     <h3>Aucun produit trouvé</h3>
     <p>Essayez de changer votre filtre de catégorie</p>
