@@ -18,9 +18,20 @@ export interface Order {
   id: number;
   userId: number;
   userName: string;
+  userEmail: string;
+  userPhone: string;
+  deliveryAddress: string;
+  city: string;
+  governorate: string;
+  postalCode: string;
+  additionalNotes: string;
   items: OrderItem[];
+  subtotal: number;
+  tax: number;
+  deliveryFee: number;
   total: number;
   status: OrderStatus;
+  dateCommande: string;
   createdAt: Date;
 }
 
@@ -34,8 +45,20 @@ export interface OrdersResponse {
 export interface CreateOrderRequest {
   userId: number;
   userName: string;
+  userEmail: string;
+  userPhone: string;
+  deliveryAddress: string;
+  city: string;
+  governorate: string;
+  postalCode: string;
+  additionalNotes: string;
   items: OrderItem[];
+  subtotal: number;
+  tax: number;
+  deliveryFee: number;
   total: number;
+  dateCommande: string;
+  status: string;
 }
 
 export interface OrderStats {

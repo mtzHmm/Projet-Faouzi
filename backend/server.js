@@ -105,6 +105,16 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// Test endpoint to verify backend connectivity
+app.get('/api/test', (req, res) => {
+  console.log('🧪 TEST endpoint hit! Backend is responding!');
+  res.json({ 
+    message: 'REAL backend is responding!',
+    timestamp: new Date().toISOString(),
+    port: PORT
+  });
+});
+
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({

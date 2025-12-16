@@ -12,6 +12,7 @@ interface DeliveryInfo {
   phone: string;
   address: string;
   city: string;
+  governorate: string;
   postalCode: string;
   additionalNotes: string;
 }
@@ -31,6 +32,7 @@ export class CheckoutComponent implements OnInit {
     phone: '',
     address: '',
     city: '',
+    governorate: '',
     postalCode: '',
     additionalNotes: ''
   };
@@ -99,7 +101,8 @@ export class CheckoutComponent implements OnInit {
       this.deliveryInfo.email &&
       this.deliveryInfo.phone &&
       this.deliveryInfo.address &&
-      this.deliveryInfo.city
+      this.deliveryInfo.city &&
+      this.deliveryInfo.governorate
     );
   }
 
@@ -119,21 +122,35 @@ export class CheckoutComponent implements OnInit {
     const orderData: CreateOrderRequest = {
       userId: this.userId,
       userName: this.deliveryInfo.fullName,
+      userEmail: this.deliveryInfo.email,
+      userPhone: this.deliveryInfo.phone,
+      deliveryAddress: this.deliveryInfo.address,
+      city: this.deliveryInfo.city,
+      governorate: this.deliveryInfo.governorate,
+      postalCode: this.deliveryInfo.postalCode,
+      additionalNotes: this.deliveryInfo.additionalNotes,
       items: this.cartItems.map(item => ({
         id: item.productId,
         name: item.name,
         quantity: item.quantity,
         price: item.price
       })),
-      total: this.total
+      subtotal: this.subtotal,
+      tax: this.tax,
+      deliveryFee: this.deliveryFee,
+      total: this.total,
+      dateCommande: new Date().toISOString().split('T')[0],
+      status: 'en cours'  // Use French status that matches DB constraint
     };
 
     console.log('📦 Creating order:', orderData);
+    console.log('🌐 API URL:', `${this.orderService['apiUrl']}`);
 
     // Créer la commande
     this.orderService.createOrder(orderData).subscribe({
       next: (order) => {
         console.log('✅ Order created successfully:', order);
+        console.log('🔍 Order details:', JSON.stringify(order, null, 2));
         
         // Vider le panier
         this.cartService.clearCart();
@@ -146,6 +163,7 @@ export class CheckoutComponent implements OnInit {
       },
       error: (error) => {
         console.error('❌ Error creating order:', error);
+        console.error('🔍 Error details:', JSON.stringify(error, null, 2));
         alert('Erreur lors de la création de la commande. Veuillez réessayer.');
         this.isProcessing = false;
       }

@@ -1,161 +1,354 @@
 const express = require('express');
 const router = express.Router();
+const database = require('../config/database');
 
-// Mock orders data - Will be replaced with database queries
-let orders = [
-  {
-    id: 1001,
-    userId: 1,
-    userName: 'Sophie Martin',
-    userEmail: 'sophie.martin@email.com',
-    total: 45.80,
-    status: 'en_cours',
-    deliveryAddress: '123 Rue de la Paix, 75001 Paris',
-    items: [
-      { id: 1, name: 'Pizza Margherita', quantity: 2, price: 15.90 },
-      { id: 2, name: 'Coca Cola', quantity: 2, price: 7.00 }
-    ],
-    createdAt: new Date('2025-12-13T14:30:00')
-  },
-  {
-    id: 1002,
-    userId: 2,
-    userName: 'Marc Dubois',
-    userEmail: 'marc.dubois@email.com',
-    total: 28.90,
-    status: 'en_cours',
-    deliveryAddress: '456 Avenue des Champs, 75008 Paris',
-    items: [
-      { id: 3, name: 'Burger Classic', quantity: 1, price: 12.90 },
-      { id: 4, name: 'Frites', quantity: 1, price: 4.00 }
-    ],
-    createdAt: new Date('2025-12-13T14:25:00')
-  },
-  {
-    id: 1003,
-    userId: 3,
-    userName: 'Laura Petit',
-    userEmail: 'laura.petit@email.com',
-    total: 67.30,
-    status: 'en_cours',
-    deliveryAddress: '789 Boulevard Saint-Germain, 75006 Paris',
-    items: [
-      { id: 5, name: 'Salade César', quantity: 1, price: 8.90 },
-      { id: 6, name: 'Saumon grillé', quantity: 2, price: 18.50 },
-      { id: 7, name: 'Vin blanc', quantity: 1, price: 15.40 }
-    ],
-    createdAt: new Date('2025-12-13T13:45:00')
-  },
-  {
-    id: 1004,
-    userId: 4,
-    userName: 'Thomas Bernard',
-    userEmail: 'thomas.bernard@email.com',
-    total: 92.10,
-    status: 'livrée',
-    deliveryAddress: '321 Rue de Rivoli, 75004 Paris',
-    items: [
-      { id: 8, name: 'Sushi Mix', quantity: 2, price: 25.90 },
-      { id: 9, name: 'Miso Soup', quantity: 2, price: 4.50 },
-      { id: 10, name: 'Saké', quantity: 1, price: 12.80 }
-    ],
-    createdAt: new Date('2025-12-13T12:30:00')
+console.log('🔗 Orders route loaded and initialized');
+
+// Add request logging middleware for debugging
+router.use((req, res, next) => {
+  console.log(`🌐 ${req.method} ${req.originalUrl} - ${new Date().toISOString()}`);
+  if (req.method === 'POST') {
+    console.log('📨 POST Request body preview:', Object.keys(req.body || {}));
   }
-];
+  next();
+});
+
+// Helper function to format order with items
+async function formatOrderWithItems(order) {
+  const db = database.getPool();
+  
+  // Get order items from ligne_commande and produit tables
+  const itemsQuery = `
+    SELECT lc.quantite, p.id_produit as id, p.nom as name, p.prix as price
+    FROM ligne_commande lc
+    JOIN produit p ON lc.id_produit = p.id_produit
+    WHERE lc.id_cmd = $1
+  `;
+  
+  const itemsResult = await db.query(itemsQuery, [order.id_cmd]);
+  
+  return {
+    id: order.id_cmd,
+    userId: order.id_client,
+    userName: order.user_name || '',
+    userEmail: order.user_email || '',
+    userPhone: order.user_phone || '',
+    deliveryAddress: order.delivery_address || '',
+    city: order.city || '',
+    governorate: order.governorate || '',
+    postalCode: order.postal_code || '',
+    additionalNotes: order.additional_notes || '',
+    subtotal: parseFloat(order.subtotal || 0),
+    tax: parseFloat(order.tax || 0),
+    deliveryFee: parseFloat(order.delivery_fee || 0),
+    total: parseFloat(order.total),
+    status: order.status,
+    createdAt: order.date_commande,
+    items: itemsResult.rows.map(item => ({
+      id: item.id,
+      name: item.name,
+      quantity: item.quantite,
+      price: parseFloat(item.price)
+    }))
+  };
+}
 
 // GET /api/orders - Get all orders
-router.get('/', (req, res) => {
-  const { status, userId, page = 1, limit = 10 } = req.query;
-  
-  let filteredOrders = orders;
-  
-  // Filter by status
-  if (status) {
-    filteredOrders = filteredOrders.filter(order => order.status === status);
+router.get('/', async (req, res) => {
+  try {
+    const { status, userId, page = 1, limit = 10 } = req.query;
+    const db = database.getPool();
+    
+    let query = `
+      SELECT c.*, 
+             cl.nom || ' ' || cl.prenom as user_name,
+             cl.email as user_email
+      FROM commande c
+      LEFT JOIN client cl ON c.id_client = cl.id_client
+      WHERE 1=1
+    `;
+    
+    const params = [];
+    let paramIndex = 1;
+    
+    // Filter by status
+    if (status) {
+      query += ` AND c.status = $${paramIndex}`;
+      params.push(status);
+      paramIndex++;
+    }
+    
+    // Filter by user
+    if (userId) {
+      query += ` AND c.id_client = $${paramIndex}`;
+      params.push(parseInt(userId));
+      paramIndex++;
+    }
+    
+    // Order by date desc
+    query += ' ORDER BY c.date_commande DESC';
+    
+    // Execute query to get total count
+    const countResult = await db.query(query.replace('c.*, cl.nom || \' \' || cl.prenom as user_name, cl.email as user_email', 'COUNT(*)'), params);
+    const totalOrders = parseInt(countResult.rows[0].count);
+    
+    // Add pagination
+    const offset = (page - 1) * limit;
+    query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    params.push(parseInt(limit), offset);
+    
+    const result = await db.query(query, params);
+    
+    // Format each order with its items
+    const formattedOrders = await Promise.all(
+      result.rows.map(order => formatOrderWithItems(order))
+    );
+    
+    res.json({
+      orders: formattedOrders,
+      total: totalOrders,
+      page: parseInt(page),
+      totalPages: Math.ceil(totalOrders / limit)
+    });
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-  
-  // Filter by user
-  if (userId) {
-    filteredOrders = filteredOrders.filter(order => order.userId === parseInt(userId));
-  }
-  
-  // Pagination
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + parseInt(limit);
-  const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
-  
-  res.json({
-    orders: paginatedOrders,
-    total: filteredOrders.length,
-    page: parseInt(page),
-    totalPages: Math.ceil(filteredOrders.length / limit)
-  });
 });
 
 // GET /api/orders/:id - Get order by ID
-router.get('/:id', (req, res) => {
-  const order = orders.find(o => o.id === parseInt(req.params.id));
-  
-  if (!order) {
-    return res.status(404).json({ error: 'Order not found' });
+router.get('/:id', async (req, res) => {
+  try {
+    const db = database.getPool();
+    const orderId = parseInt(req.params.id);
+    
+    const query = `
+      SELECT c.*, 
+             cl.nom || ' ' || cl.prenom as user_name,
+             cl.email as user_email
+      FROM commande c
+      LEFT JOIN client cl ON c.id_client = cl.id_client
+      WHERE c.id_cmd = $1
+    `;
+    
+    const result = await db.query(query, [orderId]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    
+    const formattedOrder = await formatOrderWithItems(result.rows[0]);
+    res.json(formattedOrder);
+  } catch (error) {
+    console.error('Error fetching order:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-  
-  res.json(order);
 });
 
 // POST /api/orders - Create new order
-router.post('/', (req, res) => {
-  const { userId, userName, items, total } = req.body;
+router.post('/', async (req, res) => {
+  console.log('🚨🚨🚨 POST /orders route HIT - Database version! 🚨🚨🚨');
+  const db = database.getPool();
+  const client = await db.connect();
   
-  if (!userId || !items || !total) {
-    return res.status(400).json({ error: 'UserId, items, and total are required' });
+  try {
+    // Debug: Log incoming request data
+    console.log('📝 Incoming order request body:', JSON.stringify(req.body, null, 2));
+    
+    const { 
+      userId, 
+      userName, 
+      userEmail, 
+      userPhone, 
+      deliveryAddress, 
+      city, 
+      governorate, 
+      postalCode, 
+      additionalNotes, 
+      items, 
+      subtotal, 
+      tax, 
+      deliveryFee, 
+      total, 
+      dateCommande, 
+      status = 'en cours'  // Use French status that matches DB constraint 
+    } = req.body;
+    
+    // Debug: Log extracted values
+    console.log('🔍 Extracted values:', {
+      userId, userName, userEmail, userPhone, 
+      deliveryAddress, city, governorate, 
+      items: items?.length, total, status
+    });
+    
+    // Validation
+    if (!userId || !items || !Array.isArray(items) || items.length === 0 || !total) {
+      console.log('❌ Validation failed:', { userId, itemsLength: items?.length, total });
+      return res.status(400).json({ error: 'UserId, items (non-empty array), and total are required' });
+    }
+    
+    console.log('✅ Validation passed, starting transaction...');
+    
+    console.log('✅ Validation passed, starting transaction...');
+    
+    // Start transaction
+    await client.query('BEGIN');
+    
+    // Insert into commande table
+    const insertOrderQuery = `
+      INSERT INTO commande (
+        date_commande, 
+        status, 
+        total, 
+        id_client,
+        user_name,
+        user_email,
+        user_phone,
+        delivery_address,
+        city,
+        governorate,
+        postal_code,
+        additional_notes,
+        subtotal,
+        tax,
+        delivery_fee
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      RETURNING id_cmd
+    `;
+    
+    const orderValues = [
+      dateCommande || new Date().toISOString().split('T')[0],
+      status,
+      total,
+      userId,
+      userName,
+      userEmail,
+      userPhone,
+      deliveryAddress,
+      city,
+      governorate,
+      postalCode,
+      additionalNotes,
+      subtotal || 0,
+      tax || 0,
+      deliveryFee || 0
+    ];
+    
+    console.log('🗃️ Executing order insert with values:', orderValues);
+    
+    const orderResult = await client.query(insertOrderQuery, orderValues);
+    const orderId = orderResult.rows[0].id_cmd;
+    
+    console.log('🎯 Order inserted with ID:', orderId);
+    
+    // Insert items into ligne_commande table
+    console.log('📦 Inserting', items.length, 'items...');
+    for (const item of items) {
+      console.log('🔹 Inserting item:', { quantity: item.quantity, orderId, productId: item.id });
+      
+      const insertItemQuery = `
+        INSERT INTO ligne_commande (quantite, id_cmd, id_produit)
+        VALUES ($1, $2, $3)
+      `;
+      
+      await client.query(insertItemQuery, [item.quantity, orderId, item.id]);
+    }
+    
+    console.log('✅ All items inserted successfully');
+    
+    // Commit transaction
+    await client.query('COMMIT');
+    console.log('💾 Transaction committed');
+    
+    // Fetch the created order with all details
+    const fetchOrderQuery = `
+      SELECT c.*, 
+             cl.nom || ' ' || cl.prenom as user_name,
+             cl.email as user_email
+      FROM commande c
+      LEFT JOIN client cl ON c.id_client = cl.id_client
+      WHERE c.id_cmd = $1
+    `;
+    
+    const createdOrderResult = await client.query(fetchOrderQuery, [orderId]);
+    const formattedOrder = await formatOrderWithItems(createdOrderResult.rows[0]);
+    
+    console.log(`✅ Order created successfully: #${orderId}`);
+    res.status(201).json(formattedOrder);
+    
+  } catch (error) {
+    // Rollback transaction on error
+    await client.query('ROLLBACK');
+    console.error('Error creating order:', error);
+    res.status(500).json({ error: 'Failed to create order: ' + error.message });
+  } finally {
+    // Release the client back to the pool
+    client.release();
   }
-  
-  const newOrder = {
-    id: Date.now(),
-    userId,
-    userName,
-    items,
-    total,
-    status: 'en_cours',
-    createdAt: new Date()
-  };
-  
-  orders.push(newOrder);
-  
-  res.status(201).json(newOrder);
 });
 
 // PUT /api/orders/:id/status - Update order status
-router.put('/:id/status', (req, res) => {
-  const { status } = req.body;
-  const orderIndex = orders.findIndex(o => o.id === parseInt(req.params.id));
-  
-  if (orderIndex === -1) {
-    return res.status(404).json({ error: 'Order not found' });
+router.put('/:id/status', async (req, res) => {
+  try {
+    const { status } = req.body;
+    const orderId = parseInt(req.params.id);
+    const db = database.getPool();
+    
+    const validStatuses = ['en cours', 'livrée', 'annulée'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: 'Invalid status. Valid statuses: ' + validStatuses.join(', ') });
+    }
+    
+    const updateQuery = `
+      UPDATE commande 
+      SET status = $1 
+      WHERE id_cmd = $2
+      RETURNING *
+    `;
+    
+    const result = await db.query(updateQuery, [status, orderId]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    
+    const formattedOrder = await formatOrderWithItems(result.rows[0]);
+    res.json(formattedOrder);
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-  
-  const validStatuses = ['en_cours', 'livrée', 'annulée'];
-  if (!validStatuses.includes(status)) {
-    return res.status(400).json({ error: 'Invalid status' });
-  }
-  
-  orders[orderIndex].status = status;
-  
-  res.json(orders[orderIndex]);
 });
 
-// GET /api/orders/stats - Get order statistics
-router.get('/stats/summary', (req, res) => {
-  const stats = {
-    total: orders.length,
-    inProgress: orders.filter(o => o.status === 'en_cours').length,
-    delivered: orders.filter(o => o.status === 'livrée').length,
-    cancelled: orders.filter(o => o.status === 'annulée').length,
-    totalRevenue: orders.reduce((sum, order) => sum + order.total, 0)
-  };
-  
-  res.json(stats);
+// GET /api/orders/stats/summary - Get order statistics
+router.get('/stats/summary', async (req, res) => {
+  try {
+    const db = database.getPool();
+    
+    const statsQuery = `
+      SELECT 
+        COUNT(*) as totalOrders,
+        COUNT(CASE WHEN status = 'en cours' THEN 1 END) as pendingOrders,
+        COUNT(CASE WHEN status = 'livrée' THEN 1 END) as completedOrders,
+        COALESCE(SUM(total), 0) as totalRevenue,
+        COALESCE(AVG(total), 0) as averageOrderValue
+      FROM commande
+    `;
+    
+    const result = await db.query(statsQuery);
+    const stats = result.rows[0];
+    
+    res.json({
+      totalOrders: parseInt(stats.totalorders),
+      pendingOrders: parseInt(stats.pendingorders),
+      completedOrders: parseInt(stats.completedorders),
+      totalRevenue: parseFloat(stats.totalrevenue),
+      averageOrderValue: parseFloat(stats.averageordervalue)
+    });
+  } catch (error) {
+    console.error('Error fetching order stats:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 module.exports = router;
