@@ -8,9 +8,10 @@ export interface OrderItem {
   name: string;
   quantity: number;
   price: number;
+  total?: number; // Optional - calculated in backend
 }
 export type OrderStatus =
-  | 'en_cours'
+  | 'en cours'
   | 'livrée'
   | 'annulée'
 ;

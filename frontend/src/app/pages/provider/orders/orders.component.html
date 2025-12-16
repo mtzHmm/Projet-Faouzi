@@ -30,6 +30,14 @@
 
   <!-- Main Content -->
   <div class="main-content">
+    <!-- Debug panel -->
+    <div style="position: fixed; top: 10px; right: 10px; background: #000; color: #0f0; padding: 10px; font-family: monospace; z-index: 9999; border-radius: 4px;">
+      loading: {{ loading }}<br>
+      error: {{ !!error }}<br>
+      orders: {{ orders.length }}<br>
+      filtered: {{ filteredOrders.length }}
+    </div>
+
     <div class="page-header">
       <h1>📋 Order Management</h1>
       <p>Track and manage customer orders</p>
@@ -49,16 +57,8 @@
           [(ngModel)]="selectedStatus" 
           (change)="filterOrders()" 
           class="filter-select">
-          <option value="">All Status</option>
-          <option *ngFor="let status of statuses" [value]="status">{{ status | titlecase }}</option>
-        </select>
-
-        <select 
-          [(ngModel)]="selectedPayment" 
-          (change)="filterOrders()" 
-          class="filter-select">
-          <option value="">All Payment Methods</option>
-          <option *ngFor="let method of paymentMethods" [value]="method">{{ method | titlecase }}</option>
+          <option value="all">All Status</option>
+          <option *ngFor="let status of statuses" [value]="status">{{ getStatusText(status) }}</option>
         </select>
       </div>
 
@@ -75,7 +75,17 @@
     </div>
 
     <!-- Orders Table -->
-    <div class="orders-table">
+    <div *ngIf="loading" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Loading orders...</p>
+    </div>
+
+    <div *ngIf="error" class="error-state">
+      <p>❌ {{ error }}</p>
+      <button (click)="loadOrders()" class="retry-btn">🔄 Retry</button>
+    </div>
+
+    <div *ngIf="!loading && !error" class="orders-table">
       <div class="table-header">
         <div>Order ID</div>
         <div>Customer</div>
@@ -86,20 +96,19 @@
         <div>Actions</div>
       </div>
 
-      <div *ngFor="let order of filteredOrders" class="table-row">
-        <div class="col-id">{{ order.id }}</div>
+      <div *ngFor="let order of filteredOrders; trackBy: trackOrder" class="table-row">
+        <div class="col-id">#{{ order.id }}</div>
         <div class="col-customer">
           <div class="customer-info">
-            <strong>{{ order.customer.fullName }}</strong>
+            <strong>{{ order.userName || 'N/A' }}</strong>
             <div class="customer-details">
-              <div>🏪 {{ order.store }}</div>
-              <div>📞 {{ order.phone }}</div>
-              <div>📍 {{ order.address }}</div>
-              <div>💳 {{ order.paymentMethod | titlecase }}</div>
+              <div>📧 {{ order.userEmail || 'N/A' }}</div>
+              <div>📞 {{ order.userPhone || 'N/A' }}</div>
+              <div>📍 {{ order.deliveryAddress || 'N/A' }}, {{ order.city || 'N/A' }}</div>
             </div>
           </div>
         </div>
-        <div class="col-items">{{ order.itemsText }}</div>
+        <div class="col-items">{{ getItemsText(order.items) }}</div>
         <div class="col-total">{{ order.total | number:'1.2-2' }} DT</div>
         <div class="col-status">
           <span class="status-badge" [ngClass]="getStatusClass(order.status)" 
@@ -107,21 +116,21 @@
             {{ getStatusText(order.status) }}
           </span>
         </div>
-        <div class="col-date">{{ order.date | date:'short' }}</div>
+        <div class="col-date">{{ formatDate(order.createdAt) }}</div>
         <div class="col-actions">
           <button (click)="viewOrder(order.id)" class="action-btn view" title="View Details">
             👁️
           </button>
-          <button *ngIf="canAcceptOrDeny(order.status)" 
-                  (click)="acceptOrder(order.id)" 
+          <button *ngIf="canMarkAsReady(order.status)" 
+                  (click)="markAsReady(order.id)" 
                   class="action-btn accept" 
-                  title="Accept Order">
+                  title="Mark as Ready">
             ✅
           </button>
-          <button *ngIf="canAcceptOrDeny(order.status)" 
-                  (click)="denyOrder(order.id)" 
-                  class="action-btn deny" 
-                  title="Deny Order">
+          <button *ngIf="canMarkAsReady(order.status)" 
+                  (click)="cancelOrder(order.id)" 
+                  class="action-btn reject" 
+                  title="Cancel Order">
             ❌
           </button>
           <button (click)="printOrder(order.id)" class="action-btn print" title="Print Order">
@@ -129,13 +138,13 @@
           </button>
         </div>
       </div>
-    </div>
 
-    <!-- Empty State -->
-    <div *ngIf="filteredOrders.length === 0" class="empty-state">
-      <div class="empty-icon">📋</div>
-      <h3>No orders found</h3>
-      <p>Try adjusting your search criteria or wait for new orders to arrive</p>
+      <!-- Empty State -->
+      <div *ngIf="filteredOrders.length === 0" class="empty-state">
+        <div class="empty-icon">📋</div>
+        <h3>No orders found</h3>
+        <p>Try adjusting your search criteria or wait for new orders to arrive</p>
+      </div>
     </div>
   </div>
 </div>
@@ -144,7 +153,7 @@
 <div *ngIf="showOrderDetails && selectedOrder" class="modal-overlay" (click)="closeOrderDetails()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h2>Order Details - {{ selectedOrder.id }}</h2>
+      <h2>Order Details - #{{ selectedOrder.id }}</h2>
       <button class="close-btn" (click)="closeOrderDetails()">×</button>
     </div>
     
@@ -153,26 +162,29 @@
         <div class="info-section">
           <h3>Customer Information</h3>
           <div class="info-item">
-            <strong>Name:</strong> {{ selectedOrder.customer.fullName }}
+            <strong>Name:</strong> {{ selectedOrder.userName || 'N/A' }}
           </div>
           <div class="info-item">
-            <strong>Phone:</strong> {{ selectedOrder.phone }}
+            <strong>Email:</strong> {{ selectedOrder.userEmail || 'N/A' }}
           </div>
           <div class="info-item">
-            <strong>Address:</strong> {{ selectedOrder.address }}
+            <strong>Phone:</strong> {{ selectedOrder.userPhone || 'N/A' }}
           </div>
           <div class="info-item">
-            <strong>Payment:</strong> {{ selectedOrder.paymentMethod | titlecase }}
+            <strong>Address:</strong> {{ selectedOrder.deliveryAddress || 'N/A' }}
+          </div>
+          <div class="info-item">
+            <strong>City:</strong> {{ selectedOrder.city || 'N/A' }}
+          </div>
+          <div class="info-item">
+            <strong>Governorate:</strong> {{ selectedOrder.governorate || 'N/A' }}
           </div>
         </div>
 
         <div class="info-section">
           <h3>Order Information</h3>
           <div class="info-item">
-            <strong>Store:</strong> {{ selectedOrder.store }}
-          </div>
-          <div class="info-item">
-            <strong>Date:</strong> {{ selectedOrder.date | date:'medium' }}
+            <strong>Order Date:</strong> {{ formatDate(selectedOrder.createdAt) }}
           </div>
           <div class="info-item">
             <strong>Status:</strong> 
@@ -180,6 +192,9 @@
                   [style.background-color]="getStatusColor(selectedOrder.status)">
               {{ getStatusText(selectedOrder.status) }}
             </span>
+          </div>
+          <div class="info-item" *ngIf="selectedOrder.additionalNotes">
+            <strong>Notes:</strong> {{ selectedOrder.additionalNotes }}
           </div>
         </div>
       </div>
@@ -197,7 +212,7 @@
             <div>{{ item.name }}</div>
             <div>{{ item.quantity }}</div>
             <div>{{ item.price | number:'1.2-2' }} DT</div>
-            <div>{{ item.total | number:'1.2-2' }} DT</div>
+            <div>{{ (item.total || (item.quantity * item.price)) | number:'1.2-2' }} DT</div>
           </div>
           <div class="items-total">
             <div></div>
@@ -210,15 +225,15 @@
     </div>
 
     <div class="modal-footer">
-      <button *ngIf="canAcceptOrDeny(selectedOrder.status)" 
-              (click)="acceptOrder(selectedOrder.id); closeOrderDetails()" 
+      <button *ngIf="canMarkAsReady(selectedOrder.status)" 
+              (click)="markAsReady(selectedOrder.id); closeOrderDetails()" 
               class="btn-accept">
-        ✅ Accept Order
+        ✅ Mark as Ready
       </button>
-      <button *ngIf="canAcceptOrDeny(selectedOrder.status)" 
-              (click)="denyOrder(selectedOrder.id); closeOrderDetails()" 
+      <button *ngIf="canMarkAsReady(selectedOrder.status)" 
+              (click)="cancelOrder(selectedOrder.id); closeOrderDetails()" 
               class="btn-deny">
-        ❌ Deny Order
+        ❌ Cancel Order
       </button>
       <button (click)="printOrder(selectedOrder.id)" class="btn-print">
         🖨️ Print
