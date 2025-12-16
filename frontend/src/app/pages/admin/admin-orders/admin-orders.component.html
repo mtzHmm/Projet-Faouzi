@@ -34,7 +34,7 @@
           <p>Suivez et gérez toutes les commandes depuis la base de données</p>
         </div>
         <div class="header-actions">
-          <button (click)="loadMockOrders()" class="refresh-btn">
+          <button (click)="loadOrders()" class="refresh-btn">
             <i class="fas fa-sync-alt"></i>
             Actualiser
           </button>
@@ -53,13 +53,14 @@
         type="text" 
         placeholder="Rechercher par nom, email ou ID..."
         [(ngModel)]="searchTerm"
-        (input)="onSearchChange()">
+        (input)="filterOrders()">
     </div>
     
     <div class="status-filter">
-      <select [(ngModel)]="selectedStatus" (change)="onStatusChange()">
-        <option *ngFor="let option of statusOptions" [value]="option.value">
-          {{ option.label }}
+      <select [(ngModel)]="selectedStatus" (change)="filterOrders()">
+        <option value="all">Tous les statuts</option>
+        <option *ngFor="let status of statuses" [value]="status">
+          {{ getStatusText(status) }}
         </option>
       </select>
     </div>
@@ -69,8 +70,20 @@
     </div>
   </div>
 
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="loading-spinner"></div>
+    <p>Loading orders...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-state">
+    <p>❌ {{ error }}</p>
+    <button (click)="loadOrders()" class="retry-btn">🔄 Retry</button>
+  </div>
+
   <!-- Table des commandes -->
-  <div class="orders-container">
+  <div *ngIf="!loading && !error" class="orders-container">
     <div class="orders-table">
       <div class="table-header">
         <div class="col-id">ID</div>
@@ -82,63 +95,63 @@
         <div class="col-actions">Actions</div>
       </div>
       
-      <div class="table-row" *ngFor="let order of filteredOrders">
+      <div class="table-row" *ngFor="let order of filteredOrders; trackBy: trackOrder">
         <div class="col-id">#{{ order.id }}</div>
         
         <div class="col-customer">
           <div class="customer-info">
-            <strong>{{ order.customer.fullName }}</strong>
-            <small>{{ order.customer.email }}</small>
-            <div class="address">{{ order.address }}</div>
+            <strong>{{ order.userName || 'N/A' }}</strong>
+            <small>{{ order.userEmail || 'N/A' }}</small>
+            <div class="address">{{ order.deliveryAddress || 'N/A' }}, {{ order.city || 'N/A' }}</div>
           </div>
         </div>
         
         <div class="col-items">
           <div class="items-display">
-            <span class="items-text">{{ order.itemsText }}</span>
-            <small>{{ order.storeName }} - {{ order.storeType }}</small>
+            <span class="items-text">{{ getItemsText(order.items) }}</span>
+            <small>{{ order.items.length }} item(s)</small>
           </div>
         </div>
         
         <div class="col-total">
-          <strong>{{ order.amount | number:'1.2-2' }} DT</strong>
+          <strong>{{ order.total | number:'1.2-2' }} DT</strong>
         </div>
         
         <div class="col-status">
-          <select 
-            [value]="order.status"
-            (change)="updateOrderStatusFromEvent(order.id, $event)"
-            class="status-select"
-            [ngClass]="getStatusClass(order.status)">
-            <option value="pending">En attente</option>
-            <option value="accepted">Acceptée</option>
-            <option value="completed">Terminée</option>
-            <option value="cancelled">Annulée</option>
-          </select>
+          <span class="status-badge" 
+                [ngClass]="getStatusClass(order.status)" 
+                [style.background-color]="getStatusColor(order.status)">
+            {{ getStatusText(order.status) }}
+          </span>
         </div>
         
         <div class="col-time">
           <div class="time-info">
-            <strong>{{ order.createdAt | date:'HH:mm' }}</strong>
-            <small>{{ order.createdAt | date:'dd/MM/yyyy' }}</small>
+            <span>{{ formatDate(order.createdAt) }}</span>
           </div>
         </div>
         
         <div class="col-actions">
-          <button 
-            class="action-btn view"
-            (click)="viewOrderDetails(order)"
-            title="Voir détails">
+          <button *ngIf="canMarkAsReady(order.status)" 
+                  (click)="markAsReady(order.id)" 
+                  class="action-btn ready-btn" 
+                  title="Mark as Ready">
+            ✅
+          </button>
+          <button *ngIf="canMarkAsReady(order.status)" 
+                  (click)="cancelOrder(order.id)" 
+                  class="action-btn cancel-btn" 
+                  title="Cancel Order">
+            ❌
+          </button>
+          <button (click)="viewOrder(order.id)" 
+                  class="action-btn view-btn" 
+                  title="View Details">
             👁️
           </button>
-          <button 
-            class="action-btn edit"
-            title="Modifier">
-            ✏️
-          </button>
-          <button 
-            class="action-btn print"
-            title="Imprimer">
+          <button (click)="printOrder(order.id)" 
+                  class="action-btn print-btn" 
+                  title="Print Order">
             🖨️
           </button>
         </div>
@@ -171,20 +184,10 @@
       <div class="order-section">
         <h3><i class="fas fa-user"></i> Informations Client</h3>
         <div class="customer-details">
-          <p><strong>Nom:</strong> {{ selectedOrder.customer.fullName }}</p>
-          <p><strong>Email:</strong> {{ selectedOrder.customer.email }}</p>
-          <p><strong>Téléphone:</strong> {{ selectedOrder.phone }}</p>
-          <p><strong>Adresse:</strong> {{ selectedOrder.address }}</p>
-        </div>
-      </div>
-      
-      <!-- Infos magasin -->
-      <div class="order-section">
-        <h3><i class="fas fa-store"></i> Informations Magasin</h3>
-        <div class="store-details">
-          <p><strong>Magasin:</strong> {{ selectedOrder.storeName }}</p>
-          <p><strong>Type:</strong> {{ selectedOrder.storeType }}</p>
-          <p><strong>Adresse:</strong> {{ selectedOrder.storeAddress }}</p>
+          <p><strong>Nom:</strong> {{ selectedOrder.userName || 'N/A' }}</p>
+          <p><strong>Email:</strong> {{ selectedOrder.userEmail || 'N/A' }}</p>
+          <p><strong>Téléphone:</strong> {{ selectedOrder.userPhone || 'N/A' }}</p>
+          <p><strong>Adresse:</strong> {{ selectedOrder.deliveryAddress || 'N/A' }}, {{ selectedOrder.city || 'N/A' }}</p>
         </div>
       </div>
       
@@ -192,13 +195,41 @@
       <div class="order-section">
         <h3><i class="fas fa-shopping-bag"></i> Articles commandés</h3>
         <div class="items-display">
-          <p class="items-text">{{ selectedOrder.itemsText }}</p>
+          <div *ngFor="let item of selectedOrder.items" class="item-row">
+            <span>{{ item.name }} x{{ item.quantity }}</span>
+            <span>{{ item.price | number:'1.2-2' }} DT</span>
+          </div>
         </div>
         
         <div class="total-section">
+          <div class="total-row" *ngIf="selectedOrder.subtotal">
+            <div class="total-label">Sous-total:</div>
+            <div class="total-amount">{{ selectedOrder.subtotal | number:'1.2-2' }} DT</div>
+          </div>
+          <div class="total-row" *ngIf="selectedOrder.deliveryFee">
+            <div class="total-label">Livraison:</div>
+            <div class="total-amount">{{ selectedOrder.deliveryFee | number:'1.2-2' }} DT</div>
+          </div>
           <div class="total-row">
             <div class="total-label">Total:</div>
-            <div class="total-amount">{{ selectedOrder.amount | number:'1.2-2' }} DT</div>
+            <div class="total-amount">{{ selectedOrder.total | number:'1.2-2' }} DT</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statut et livraison -->
+      <div class="order-section">
+        <h3><i class="fas fa-truck"></i> Informations de Livraison</h3>
+        <div class="delivery-info">
+          <div class="status-row">
+            <span class="status-label">Statut actuel:</span>
+            <span class="status-badge" [ngClass]="'status-' + selectedOrder.status">
+              {{ getStatusText(selectedOrder.status) }}
+            </span>
+          </div>
+          <p><strong>Date de commande:</strong> {{ selectedOrder.dateCommande | date:'dd/MM/yyyy HH:mm' }}</p>
+          <div *ngIf="selectedOrder.additionalNotes" class="delivery-details">
+            <p><strong>Notes:</strong> {{ selectedOrder.additionalNotes }}</p>
           </div>
         </div>
       </div>
