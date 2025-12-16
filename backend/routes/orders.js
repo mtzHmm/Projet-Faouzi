@@ -27,42 +27,51 @@ async function formatOrderWithItems(order) {
   
   const itemsResult = await db.query(itemsQuery, [order.id_cmd]);
   
+  // Calculate totals from items if not available
+  const items = itemsResult.rows.map(item => ({
+    id: item.id,
+    name: item.name,
+    quantity: item.quantite,
+    price: parseFloat(item.price)
+  }));
+  
+  const calculatedSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  
   return {
     id: order.id_cmd,
     userId: order.id_client,
     userName: order.user_name || '',
     userEmail: order.user_email || '',
     userPhone: order.user_phone || '',
-    deliveryAddress: order.delivery_address || '',
-    city: order.city || '',
-    governorate: order.governorate || '',
-    postalCode: order.postal_code || '',
-    additionalNotes: order.additional_notes || '',
-    subtotal: parseFloat(order.subtotal || 0),
-    tax: parseFloat(order.tax || 0),
-    deliveryFee: parseFloat(order.delivery_fee || 0),
+    deliveryAddress: '', // Not available in current schema
+    city: '', // Not available in current schema
+    governorate: '', // Not available in current schema  
+    postalCode: '', // Not available in current schema
+    additionalNotes: '', // Not available in current schema
+    subtotal: calculatedSubtotal,
+    tax: 0, // Not available, set to 0
+    deliveryFee: 0, // Not available, set to 0
     total: parseFloat(order.total),
     status: order.status,
+    dateCommande: order.date_commande,
     createdAt: order.date_commande,
-    items: itemsResult.rows.map(item => ({
-      id: item.id,
-      name: item.name,
-      quantity: item.quantite,
-      price: parseFloat(item.price)
-    }))
+    items: items
   };
 }
 
 // GET /api/orders - Get all orders
 router.get('/', async (req, res) => {
   try {
-    const { status, userId, page = 1, limit = 10 } = req.query;
+    const { status, userId, providerId, page = 1, limit = 10 } = req.query;
     const db = database.getPool();
     
+    console.log('📊 Orders query params:', { status, userId, providerId, page, limit });
+    
     let query = `
-      SELECT c.*, 
+      SELECT DISTINCT c.*, 
              cl.nom || ' ' || cl.prenom as user_name,
-             cl.email as user_email
+             cl.email as user_email,
+             cl.tel as user_phone
       FROM commande c
       LEFT JOIN client cl ON c.id_client = cl.id_client
       WHERE 1=1
@@ -70,6 +79,18 @@ router.get('/', async (req, res) => {
     
     const params = [];
     let paramIndex = 1;
+    
+    // Filter by provider (join with products to find orders containing products from specific provider)
+    if (providerId) {
+      console.log('🏪 Filtering orders for provider ID:', providerId);
+      query += ` AND EXISTS (
+        SELECT 1 FROM ligne_commande lc 
+        JOIN produit p ON lc.id_produit = p.id_produit 
+        WHERE lc.id_cmd = c.id_cmd AND p.id_magazin = $${paramIndex}
+      )`;
+      params.push(parseInt(providerId));
+      paramIndex++;
+    }
     
     // Filter by status
     if (status) {
@@ -89,7 +110,8 @@ router.get('/', async (req, res) => {
     query += ' ORDER BY c.date_commande DESC';
     
     // Execute query to get total count
-    const countResult = await db.query(query.replace('c.*, cl.nom || \' \' || cl.prenom as user_name, cl.email as user_email', 'COUNT(*)'), params);
+    const countQuery = query.replace('c.*, cl.nom || \' \' || cl.prenom as user_name, cl.email as user_email, cl.tel as user_phone', 'COUNT(DISTINCT c.id_cmd)');
+    const countResult = await db.query(countQuery, params);
     const totalOrders = parseInt(countResult.rows[0].count);
     
     // Add pagination
@@ -97,12 +119,19 @@ router.get('/', async (req, res) => {
     query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     params.push(parseInt(limit), offset);
     
+    console.log('🔍 Executing query:', query);
+    console.log('📋 With params:', params);
+    
     const result = await db.query(query, params);
+    
+    console.log(`📊 Found ${result.rows.length} orders${providerId ? ` for provider ${providerId}` : ''}`);
     
     // Format each order with its items
     const formattedOrders = await Promise.all(
       result.rows.map(order => formatOrderWithItems(order))
     );
+    
+    console.log('📋 Returning formatted orders:', formattedOrders.length);
     
     res.json({
       orders: formattedOrders,

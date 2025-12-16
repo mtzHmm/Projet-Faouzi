@@ -81,6 +81,7 @@ export class OrderService {
   getOrders(filters?: {
     status?: string;
     userId?: number;
+    providerId?: number;
     page?: number;
     limit?: number;
   }): Observable<OrdersResponse> {
@@ -88,6 +89,7 @@ export class OrderService {
     
     if (filters?.status) params = params.set('status', filters.status);
     if (filters?.userId) params = params.set('userId', filters.userId.toString());
+    if (filters?.providerId) params = params.set('providerId', filters.providerId.toString());
     if (filters?.page) params = params.set('page', filters.page.toString());
     if (filters?.limit) params = params.set('limit', filters.limit.toString());
 

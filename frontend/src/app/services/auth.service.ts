@@ -179,4 +179,13 @@ export class AuthService {
   isDelivery(): boolean {
     return this.getUserRole().toLowerCase() === 'delivery' || this.getUserRole().toLowerCase() === 'livreur';
   }
+
+  // Get provider ID from user data
+  getProviderId(): number | null {
+    const userData = this.getUserData();
+    if (userData && this.isProvider()) {
+      return userData.id_magazin || userData.providerId || userData.id || null;
+    }
+    return null;
+  }
 }

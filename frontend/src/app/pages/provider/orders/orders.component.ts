@@ -34,6 +34,9 @@ export class OrdersComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    // Debug user data to understand what fields are available
+    const userData = this.authService.getUserData();
+    console.log('👤 Current user data:', userData);
     this.loadOrders();
   }
 
@@ -42,9 +45,22 @@ export class OrdersComponent implements OnInit {
     this.loading = true;
     this.error = null;
     
+    // Get current provider ID
+    const providerId = this.authService.getProviderId();
+    
+    console.log('🏪 Provider ID:', providerId);
     console.log('🔄 Loading orders from database...');
     
-    this.orderService.getOrders({}).subscribe({
+    if (!providerId) {
+      console.error('❌ No provider ID found - user may not be a provider');
+      this.error = 'Unable to identify provider. Please check your login.';
+      this.loading = false;
+      return;
+    }
+    
+    const filters = { providerId };
+    
+    this.orderService.getOrders(filters).subscribe({
       next: (response) => {
         console.log('📦 Response received:', response);
         
@@ -52,7 +68,7 @@ export class OrdersComponent implements OnInit {
           this.orders = response.orders;
           console.log('📊 Orders assigned, calling filterOrders...');
           this.filterOrders();
-          console.log(`✅ Loaded ${this.orders.length} orders from database`);
+          console.log(`✅ Loaded ${this.orders.length} orders for provider ${providerId} from database`);
         } else {
           console.log('⚠️ Response was empty or null');
           this.orders = [];
