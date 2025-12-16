@@ -158,4 +158,25 @@ export class AuthService {
   isLoggedIn(): boolean {
     return !!this.getToken() && !!this.getUserData();
   }
+
+  // Get user role
+  getUserRole(): string {
+    const userData = this.getUserData();
+    return userData?.role || '';
+  }
+
+  // Check if user is admin
+  isAdmin(): boolean {
+    return this.getUserRole().toLowerCase() === 'admin';
+  }
+
+  // Check if user is provider
+  isProvider(): boolean {
+    return this.getUserRole().toLowerCase() === 'provider';
+  }
+
+  // Check if user is delivery guy
+  isDelivery(): boolean {
+    return this.getUserRole().toLowerCase() === 'delivery' || this.getUserRole().toLowerCase() === 'livreur';
+  }
 }

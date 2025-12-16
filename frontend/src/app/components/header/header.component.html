@@ -16,9 +16,9 @@
         <a routerLink="/pharmacie" routerLinkActive="active">PHARMACIE</a>
         <a routerLink="/courses" routerLinkActive="active">COURSES</a>
         <a routerLink="/contact" routerLinkActive="active">CONTACT</a>
-        <a routerLink="/delivery" routerLinkActive="active" class="delivery-link">LIVRAISON</a>
-        <a routerLink="/admin" routerLinkActive="active" class="admin-link">ADMIN</a>
-        <a routerLink="/provider" routerLinkActive="active" class="provider-link">PROVIDER</a>
+        <a *ngIf="isDelivery" routerLink="/delivery" routerLinkActive="active" class="delivery-link">LIVRAISON</a>
+        <a *ngIf="isAdmin" routerLink="/admin" routerLinkActive="active" class="admin-link">ADMIN</a>
+        <a *ngIf="isProvider" routerLink="/provider" routerLinkActive="active" class="provider-link">PROVIDER</a>
       </nav>
       
       <div class="header-actions">

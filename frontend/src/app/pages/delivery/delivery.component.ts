@@ -3,14 +3,26 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 
+interface OrderItem {
+  name: string;
+  quantity: number;
+  price: number;
+  total: number;
+}
+
 interface Order {
   id: string;
   storeName: string;
   storeAddress: string;
-  customer: string;
+  customer: {
+    firstName: string;
+    lastName: string;
+    fullName: string;
+  };
   phone: string;
   address: string;
-  items: string[];
+  items: OrderItem[];
+  itemsText: string;
   status: 'en_attente' | 'en_préparation' | 'préparée' | 'annulée' | 'en_livraison' | 'livrée';
   amount: number;
   createdAt: Date;
@@ -49,63 +61,103 @@ export class DeliveryComponent implements OnInit {
   orders: Order[] = [
     {
       id: 'ORD001',
-      storeName: 'Burger Palace',
+      storeName: 'Bella Pizza',
       storeAddress: '45 Avenue Habib Bourguiba, Tunis',
-      customer: 'Sara Karim',
-      phone: '+216 XX XXX XXX',
-      address: '123 Main St, Tunis',
-      items: ['Burger x2', 'Pizza x1', 'Drinks x3'],
+      customer: {
+        firstName: 'hamam',
+        lastName: 'Mootaz',
+        fullName: 'hamam Mootaz'
+      },
+      phone: '+216 20 123 456',
+      address: '123 Rue de la République, Tunis',
+      items: [
+        { name: 'pizza neptune', quantity: 2, price: 4.00, total: 8.00 },
+        { name: 'pizza pepperoni', quantity: 1, price: 10.00, total: 10.00 }
+      ],
+      itemsText: 'pizza neptune x2, pizza pepperoni x1',
       status: 'en_attente',
-      amount: 45.50,
-      createdAt: new Date('2025-11-30T10:00:00')
+      amount: 18.00,
+      createdAt: new Date('2024-12-14T10:30:00')
     },
     {
       id: 'ORD002',
-      storeName: 'Sandwich House',
+      storeName: 'Urban Fashion',
       storeAddress: '78 Rue de la Paix, Sfax',
-      customer: 'Mohamed Saiid',
-      phone: '+216 XX XXX XXX',
-      address: '456 Oak Ave, Sfax',
-      items: ['Sandwich x3'],
-      status: 'en_attente',
-      amount: 32.00,
-      createdAt: new Date('2025-11-30T10:15:00')
+      customer: {
+        firstName: 'jaafeer',
+        lastName: 'seif',
+        fullName: 'jaafeer seif'
+      },
+      phone: '+216 25 987 654',
+      address: '456 Avenue Habib Bourguiba, Sfax',
+      items: [
+        { name: 'T-shirt Homme', quantity: 1, price: 25.00, total: 25.00 },
+        { name: 'Jean Slim', quantity: 1, price: 65.00, total: 65.00 }
+      ],
+      itemsText: 'T-shirt Homme x1, Jean Slim x1',
+      status: 'en_préparation',
+      amount: 90.00,
+      createdAt: new Date('2024-12-14T09:15:00')
     },
     {
       id: 'ORD003',
-      storeName: 'Kebab Grill',
+      storeName: 'Pharma Plus',
       storeAddress: '52 Rue du Port, Sousse',
-      customer: 'Leila Mansouri',
-      phone: '+216 XX XXX XXX',
-      address: '789 Pine Rd, Sousse',
-      items: ['Kebab x2', 'Salad x1'],
-      status: 'en_préparation',
-      amount: 28.75,
-      createdAt: new Date('2025-11-30T09:30:00')
+      customer: {
+        firstName: 'Test',
+        lastName: 'Client',
+        fullName: 'Test Client'
+      },
+      phone: '+216 22 456 789',
+      address: '789 Rue Mongi Slim, Sousse',
+      items: [
+        { name: 'Doliprane', quantity: 2, price: 20.00, total: 40.00 },
+        { name: 'Panadole', quantity: 1, price: 30.00, total: 30.00 }
+      ],
+      itemsText: 'Doliprane x2, Panadole x1',
+      status: 'en_livraison',
+      amount: 70.00,
+      createdAt: new Date('2024-12-13T16:45:00')
     },
     {
       id: 'ORD004',
-      storeName: 'Tacos Express',
-      storeAddress: '33 Boulevard Abou Kacem Chebbi, Kairouan',
-      customer: 'Nasser Hamda',
-      phone: '+216 XX XXX XXX',
-      address: '321 Elm St, Kairouan',
-      items: ['Tacos x4'],
-      status: 'en_livraison',
-      amount: 55.00,
-      createdAt: new Date('2025-11-30T08:45:00')
+      storeName: 'Green Market',
+      storeAddress: '33 Boulevard du 7 Novembre, Monastir',
+      customer: {
+        firstName: 'uac',
+        lastName: 'hend',
+        fullName: 'uac hend'
+      },
+      phone: '+216 29 654 321',
+      address: '321 Boulevard du 7 Novembre, Monastir',
+      items: [
+        { name: 'Pain complet', quantity: 3, price: 2.50, total: 7.50 },
+        { name: 'Œufs bio', quantity: 2, price: 4.80, total: 9.60 },
+        { name: 'Eau minérale', quantity: 6, price: 1.20, total: 7.20 }
+      ],
+      itemsText: 'Pain complet x3, Œufs bio x2, Eau minérale x6',
+      status: 'préparée',
+      amount: 24.30,
+      createdAt: new Date('2024-12-14T14:20:00')
     },
     {
       id: 'ORD005',
-      storeName: 'Fast Food Corner',
-      storeAddress: '19 Rue de la Mer, Djerba',
-      customer: 'Amira Khalil',
-      phone: '+216 XX XXX XXX',
-      address: '654 Maple Ln, Djerba',
-      items: ['Burger x1', 'Fries x2'],
+      storeName: 'Test Store',
+      storeAddress: '19 Rue Ibn Khaldoun, Bizerte',
+      customer: {
+        firstName: 'fadit',
+        lastName: 'ali',
+        fullName: 'fadit ali'
+      },
+      phone: '+216 24 789 123',
+      address: '654 Rue Ibn Khaldoun, Bizerte',
+      items: [
+        { name: 'Baskets', quantity: 1, price: 85.00, total: 85.00 }
+      ],
+      itemsText: 'Baskets x1',
       status: 'livrée',
-      amount: 38.50,
-      createdAt: new Date('2025-11-30T07:00:00')
+      amount: 85.00,
+      createdAt: new Date('2024-12-13T11:30:00')
     }
   ];
 

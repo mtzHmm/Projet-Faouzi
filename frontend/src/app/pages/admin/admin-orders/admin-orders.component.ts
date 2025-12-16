@@ -2,29 +2,35 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { OrderService, Order as ServiceOrder, OrderItem as ServiceOrderItem } from '../../../services/order.service';
 
-interface Order {
+interface Customer {
   id: number;
-  userId: number;
-  userName: string;
-  userEmail?: string;
-  total: number;
-  status: 'en_cours' | 'livrée' | 'annulée';
-  createdAt: Date;
-  deliveryAddress?: string;
-  items: OrderItem[];
-  deliveryTime?: Date;
-  livreurId?: number;
-  livreurName?: string;
+  fullName: string;
+  phone: string;
+  email: string;
 }
 
-interface OrderItem {
+interface Store {
   id: number;
   name: string;
-  price: number;
-  quantity: number;
-  category?: string;
+  type: string;
+  address: string;
+}
+
+interface Order {
+  id: string;
+  customer: Customer;
+  storeName: string;
+  storeType: string;
+  storeAddress: string;
+  phone: string;
+  address: string;
+  amount: number;
+  status: 'pending' | 'accepted' | 'completed' | 'cancelled';
+  itemsText: string;
+  createdAt: Date;
+  acceptedAt?: Date;
+  completedAt?: Date;
 }
 
 @Component({
@@ -41,122 +47,177 @@ export class AdminOrdersComponent implements OnInit {
   searchTerm: string = '';
   selectedOrder: Order | null = null;
   showOrderDetails: boolean = false;
-  loading: boolean = false;
-  error: string = '';
 
-  constructor(private orderService: OrderService) {}
+  // Mock users data
+  mockUsers: Customer[] = [
+    { id: 1, fullName: 'hamam Mootaz', phone: '+216 98 765 432', email: 'hamam.mootaz@email.com' },
+    { id: 2, fullName: 'jaafeer seif', phone: '+216 22 334 455', email: 'jaafeer.seif@email.com' },
+    { id: 3, fullName: 'Omar Khelifi', phone: '+216 55 667 788', email: 'omar.khelifi@email.com' },
+    { id: 4, fullName: 'Sarra Mansouri', phone: '+216 77 889 900', email: 'sarra.mansouri@email.com' },
+    { id: 5, fullName: 'Ahmed Ben Ali', phone: '+216 20 111 222', email: 'ahmed.benali@email.com' }
+  ];
+
+  // Mock stores data  
+  mockStores: Store[] = [
+    { id: 1, name: 'Bella Pizza', type: 'Restaurant', address: '123 Avenue Habib Bourguiba, Tunis' },
+    { id: 2, name: 'Pharmacie Ibn Sina', type: 'Pharmacie', address: '456 Rue de la Liberté, Sfax' },
+    { id: 3, name: 'Urban Fashion', type: 'Boutique', address: '789 Avenue Mohamed V, Sousse' },
+    { id: 4, name: 'TechStore', type: 'Boutique', address: '321 Rue Mongi Slim, Ariana' },
+    { id: 5, name: 'Café Central', type: 'Restaurant', address: '654 Place de l\'Indépendance, Bizerte' }
+  ];
 
   statusOptions = [
     { value: '', label: 'Tous les statuts' },
-    { value: 'en_cours', label: 'En cours' },
-    { value: 'livrée', label: 'Livrée' },
-    { value: 'annulée', label: 'Annulée' }
+    { value: 'pending', label: 'En attente' },
+    { value: 'accepted', label: 'Acceptée' },
+    { value: 'completed', label: 'Terminée' },
+    { value: 'cancelled', label: 'Annulée' }
   ];
 
   ngOnInit() {
-    this.loadOrders();
+    this.loadMockOrders();
   }
 
-  loadOrders() {
-    this.loading = true;
-    this.error = '';
-    
-    const filters: any = { limit: 100 };
-    
-    this.orderService.getOrders(filters).subscribe({
-      next: (response) => {
-        this.orders = response.orders.map(order => ({
-          ...order,
-          userEmail: order.userName + '@email.com',  // Temporal fix until backend provides email
-          deliveryAddress: 'Adresse non disponible',
-          createdAt: new Date(order.createdAt)
-        }));
-        this.filterOrders();
-        this.loading = false;
+  loadMockOrders() {
+    // Generate mock orders
+    const mockOrders: Order[] = [
+      {
+        id: 'ORD-001',
+        customer: this.mockUsers[0], // hamam Mootaz
+        storeName: this.mockStores[0].name, // Bella Pizza
+        storeType: this.mockStores[0].type,
+        storeAddress: this.mockStores[0].address,
+        phone: this.mockUsers[0].phone,
+        address: '15 Rue des Jasmins, La Marsa',
+        amount: 32.500,
+        status: 'pending',
+        itemsText: '1x pizza neptune (25.000 DT), 1x Coca Cola (2.500 DT), 1x Salade César (5.000 DT)',
+        createdAt: new Date(2024, 0, 15, 14, 30),
       },
-      error: (error) => {
-        console.error('Erreur lors du chargement des commandes:', error);
-        this.error = 'Erreur lors du chargement des commandes. Veuillez réessayer.';
-        this.loading = false;
+      {
+        id: 'ORD-002',
+        customer: this.mockUsers[1], // jaafeer seif
+        storeName: this.mockStores[1].name, // Pharmacie Ibn Sina
+        storeType: this.mockStores[1].type,
+        storeAddress: this.mockStores[1].address,
+        phone: this.mockUsers[1].phone,
+        address: '42 Avenue de la République, Tunis',
+        amount: 45.750,
+        status: 'accepted',
+        itemsText: '2x Doliprane (12.000 DT), 1x Vitamines C (15.500 DT), 1x Sirop contre la toux (18.250 DT)',
+        createdAt: new Date(2024, 0, 15, 10, 45),
+        acceptedAt: new Date(2024, 0, 15, 11, 0),
+      },
+      {
+        id: 'ORD-003',
+        customer: this.mockUsers[2], // Omar Khelifi
+        storeName: this.mockStores[2].name, // Urban Fashion
+        storeType: this.mockStores[2].type,
+        storeAddress: this.mockStores[2].address,
+        phone: this.mockUsers[2].phone,
+        address: '28 Cité El Khadra, Tunis',
+        amount: 125.000,
+        status: 'completed',
+        itemsText: '1x Chemise Business (65.000 DT), 1x Pantalon Classique (45.000 DT), 1x Cravate (15.000 DT)',
+        createdAt: new Date(2024, 0, 14, 16, 20),
+        acceptedAt: new Date(2024, 0, 14, 16, 35),
+        completedAt: new Date(2024, 0, 14, 18, 10),
+      },
+      {
+        id: 'ORD-004',
+        customer: this.mockUsers[3], // Sarra Mansouri
+        storeName: this.mockStores[3].name, // TechStore
+        storeType: this.mockStores[3].type,
+        storeAddress: this.mockStores[3].address,
+        phone: this.mockUsers[3].phone,
+        address: '67 Rue Ibn Khaldoun, Manouba',
+        amount: 899.000,
+        status: 'completed',
+        itemsText: '1x Smartphone Samsung Galaxy (650.000 DT), 1x Coque de protection (25.000 DT), 1x Chargeur sans fil (224.000 DT)',
+        createdAt: new Date(2024, 0, 13, 9, 15),
+        acceptedAt: new Date(2024, 0, 13, 9, 30),
+        completedAt: new Date(2024, 0, 13, 15, 45),
+      },
+      {
+        id: 'ORD-005',
+        customer: this.mockUsers[4], // Ahmed Ben Ali
+        storeName: this.mockStores[4].name, // Café Central
+        storeType: this.mockStores[4].type,
+        storeAddress: this.mockStores[4].address,
+        phone: this.mockUsers[4].phone,
+        address: '91 Impasse des Oliviers, Ben Arous',
+        amount: 18.500,
+        status: 'cancelled',
+        itemsText: '2x Café Express (6.000 DT), 1x Croissant (4.500 DT), 1x Jus d\'orange frais (8.000 DT)',
+        createdAt: new Date(2024, 0, 12, 8, 0),
+      },
+      {
+        id: 'ORD-006',
+        customer: this.mockUsers[0], // hamam Mootaz
+        storeName: this.mockStores[1].name, // Pharmacie Ibn Sina
+        storeType: this.mockStores[1].type,
+        storeAddress: this.mockStores[1].address,
+        phone: this.mockUsers[0].phone,
+        address: '15 Rue des Jasmins, La Marsa',
+        amount: 28.750,
+        status: 'accepted',
+        itemsText: '1x Aspirine (8.500 DT), 1x Pansements (5.250 DT), 1x Désinfectant (15.000 DT)',
+        createdAt: new Date(2024, 0, 11, 12, 30),
+        acceptedAt: new Date(2024, 0, 11, 12, 45),
       }
-    });
+    ];
+
+    this.orders = mockOrders;
+    this.filterOrders();
   }
 
   filterOrders() {
     this.filteredOrders = this.orders.filter(order => {
       const matchesStatus = !this.selectedStatus || order.status === this.selectedStatus;
       const matchesSearch = !this.searchTerm || 
-        order.userName.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        order.id.toString().includes(this.searchTerm) ||
-        (order.userEmail && order.userEmail.toLowerCase().includes(this.searchTerm.toLowerCase()));
+        order.customer.fullName.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        order.id.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        order.storeName.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        order.customer.email.toLowerCase().includes(this.searchTerm.toLowerCase());
       
       return matchesStatus && matchesSearch;
     });
   }
 
   onStatusChange() {
-    if (this.selectedStatus) {
-      this.loadOrdersByStatus();
-    } else {
-      this.loadOrders();
-    }
-  }
-
-  loadOrdersByStatus() {
-    this.loading = true;
-    this.error = '';
-    
-    const filters: any = { 
-      status: this.selectedStatus,
-      limit: 100 
-    };
-    
-    this.orderService.getOrders(filters).subscribe({
-      next: (response) => {
-        this.orders = response.orders.map(order => ({
-          ...order,
-          userEmail: order.userName + '@email.com',
-          deliveryAddress: 'Adresse non disponible',
-          createdAt: new Date(order.createdAt)
-        }));
-        this.filterOrders();
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Erreur lors du chargement des commandes:', error);
-        this.error = 'Erreur lors du chargement des commandes. Veuillez réessayer.';
-        this.loading = false;
-      }
-    });
+    this.filterOrders();
   }
 
   onSearchChange() {
     this.filterOrders();
   }
 
-  updateOrderStatus(orderId: number, newStatus: string) {
-    this.orderService.updateOrderStatus(orderId, newStatus).subscribe({
-      next: (updatedOrder) => {
-        const order = this.orders.find(o => o.id === orderId);
-        if (order) {
-          order.status = newStatus as any;
-          this.filterOrders();
+  updateOrderStatus(orderId: string, newStatus: string) {
+    const order = this.orders.find(o => o.id === orderId);
+    if (order) {
+      order.status = newStatus as any;
+      
+      // Update timestamps based on status
+      if (newStatus === 'accepted' && !order.acceptedAt) {
+        order.acceptedAt = new Date();
+      } else if (newStatus === 'completed' && !order.completedAt) {
+        order.completedAt = new Date();
+        if (!order.acceptedAt) {
+          order.acceptedAt = new Date(Date.now() - 30 * 60000); // 30 minutes before completion
         }
-        console.log('Statut de la commande mis à jour:', updatedOrder);
-      },
-      error: (error) => {
-        console.error('Erreur lors de la mise à jour du statut:', error);
-        alert('Erreur lors de la mise à jour du statut de la commande');
       }
-    });
+      
+      this.filterOrders();
+      console.log('Order status updated:', order);
+    }
   }
 
-  updateOrderStatusFromEvent(orderId: number, event: Event) {
-  const select = event.target as HTMLSelectElement | null;
-  if (select) {
-    this.updateOrderStatus(orderId, select.value);
+  updateOrderStatusFromEvent(orderId: string, event: Event) {
+    const select = event.target as HTMLSelectElement | null;
+    if (select) {
+      this.updateOrderStatus(orderId, select.value);
+    }
   }
-}
 
 
   viewOrderDetails(order: Order) {
@@ -171,32 +232,31 @@ export class AdminOrdersComponent implements OnInit {
 
   getStatusColor(status: string): string {
     switch (status) {
-      case 'en_cours': return '#f59e0b';
-      case 'livrée': return '#10b981';
-      case 'annulée': return '#e74c3c';
+      case 'pending': return '#f59e0b';
+      case 'accepted': return '#3b82f6';
+      case 'completed': return '#10b981';
+      case 'cancelled': return '#e74c3c';
       default: return '#95a5a6';
     }
   }
 
   getStatusClass(status: string): string {
     switch (status) {
-      case 'en_cours': return 'en-cours';
-      case 'livrée': return 'livree';
-      case 'annulée': return 'annulee';
+      case 'pending': return 'pending';
+      case 'accepted': return 'accepted';
+      case 'completed': return 'completed';
+      case 'cancelled': return 'cancelled';
       default: return '';
     }
   }
 
   getStatusText(status: string): string {
     switch (status) {
-      case 'en_cours': return 'En Cours';
-      case 'livrée': return 'Livrée';
-      case 'annulée': return 'Annulée';
+      case 'pending': return 'En attente';
+      case 'accepted': return 'Acceptée';
+      case 'completed': return 'Terminée';
+      case 'cancelled': return 'Annulée';
       default: return status;
     }
-  }
-
-  getTotalItems(order: Order): number {
-    return order.items.reduce((sum, item) => sum + item.quantity, 0);
   }
 }

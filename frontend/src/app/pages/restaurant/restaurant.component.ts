@@ -61,7 +61,7 @@ export class RestaurantComponent implements OnInit {
           
           this.allProducts = response.products.map((product: any) => ({
             ...product,
-            price: typeof product.price === 'number' ? product.price / 100 : product.price // Convert from cents to DT if needed
+            price: typeof product.price === 'number' ? product.price : parseFloat(product.price) // Ensure price is a number
           }));
           this.products = this.allProducts;
         } else if (Array.isArray(response)) {
@@ -235,6 +235,12 @@ export class RestaurantComponent implements OnInit {
   ];
 
   addToCart(product: Product) {
+    console.log('🛒 Restaurant component - Adding to cart:', {
+      name: product.name,
+      price: product.price,
+      priceType: typeof product.price,
+      fullProduct: product
+    });
     this.cartService.addToCart(product, 'restaurant');
     this.updateCartCount();
   }
@@ -313,8 +319,15 @@ export class RestaurantComponent implements OnInit {
     return '🍴'; // Emoji par défaut
   }
 
-  onImageError(event: any): void {
-    console.log('❌ Image failed to load:', event.target.src);
+  onImageError(event: any) {
+    console.error('🖼️ Image failed to load:', event.target.src);
+    console.log('🔍 Image element:', event.target);
+    
+    // Hide broken images and show placeholder
     event.target.style.display = 'none';
+    const placeholder = event.target.parentElement.querySelector('.product-image-placeholder');
+    if (placeholder) {
+      placeholder.style.display = 'flex';
+    }
   }
 }

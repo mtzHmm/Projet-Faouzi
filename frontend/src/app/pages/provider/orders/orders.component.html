@@ -90,29 +90,39 @@
         <div class="col-id">{{ order.id }}</div>
         <div class="col-customer">
           <div class="customer-info">
-            <strong>{{ order.customer }}</strong>
+            <strong>{{ order.customer.fullName }}</strong>
             <div class="customer-details">
+              <div>🏪 {{ order.store }}</div>
               <div>📞 {{ order.phone }}</div>
               <div>📍 {{ order.address }}</div>
               <div>💳 {{ order.paymentMethod | titlecase }}</div>
             </div>
           </div>
         </div>
-        <div class="col-items">{{ order.items }}</div>
-        <div class="col-total">{{ order.total }} DT</div>
+        <div class="col-items">{{ order.itemsText }}</div>
+        <div class="col-total">{{ order.total | number:'1.2-2' }} DT</div>
         <div class="col-status">
-          <select 
-            [value]="order.status" 
-            (change)="updateStatus(order.id, $any($event.target).value)"
-            class="status-select"
-            [style.background-color]="getStatusColor(order.status)">
-            <option *ngFor="let status of statuses" [value]="status">{{ status | titlecase }}</option>
-          </select>
+          <span class="status-badge" [ngClass]="getStatusClass(order.status)" 
+                [style.background-color]="getStatusColor(order.status)">
+            {{ getStatusText(order.status) }}
+          </span>
         </div>
         <div class="col-date">{{ order.date | date:'short' }}</div>
         <div class="col-actions">
           <button (click)="viewOrder(order.id)" class="action-btn view" title="View Details">
             👁️
+          </button>
+          <button *ngIf="canAcceptOrDeny(order.status)" 
+                  (click)="acceptOrder(order.id)" 
+                  class="action-btn accept" 
+                  title="Accept Order">
+            ✅
+          </button>
+          <button *ngIf="canAcceptOrDeny(order.status)" 
+                  (click)="denyOrder(order.id)" 
+                  class="action-btn deny" 
+                  title="Deny Order">
+            ❌
           </button>
           <button (click)="printOrder(order.id)" class="action-btn print" title="Print Order">
             🖨️
@@ -126,6 +136,96 @@
       <div class="empty-icon">📋</div>
       <h3>No orders found</h3>
       <p>Try adjusting your search criteria or wait for new orders to arrive</p>
+    </div>
+  </div>
+</div>
+
+<!-- Order Details Modal -->
+<div *ngIf="showOrderDetails && selectedOrder" class="modal-overlay" (click)="closeOrderDetails()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Order Details - {{ selectedOrder.id }}</h2>
+      <button class="close-btn" (click)="closeOrderDetails()">×</button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="order-info-grid">
+        <div class="info-section">
+          <h3>Customer Information</h3>
+          <div class="info-item">
+            <strong>Name:</strong> {{ selectedOrder.customer.fullName }}
+          </div>
+          <div class="info-item">
+            <strong>Phone:</strong> {{ selectedOrder.phone }}
+          </div>
+          <div class="info-item">
+            <strong>Address:</strong> {{ selectedOrder.address }}
+          </div>
+          <div class="info-item">
+            <strong>Payment:</strong> {{ selectedOrder.paymentMethod | titlecase }}
+          </div>
+        </div>
+
+        <div class="info-section">
+          <h3>Order Information</h3>
+          <div class="info-item">
+            <strong>Store:</strong> {{ selectedOrder.store }}
+          </div>
+          <div class="info-item">
+            <strong>Date:</strong> {{ selectedOrder.date | date:'medium' }}
+          </div>
+          <div class="info-item">
+            <strong>Status:</strong> 
+            <span class="status-badge" [ngClass]="getStatusClass(selectedOrder.status)" 
+                  [style.background-color]="getStatusColor(selectedOrder.status)">
+              {{ getStatusText(selectedOrder.status) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="items-section">
+        <h3>Order Items</h3>
+        <div class="items-table">
+          <div class="items-header">
+            <div>Product</div>
+            <div>Quantity</div>
+            <div>Price</div>
+            <div>Total</div>
+          </div>
+          <div *ngFor="let item of selectedOrder.items" class="item-row">
+            <div>{{ item.name }}</div>
+            <div>{{ item.quantity }}</div>
+            <div>{{ item.price | number:'1.2-2' }} DT</div>
+            <div>{{ item.total | number:'1.2-2' }} DT</div>
+          </div>
+          <div class="items-total">
+            <div></div>
+            <div></div>
+            <div><strong>Total:</strong></div>
+            <div><strong>{{ selectedOrder.total | number:'1.2-2' }} DT</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button *ngIf="canAcceptOrDeny(selectedOrder.status)" 
+              (click)="acceptOrder(selectedOrder.id); closeOrderDetails()" 
+              class="btn-accept">
+        ✅ Accept Order
+      </button>
+      <button *ngIf="canAcceptOrDeny(selectedOrder.status)" 
+              (click)="denyOrder(selectedOrder.id); closeOrderDetails()" 
+              class="btn-deny">
+        ❌ Deny Order
+      </button>
+      <button (click)="printOrder(selectedOrder.id)" class="btn-print">
+        🖨️ Print
+      </button>
+      <button (click)="closeOrderDetails()" class="btn-close">
+        Close
+      </button>
     </div>
   </div>
 </div>

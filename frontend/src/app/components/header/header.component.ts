@@ -18,6 +18,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
   isLoggedIn = false;
   userName = '';
   userId = '';
+  isAdmin = false;
+  isProvider = false;
+  isDelivery = false;
   private authSubscription: Subscription = new Subscription();
   private cartSubscription: Subscription = new Subscription();
 
@@ -40,10 +43,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
           console.log('👤 User data:', userData);
           this.userName = this.authService.getFullUserName();
           this.userId = userData?.id || userData?.user_id || '';
-          console.log('✅ Header - User:', this.userName, 'ID:', this.userId);
+          this.isAdmin = this.authService.isAdmin();
+          this.isProvider = this.authService.isProvider();
+          this.isDelivery = this.authService.isDelivery();
+          console.log('✅ Header - User:', this.userName, 'ID:', this.userId, 'Admin:', this.isAdmin, 'Provider:', this.isProvider, 'Delivery:', this.isDelivery);
         } else {
           this.userName = '';
           this.userId = '';
+          this.isAdmin = false;
+          this.isProvider = false;
+          this.isDelivery = false;
         }
       }
     );
@@ -75,6 +84,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.isLoggedIn = this.authService.isLoggedIn();
     if (this.isLoggedIn) {
       this.userName = this.authService.getFullUserName();
+      const userData = this.authService.getUserData();
+      this.userId = userData?.id || userData?.user_id || '';
+      this.isAdmin = this.authService.isAdmin();
+      this.isProvider = this.authService.isProvider();
+      this.isDelivery = this.authService.isDelivery();
+    } else {
+      this.userName = '';
+      this.userId = '';
+      this.isAdmin = false;
+      this.isProvider = false;
+      this.isDelivery = false;
     }
   }
 
@@ -82,6 +102,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.authService.removeToken();
     this.isLoggedIn = false;
     this.userName = '';
+    this.userId = '';
+    this.isAdmin = false;
+    this.isProvider = false;
+    this.isDelivery = false;
     this.router.navigate(['/']);
   }
 }

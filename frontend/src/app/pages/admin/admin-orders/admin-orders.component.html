@@ -34,8 +34,8 @@
           <p>Suivez et gérez toutes les commandes depuis la base de données</p>
         </div>
         <div class="header-actions">
-          <button (click)="loadOrders()" class="refresh-btn" [disabled]="loading">
-            <i class="fas fa-sync-alt" [class.spinning]="loading"></i>
+          <button (click)="loadMockOrders()" class="refresh-btn">
+            <i class="fas fa-sync-alt"></i>
             Actualiser
           </button>
           <a routerLink="/admin" class="back-btn">
@@ -69,19 +69,8 @@
     </div>
   </div>
 
-  <!-- Message de chargement -->
-  <div *ngIf="loading" class="loading-container">
-    <p>Chargement des commandes...</p>
-  </div>
-
-  <!-- Message d'erreur -->
-  <div *ngIf="error" class="error-container">
-    <p>{{ error }}</p>
-    <button (click)="loadOrders()" class="retry-btn">Réessayer</button>
-  </div>
-
   <!-- Table des commandes -->
-  <div class="orders-container" *ngIf="!loading && !error">
+  <div class="orders-container">
     <div class="orders-table">
       <div class="table-header">
         <div class="col-id">ID</div>
@@ -98,19 +87,21 @@
         
         <div class="col-customer">
           <div class="customer-info">
-            <strong>{{ order.userName }}</strong>
-            <small>{{ order.userEmail }}</small>
-            <div class="address">{{ order.deliveryAddress }}</div>
+            <strong>{{ order.customer.fullName }}</strong>
+            <small>{{ order.customer.email }}</small>
+            <div class="address">{{ order.address }}</div>
           </div>
         </div>
         
         <div class="col-items">
-          <span class="items-count">{{ getTotalItems(order) }} article(s)</span>
-          <small>{{ order.items.length }} produit(s)</small>
+          <div class="items-display">
+            <span class="items-text">{{ order.itemsText }}</span>
+            <small>{{ order.storeName }} - {{ order.storeType }}</small>
+          </div>
         </div>
         
         <div class="col-total">
-          <strong>{{ order.total | currency:'EUR':'symbol':'1.2-2' }}</strong>
+          <strong>{{ order.amount | number:'1.2-2' }} DT</strong>
         </div>
         
         <div class="col-status">
@@ -119,9 +110,10 @@
             (change)="updateOrderStatusFromEvent(order.id, $event)"
             class="status-select"
             [ngClass]="getStatusClass(order.status)">
-            <option value="en_cours">En cours</option>
-            <option value="livrée">Livrée</option>
-            <option value="annulée">Annulée</option>
+            <option value="pending">En attente</option>
+            <option value="accepted">Acceptée</option>
+            <option value="completed">Terminée</option>
+            <option value="cancelled">Annulée</option>
           </select>
         </div>
         
@@ -129,10 +121,6 @@
           <div class="time-info">
             <strong>{{ order.createdAt | date:'HH:mm' }}</strong>
             <small>{{ order.createdAt | date:'dd/MM/yyyy' }}</small>
-            <div *ngIf="order.deliveryTime" class="delivery-time">
-              <i class="fas fa-truck"></i>
-              {{ order.deliveryTime | date:'HH:mm' }}
-            </div>
           </div>
         </div>
         
@@ -183,38 +171,34 @@
       <div class="order-section">
         <h3><i class="fas fa-user"></i> Informations Client</h3>
         <div class="customer-details">
-          <p><strong>Nom:</strong> {{ selectedOrder.userName }}</p>
-          <p><strong>Email:</strong> {{ selectedOrder.userEmail }}</p>
-          <p><strong>Adresse:</strong> {{ selectedOrder.deliveryAddress }}</p>
+          <p><strong>Nom:</strong> {{ selectedOrder.customer.fullName }}</p>
+          <p><strong>Email:</strong> {{ selectedOrder.customer.email }}</p>
+          <p><strong>Téléphone:</strong> {{ selectedOrder.phone }}</p>
+          <p><strong>Adresse:</strong> {{ selectedOrder.address }}</p>
         </div>
       </div>
       
-      <!-- Infos livraison -->
-      <div class="order-section" *ngIf="selectedOrder.livreurName">
-        <h3><i class="fas fa-truck"></i> Livraison</h3>
-        <div class="delivery-details">
-          <p><strong>Livreur:</strong> {{ selectedOrder.livreurName }}</p>
-          <p><strong>Heure prévue:</strong> {{ selectedOrder.deliveryTime | date:'HH:mm' }}</p>
+      <!-- Infos magasin -->
+      <div class="order-section">
+        <h3><i class="fas fa-store"></i> Informations Magasin</h3>
+        <div class="store-details">
+          <p><strong>Magasin:</strong> {{ selectedOrder.storeName }}</p>
+          <p><strong>Type:</strong> {{ selectedOrder.storeType }}</p>
+          <p><strong>Adresse:</strong> {{ selectedOrder.storeAddress }}</p>
         </div>
       </div>
       
       <!-- Articles -->
       <div class="order-section">
         <h3><i class="fas fa-shopping-bag"></i> Articles commandés</h3>
-        <div class="items-list">
-          <div class="item-row" *ngFor="let item of selectedOrder.items">
-            <div class="item-info">
-              <strong>{{ item.name }}</strong>
-              <span class="item-category">{{ item.category }}</span>
-            </div>
-            <div class="item-quantity">x{{ item.quantity }}</div>
-            <div class="item-price">{{ item.price | currency:'EUR':'symbol':'1.2-2' }}</div>
-            <div class="item-total">{{ (item.price * item.quantity) | currency:'EUR':'symbol':'1.2-2' }}</div>
-          </div>
-          
+        <div class="items-display">
+          <p class="items-text">{{ selectedOrder.itemsText }}</p>
+        </div>
+        
+        <div class="total-section">
           <div class="total-row">
             <div class="total-label">Total:</div>
-            <div class="total-amount">{{ selectedOrder.total | currency:'EUR':'symbol':'1.2-2' }}</div>
+            <div class="total-amount">{{ selectedOrder.amount | number:'1.2-2' }} DT</div>
           </div>
         </div>
       </div>

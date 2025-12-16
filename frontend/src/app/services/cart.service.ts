@@ -84,6 +84,12 @@ export class CartService {
     }
 
     console.log('➕ Adding product to cart for user ID:', user.id);
+    console.log('🔍 Product data received:', {
+      name: product.name || product.nom,
+      price: product.price || product.prix,
+      priceType: typeof(product.price || product.prix),
+      fullProduct: product
+    });
 
     // Check if product already exists in cart
     const existingItem = this.cartItems.find(
@@ -102,19 +108,29 @@ export class CartService {
         'courses': 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=200&h=200&fit=crop'
       };
 
+      const rawPrice = product.price || product.prix || 0;
+      const parsedPrice = parseFloat(rawPrice);
+      
+      console.log('💰 Price processing:', {
+        raw: rawPrice,
+        parsed: parsedPrice,
+        isNaN: isNaN(parsedPrice)
+      });
+
       const cartItem: CartItem = {
         id: Date.now(), // Unique cart item ID
         productId: product.id,
         name: product.name || product.nom,
-        price: parseFloat(product.price || product.prix || 0),
+        price: isNaN(parsedPrice) ? 0 : parsedPrice,
         quantity: 1,
         image: product.image || product.imageUrl || defaultImages[type] || defaultImages['restaurant'],
         category: product.category || product.categorie || type,
         type: type
       };
 
+      console.log('📦 Created cart item:', cartItem);
       this.cartItems.push(cartItem);
-      console.log('✅ Product added to cart:', product.name, '→ Type:', type);
+      console.log('✅ Product added to cart:', product.name, '→ Type:', type, '→ Price:', cartItem.price);
     }
 
     this.saveCartToStorage();

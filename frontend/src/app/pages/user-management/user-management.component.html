@@ -41,7 +41,7 @@
         <div class="search-box">
           <input 
             type="text" 
-            placeholder="Search users..." 
+            placeholder="Rechercher utilisateurs..." 
             [(ngModel)]="searchTerm"
             class="search-input"
           >
@@ -49,11 +49,31 @@
         </div>
         
         <select [(ngModel)]="selectedRole" class="role-filter">
-          <option value="all">All Roles</option>
-          <option value="customer">Customer</option>
-          <option value="delivery partner">Delivery Partner</option>
-          <option value="provider">Provider</option>
+          <option value="all">Tous les rôles</option>
+          <option value="admin">Administrateur</option>
+          <option value="client">Client</option>
+          <option value="provider">Fournisseur</option>
+          <option value="delivery">Livreur</option>
         </select>
+      </div>
+
+      <div class="role-summary">
+        <div class="summary-item">
+          <span class="role-count admin">{{ getRoleCount('admin') }}</span>
+          <span class="role-label">Admins</span>
+        </div>
+        <div class="summary-item">
+          <span class="role-count client">{{ getRoleCount('client') }}</span>
+          <span class="role-label">Clients</span>
+        </div>
+        <div class="summary-item">
+          <span class="role-count provider">{{ getRoleCount('provider') }}</span>
+          <span class="role-label">Fournisseurs</span>
+        </div>
+        <div class="summary-item">
+          <span class="role-count delivery">{{ getRoleCount('delivery') }}</span>
+          <span class="role-label">Livreurs</span>
+        </div>
       </div>
 
       <div class="users-table-container">
@@ -61,31 +81,59 @@
           <thead>
             <tr>
               <th>ID</th>
-              <th>Name</th>
+              <th>Nom complet</th>
               <th>Email</th>
-              <th>Role</th>
-              <th>Phone</th>
-              <th>Registration Date</th>
+              <th>Rôle</th>
+              <th>Téléphone</th>
+              <th>Statut</th>
+              <th>Total Commandes</th>
+              <th>Date d'inscription</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let user of filteredUsers" class="user-row">
               <td class="user-id">{{ user.id }}</td>
-              <td class="user-name">{{ user.name }}</td>
+              <td class="user-name">
+                <div class="name-info">
+                  <strong>{{ user.fullName }}</strong>
+                  <div *ngIf="user.storeInfo" class="store-info">
+                    <small>{{ user.storeInfo.storeName }} - {{ user.storeInfo.storeType }}</small>
+                  </div>
+                </div>
+              </td>
               <td class="user-email">{{ user.email }}</td>
               <td class="user-role">
-                <span class="role-badge" [class]="'role-' + user.role.toLowerCase().replace(' ', '-')">
-                  {{ user.role }}
-                </span>
+                <select 
+                  [value]="user.role"
+                  (change)="onRoleChange(user.id, $event)"
+                  class="role-select"
+                  [ngClass]="getRoleClass(user.role)">
+                  <option value="admin">Administrateur</option>
+                  <option value="client">Client</option>
+                  <option value="provider">Fournisseur</option>
+                  <option value="delivery">Livreur</option>
+                </select>
               </td>
               <td class="user-phone">{{ user.phone }}</td>
-              <td class="user-date">{{ user.registrationDate }}</td>
+              <td class="user-status">
+                <span class="status-badge" [class]="getStatusClass(user.status)">
+                  {{ getStatusDisplayName(user.status) }}
+                </span>
+              </td>
+              <td class="user-orders">
+                <span class="orders-count">{{ user.totalOrders || 0 }}</span>
+              </td>
+              <td class="user-date">{{ user.registrationDate | date:'dd/MM/yyyy' }}</td>
               <td class="user-actions">
-                <button class="action-btn edit-btn" (click)="editUser(user.id)" title="Edit User">
-                  <span class="icon">👤</span>
+                <button class="action-btn edit-btn" (click)="editUser(user.id)" title="Modifier utilisateur">
+                  <span class="icon">✏️</span>
                 </button>
-                <button class="action-btn delete-btn" (click)="deleteUser(user.id)" title="Delete User">
+                <button class="action-btn toggle-btn" (click)="toggleUserStatus(user.id)" 
+                        title="{{ user.status === 'active' ? 'Suspendre' : 'Activer' }}">
+                  <span class="icon">{{ user.status === 'active' ? '⏸️' : '▶️' }}</span>
+                </button>
+                <button class="action-btn delete-btn" (click)="deleteUser(user.id)" title="Supprimer utilisateur">
                   <span class="icon">🗑️</span>
                 </button>
               </td>
@@ -95,7 +143,7 @@
       </div>
 
       <div class="pagination">
-        <span class="results-count">Showing {{ filteredUsers.length }} users</span>
+        <span class="results-count">Affichage de {{ filteredUsers.length }} utilisateur(s)</span>
       </div>
     </div>
   </div>

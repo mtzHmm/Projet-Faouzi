@@ -36,72 +36,34 @@
 
 /* Category Filters */
 .category-filters {
-  margin-bottom: 2rem;
-  padding: 1.5rem;
-  background: white;
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
-}
-
-.category-filters h3 {
-  margin-bottom: 1rem;
-  color: var(--dark-gray);
-  font-size: 1.2rem;
-  font-weight: 600;
-}
-
-.filter-buttons {
   display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 3rem;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
 }
 
 .filter-btn {
-  background: linear-gradient(135deg, #F8F9FA, #E9ECEF);
-  border: 2px solid #DEE2E6;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 50px;
+  background: #fff;
   color: var(--dark-gray);
-  padding: 0.75rem 1.2rem;
-  border-radius: 25px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  border: 1px solid #ddd;
 }
 
 .filter-btn:hover {
-  background: linear-gradient(135deg, #E9ECEF, #DEE2E6);
+  background: #f8f9fa;
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 .filter-btn.active {
-  background: linear-gradient(135deg, #4A90E2, #357ABD);
-  color: white;
-  border-color: #357ABD;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
-}
-
-.filter-btn.active:hover {
-  background: linear-gradient(135deg, #357ABD, #2A5F8F);
-}
-
-.filter-info {
-  padding: 0.75rem 1rem;
-  background: linear-gradient(135deg, #E8F4F8, #D1E7DD);
-  border: 1px solid #B3D8E8;
-  border-radius: 8px;
-  color: #0F5132;
-  font-weight: 500;
-  font-size: 0.9rem;
-}
-
-.filter-info p {
-  margin: 0;
+  background: #8B4513;
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(139, 69, 19, 0.3);
 }
 
 .products-grid {

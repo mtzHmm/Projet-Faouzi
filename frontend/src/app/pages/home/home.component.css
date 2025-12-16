@@ -142,59 +142,85 @@
 
 .features-section {
   padding: 4rem 2rem;
-  background: var(--light-gray);
-  width: 100%;
+  background: #f8f9fa;
 }
 
-.features {
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.features-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 2rem;
-  max-width: none;
-  width: 100%;
-  margin: 0;
 }
 
-.feature {
-  text-align: center;
+.feature-card {
+  background: white;
+  border-radius: 20px;
   padding: 2rem;
-}
-
-.feature-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-}
-
-.feature-image {
-  margin-bottom: 1rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 220px;
-}
-
-.feature-image img {
-  max-width: 200px;
-  max-height: 200px;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
 }
 
-.feature-image img:hover {
-  transform: scale(1.1);
+.feature-card:hover {
+  transform: translateY(-5px);
 }
 
-.feature h4 {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: var(--dark-gray);
+.feature-illustration {
+  height: 200px;
+  margin-bottom: 1.5rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
-.feature p {
-  color: #666;
-  line-height: 1.5;
+.feature-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 10px;
+  transition: transform 0.3s ease;
+}
+
+.feature-image:hover {
+  transform: scale(1.05);
+}
+
+.feature-text {
+  text-align: center;
+}
+
+.feature-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 0.75rem;
+}
+
+.feature-description {
+  font-size: 1rem;
+  color: #718096;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .feature-card {
+    padding: 1.5rem;
+  }
+  
+  .feature-illustration {
+    height: 150px;
+  }
 }
 
 @media (max-width: 768px) {

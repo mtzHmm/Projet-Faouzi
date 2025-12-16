@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { HomeComponent } from './pages/home/home.component';
 import { SigninComponent } from './pages/signin/signin.component';
 import { SignupComponent } from './pages/signup/signup.component';
+import { adminGuard, providerGuard, deliveryGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -12,7 +13,11 @@ export const routes: Routes = [
     path: 'checkout', 
     loadComponent: () => import('./pages/checkout/checkout.component').then(m => m.CheckoutComponent)
   },
-  { path: 'delivery', loadChildren: () => import('./pages/delivery/delivery.routes').then(m => m.routes) },
+  { 
+    path: 'delivery', 
+    loadChildren: () => import('./pages/delivery/delivery.routes').then(m => m.routes),
+    canActivate: [deliveryGuard]
+  },
   { path: 'shop', loadChildren: () => import('./pages/shop/shop.routes').then(m => m.routes) },
   { path: 'contact', loadChildren: () => import('./pages/contact/contact.routes').then(m => m.routes) },
   { 
@@ -33,11 +38,13 @@ export const routes: Routes = [
   },
   { 
     path: 'admin', 
-    loadChildren: () => import('./pages/admin/admin.routes').then(m => m.routes)
+    loadChildren: () => import('./pages/admin/admin.routes').then(m => m.routes),
+    canActivate: [adminGuard]
   },
   { 
     path: 'provider', 
-    loadChildren: () => import('./pages/provider/provider.routes').then(m => m.routes)
+    loadChildren: () => import('./pages/provider/provider.routes').then(m => m.routes),
+    canActivate: [providerGuard]
   },
   { 
     path: 'user-management', 

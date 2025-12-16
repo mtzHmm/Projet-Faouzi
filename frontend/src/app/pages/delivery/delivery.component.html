@@ -90,16 +90,14 @@
             </div>
 
             <div class="customer-info">
-              <h3>{{ order.customer }}</h3>
+              <h3>{{ order.customer.fullName }}</h3>
               <p class="phone">📞 {{ order.phone }}</p>
               <p class="address">📍 {{ order.address }}</p>
             </div>
 
             <div class="items">
               <p class="items-label">Items:</p>
-              <ul>
-                <li *ngFor="let item of order.items">{{ item }}</li>
-              </ul>
+              <p class="items-text">{{ order.itemsText }}</p>
             </div>
 
             <div class="order-amount">
@@ -144,16 +142,14 @@
             </div>
 
             <div class="customer-info">
-              <h3>{{ order.customer }}</h3>
+              <h3>{{ order.customer.fullName }}</h3>
               <p class="phone">📞 {{ order.phone }}</p>
               <p class="address">📍 {{ order.address }}</p>
             </div>
 
             <div class="items">
               <p class="items-label">Items:</p>
-              <ul>
-                <li *ngFor="let item of order.items">{{ item }}</li>
-              </ul>
+              <p class="items-text">{{ order.itemsText }}</p>
             </div>
 
             <div class="order-amount">
@@ -202,16 +198,14 @@
             </div>
 
             <div class="customer-info">
-              <h3>{{ order.customer }}</h3>
+              <h3>{{ order.customer.fullName }}</h3>
               <p class="phone">📞 {{ order.phone }}</p>
               <p class="address">📍 {{ order.address }}</p>
             </div>
 
             <div class="items">
               <p class="items-label">Items:</p>
-              <ul>
-                <li *ngFor="let item of order.items">{{ item }}</li>
-              </ul>
+              <p class="items-text">{{ order.itemsText }}</p>
             </div>
 
             <div class="order-amount">
@@ -279,7 +273,7 @@
         <div class="detail-row">
           <div class="detail-column">
             <label>Name</label>
-            <p class="value">{{ selectedOrder.customer }}</p>
+            <p class="value">{{ selectedOrder.customer.fullName }}</p>
           </div>
           <div class="detail-column">
             <label>Phone</label>
@@ -295,14 +289,9 @@
       <!-- Items -->
       <div class="section">
         <h3>Items</h3>
-        <ul class="items-list">
-          <li *ngFor="let item of selectedOrder.items" class="item">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            {{ item }}
-          </li>
-        </ul>
+        <div class="items-display">
+          <p class="items-text">{{ selectedOrder.itemsText }}</p>
+        </div>
       </div>
 
       <!-- Order Amount and Time -->

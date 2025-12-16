@@ -156,7 +156,7 @@ router.get('/', async (req, res) => {
     // Format products with proper price conversion
     const products = result.rows.map(product => ({
       ...product,
-      price: parseFloat(product.price) / 100, // Convert from cents to currency
+      price: parseFloat(product.price) / 1000, // Convert from millimes to DT
       available: true
       // Note: image field comes from database as 'image' (mapped from image_url)
     }));
@@ -257,7 +257,7 @@ router.get('/:id', async (req, res) => {
     
     const product = {
       ...result.rows[0],
-      price: result.rows[0].price / 100
+      price: result.rows[0].price / 1000 // Convert from millimes to DT
     };
     
     res.json(product);
@@ -363,7 +363,7 @@ router.post('/', upload.single('image'), async (req, res) => {
     const result = await db.query(insertQuery, [
       name,
       description,
-      parseFloat(price), // Store as actual price value
+      Math.round(parseFloat(price) * 1000), // Store as millimes (1000 = 1 DT)
       parseInt(store_id),
       parseInt(category_id),
       imageUrl,
@@ -398,10 +398,10 @@ router.post('/', upload.single('image'), async (req, res) => {
     
     const detailResult = await db.query(detailQuery, [newProduct.id_produit]);
     
-    // Keep price as stored (no conversion needed)
+    // Convert price from millimes to DT for frontend
     const productWithPrice = {
       ...detailResult.rows[0],
-      price: parseFloat(detailResult.rows[0].price)
+      price: parseFloat(detailResult.rows[0].price) / 1000
     };
     
     console.log('✅ Product created successfully:', productWithPrice);
@@ -435,16 +435,48 @@ router.put('/:id', upload.single('image'), async (req, res) => {
     console.log('📎 Request file:', req.file ? 'File uploaded' : 'No file');
     
     const productId = parseInt(req.params.id);
+    
+    // Log the parsed values for debugging
+    console.log('🔍 Parsed productId:', productId, typeof productId);
+    console.log('🔍 Parsed store_id:', req.body.store_id, typeof req.body.store_id);
+    console.log('🔍 Parsed category_id:', req.body.category_id, typeof req.body.category_id);
+    console.log('🔍 Parsed price:', req.body.price, typeof req.body.price);
+    
     const { name, description, price, category_id, store_id, prescription = false, keepCurrentImage } = req.body;
     
     // Validate required fields
     if (!name || !description || !price || !category_id || !store_id) {
+      console.error('❌ Missing required fields:', { name: !!name, description: !!description, price: !!price, category_id: !!category_id, store_id: !!store_id });
       return res.status(400).json({ 
-        error: 'Name, description, price, category_id, and store_id are required' 
+        error: 'Name, description, price, category_id, and store_id are required',
+        received: { name, description, price, category_id, store_id }
       });
+    }
+    
+    // Validate numeric fields
+    if (isNaN(productId)) {
+      console.error('❌ Invalid product ID:', req.params.id);
+      return res.status(400).json({ error: 'Invalid product ID' });
+    }
+    
+    if (isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
+      console.error('❌ Invalid price:', price);
+      return res.status(400).json({ error: 'Price must be a valid positive number' });
+    }
+    
+    if (isNaN(parseInt(category_id))) {
+      console.error('❌ Invalid category_id:', category_id);
+      return res.status(400).json({ error: 'Category ID must be a valid number' });
+    }
+    
+    if (isNaN(parseInt(store_id))) {
+      console.error('❌ Invalid store_id:', store_id);
+      return res.status(400).json({ error: 'Store ID must be a valid number' });
     }
 
     const db = getDB();
+    
+    console.log('🔍 Checking if product exists...');
     
     // Check if product exists and belongs to the store
     const checkResult = await db.query(
@@ -452,7 +484,10 @@ router.put('/:id', upload.single('image'), async (req, res) => {
       [productId, parseInt(store_id)]
     );
     
+    console.log('🔍 Product check result:', checkResult.rows.length, 'rows found');
+    
     if (checkResult.rows.length === 0) {
+      console.error('❌ Product not found or unauthorized:', { productId, store_id: parseInt(store_id) });
       return res.status(404).json({ error: 'Product not found or unauthorized' });
     }
 
@@ -505,14 +540,27 @@ router.put('/:id', upload.single('image'), async (req, res) => {
     }
 
     // Validate that the category exists and matches the store type
-    const categoryValidation = await db.query(`
-      SELECT c.id, c.type as category_type, m.type as store_type 
-      FROM categorie c
-      CROSS JOIN magasin m
-      WHERE c.id = $1 AND m.id_magazin = $2
-    `, [parseInt(category_id), parseInt(store_id)]);
+    console.log('🔍 Validating category...');
+    let categoryValidation;
+    try {
+      categoryValidation = await db.query(`
+        SELECT c.id, c.type as category_type, m.type as store_type 
+        FROM categorie c
+        CROSS JOIN magasin m
+        WHERE c.id = $1 AND m.id_magazin = $2
+      `, [parseInt(category_id), parseInt(store_id)]);
+      
+      console.log('🔍 Category validation result:', categoryValidation.rows);
+    } catch (categoryError) {
+      console.error('❌ Category validation query failed:', categoryError);
+      return res.status(500).json({ 
+        error: 'Database error during category validation', 
+        details: categoryError.message 
+      });
+    }
     
     if (categoryValidation.rows.length === 0) {
+      console.error('❌ Invalid category or store:', { category_id: parseInt(category_id), store_id: parseInt(store_id) });
       return res.status(400).json({ error: 'Invalid category or store' });
     }
     
@@ -522,6 +570,7 @@ router.put('/:id', upload.single('image'), async (req, res) => {
     const expectedCategoryType = store_type;
     
     if (category_type !== expectedCategoryType) {
+      console.error('❌ Category type mismatch:', { category_type, store_type, expected: expectedCategoryType });
       return res.status(400).json({ 
         error: `Category type mismatch. Selected category is for ${category_type} but store is ${store_type}` 
       });
@@ -530,6 +579,7 @@ router.put('/:id', upload.single('image'), async (req, res) => {
     console.log(`✅ Category validation passed for update: ${category_type} matches ${store_type}`);
 
     // Update product in database
+    console.log('🔍 Updating product in database...');
     const updateQuery = `
       UPDATE produit 
       SET nom = $1, description = $2, prix = $3, categorie_id = $4, image_url = $5, prescription_required = $6
@@ -537,17 +587,33 @@ router.put('/:id', upload.single('image'), async (req, res) => {
       RETURNING id_produit, nom, description, prix, id_magazin, categorie_id, image_url, prescription_required
     `;
     
-    // Store price as entered (not multiplied by 100) since the frontend handles the display format
-    const updateResult = await db.query(updateQuery, [
+    const updateParams = [
       name,
       description,
-      parseFloat(price), // Store as the actual price value
+      Math.round(parseFloat(price) * 1000), // Store as millimes (1000 = 1 DT)
       parseInt(category_id),
       imageUrl,
       Boolean(prescription),
       productId,
       parseInt(store_id)
-    ]);
+    ];
+    
+    console.log('🔍 Update query params:', updateParams);
+    
+    // Store price as entered (not multiplied by 100) since the frontend handles the display format
+    let updateResult;
+    try {
+      updateResult = await db.query(updateQuery, updateParams);
+      console.log('🔍 Update result:', updateResult.rows);
+    } catch (updateError) {
+      console.error('❌ Product update query failed:', updateError);
+      return res.status(500).json({ 
+        error: 'Database error during product update', 
+        details: updateError.message,
+        query: updateQuery,
+        params: updateParams
+      });
+    }
 
     if (updateResult.rows.length === 0) {
       return res.status(500).json({ error: 'Failed to update product' });
@@ -578,8 +644,8 @@ router.put('/:id', upload.single('image'), async (req, res) => {
     const detailResult = await db.query(detailQuery, [productId]);
     const productDetails = detailResult.rows[0];
     
-    // Keep price as is (already in correct format)
-    productDetails.price = parseFloat(productDetails.price);
+    // Convert price from millimes to DT
+    productDetails.price = parseFloat(productDetails.price) / 1000;
 
     console.log('✅ Product updated successfully:', productDetails);
     
@@ -646,7 +712,7 @@ router.get('/category/:category', async (req, res) => {
     
     const categoryProducts = result.rows.map(product => ({
       ...product,
-      price: parseFloat(product.price) // Keep price as stored
+      price: parseFloat(product.price) / 1000 // Convert from millimes to DT
     }));
     
     res.json({
