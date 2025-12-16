@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { RouterLink, RouterLinkActive, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -62,10 +62,12 @@ export class ProductsComponent implements OnInit {
   constructor(
     private productService: ProductService,
     private authService: AuthService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
+    console.log('🚀 ProductsComponent ngOnInit started');
     this.loadUserStoreInfo();
     // Don't load products yet, wait for categories to load first
   }
@@ -73,22 +75,50 @@ export class ProductsComponent implements OnInit {
   loadUserStoreInfo() {
     const userData = this.authService.getUserData();
     console.log('🏪 Current user data:', userData);
-    if (userData && userData.role === 'provider') {
-      this.currentStore = {
-        id: userData.id,
-        name: userData.storeName || userData.name || userData.nom,
-        storeName: userData.storeName || userData.name || userData.nom,
-        storeType: userData.storeType || userData.type || 'restaurant'
-      };
-      this.storeType = this.currentStore.storeType;
-      console.log('🏪 Store info:', this.currentStore);
-      console.log('🏷️ Detected store type:', this.storeType);
-      console.log('🏷️ Store type (lowercase):', this.storeType.toLowerCase());
-      this.setProductCategories();
+    
+    if (!userData) {
+      console.error('❌ No user data found');
+      this.error = 'Please login to access this page.';
+      this.loading = false;
+      this.cdr.detectChanges();
+      return;
     }
+    
+    if (userData.role !== 'provider' && userData.role !== 'PROVIDER') {
+      console.error('❌ User is not a provider. Role:', userData.role);
+      this.error = 'Access denied. This page is for providers only.';
+      this.loading = false;
+      this.cdr.detectChanges();
+      return;
+    }
+    
+    // Extract store info from user data
+    this.currentStore = {
+      id: userData.id_magazin || userData.storeId || userData.id,
+      name: userData.storeName || userData.name || userData.nom || userData.firstName,
+      storeName: userData.storeName || userData.name || userData.nom || userData.firstName,
+      storeType: userData.storeType || userData.type || 'restaurant'
+    };
+    
+    this.storeType = this.currentStore.storeType;
+    
+    console.log('🏪 Store info extracted:', this.currentStore);
+    console.log('🏷️ Store type detected:', this.storeType);
+    
+    if (!this.currentStore.id) {
+      console.error('❌ No store ID found in user data');
+      this.error = 'Store ID not found. Please contact administrator.';
+      this.loading = false;
+      this.cdr.detectChanges();
+      return;
+    }
+    
+    console.log('✅ Store info loaded, proceeding to set categories');
+    this.setProductCategories();
   }
 
   setProductCategories() {
+    console.log('🔄 setProductCategories started');
     // Load categories from database based on store type
     let storeTypeForApi = this.storeType.toLowerCase();
     
@@ -97,8 +127,8 @@ export class ProductsComponent implements OnInit {
       storeTypeForApi = 'pharmacie';
     }
     
-    console.log('🏪 Store type:', this.storeType);
-    console.log('🔄 Requesting categories for type:', storeTypeForApi);
+    console.log('🏪 Store type for API:', storeTypeForApi);
+    console.log('🔄 Requesting categories...');
     
     this.productService.getCategories(storeTypeForApi).subscribe({
       next: (response) => {
@@ -106,20 +136,21 @@ export class ProductsComponent implements OnInit {
         if (response.success && response.categories) {
           this.categories = response.categories;
           this.categoryNames = response.categories.map(cat => cat.name);
-          console.log('✅ Categories loaded:', this.categories);
-          console.log('📋 Category names:', this.categoryNames);
+          console.log('✅ Categories loaded:', this.categories.length, 'categories');
         } else {
           console.log('⚠️ Invalid API response, using fallback categories');
-          // Fallback to default categories if API fails
           this.setFallbackCategories();
         }
-        // Load products after categories are ready
+        console.log('✅ Categories ready, starting to load products');
+        this.cdr.detectChanges();
         this.loadProducts();
       },
       error: (error) => {
-        console.error('Error loading categories:', error);
+        console.error('❌ Error loading categories:', error);
+        console.log('🔄 Using fallback categories due to error');
         this.setFallbackCategories();
-        // Load products even if categories fail
+        console.log('✅ Fallback categories ready, starting to load products');
+        this.cdr.detectChanges();
         this.loadProducts();
       }
     });
@@ -147,12 +178,15 @@ export class ProductsComponent implements OnInit {
   }
 
   loadProducts() {
+    console.log('🔄 loadProducts started');
     this.loading = true;
     this.error = '';
     
     if (!this.currentStore || !this.currentStore.id) {
+      console.error('❌ No store information available');
       this.error = 'Store information not available. Please login again.';
       this.loading = false;
+      this.cdr.detectChanges();
       return;
     }
     
@@ -161,31 +195,36 @@ export class ProductsComponent implements OnInit {
       store_id: this.currentStore.id
     };
     
-    console.log('🔍 Loading products for store ID:', this.currentStore.id);
+    console.log('🔍 Loading products for store:', this.currentStore.name, 'ID:', this.currentStore.id);
+    console.log('📋 Using filters:', filters);
     
     this.productService.getProducts(filters).subscribe({
       next: (response) => {
-        console.log('📦 Products received for this store:', response.products.length);
-        console.log('📦 Products data:', response.products);
+        console.log('📦 Products API response received');
+        console.log('📦 Products count for this store:', response.products?.length || 0);
         
-        // Debug image URLs specifically
-        response.products.forEach(product => {
-          if (product.image) {
-            console.log(`🖼️ Product "${product.name}" image URL:`, product.image);
-          } else {
-            console.log(`❌ Product "${product.name}" has no image`);
-          }
-        });
+        if (response.products) {
+          this.products = response.products;
+          this.filteredProducts = [...this.products];
+          console.log('✅ Products loaded and displayed:', this.filteredProducts.length);
+        } else {
+          console.log('⚠️ No products in response');
+          this.products = [];
+          this.filteredProducts = [];
+        }
         
-        this.products = response.products;
-        this.filteredProducts = [...this.products]; // Show all products initially
         this.loading = false;
-        console.log('✅ Products displayed:', this.filteredProducts.length);
+        console.log('🏁 Loading complete, loading =', this.loading);
+        this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error('Error loading products:', error);
+        console.error('❌ Error loading products:', error);
         this.error = 'Failed to load products. Please try again.';
+        this.products = [];
+        this.filteredProducts = [];
         this.loading = false;
+        console.log('🏁 Loading failed, loading =', this.loading);
+        this.cdr.detectChanges();
       }
     });
   }
@@ -216,6 +255,7 @@ export class ProductsComponent implements OnInit {
     });
     
     console.log('📊 Filtered products:', this.filteredProducts.length, 'of', this.products.length);
+    this.cdr.detectChanges();
   }
 
   getCategoryNameById(categoryId: number): string {
