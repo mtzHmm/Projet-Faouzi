@@ -113,11 +113,15 @@
                   [value]="user.role"
                   (change)="onRoleChange(user.id, $event)"
                   class="role-select"
-                  [ngClass]="getRoleClass(user.role)">
+                  [ngClass]="getRoleClass(user.role)"
+                  [attr.data-user-id]="user.id"
+                  [disabled]="!canChangeRole(user)"
+                  [title]="canChangeRole(user) ? 'Changer le rôle' : 'Ce rôle ne peut pas être modifié'">
                   <option value="admin">Administrateur</option>
                   <option value="client">Client</option>
-                  <option value="provider">Fournisseur</option>
-                  <option value="delivery">Livreur</option>
+                  <!-- Les options provider et delivery sont affichées mais ne peuvent être sélectionnées pour client/admin -->
+                  <option value="provider" [disabled]="true">Fournisseur</option>
+                  <option value="delivery" [disabled]="true">Livreur</option>
                 </select>
               </td>
               <td class="user-phone">{{ user.phone }}</td>

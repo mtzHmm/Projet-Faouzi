@@ -249,10 +249,83 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
   changeUserRole(userId: number, newRole: 'admin' | 'client' | 'provider' | 'delivery') {
     const user = this.users.find(u => u.id === userId);
-    if (user) {
-      user.role = newRole;
-      console.log(`User ${user.fullName} role changed to ${newRole}`);
+    if (!user) {
+      alert('Utilisateur introuvable');
+      return;
     }
+    
+    // Vérifier si le changement de rôle est autorisé
+    if (!this.isRoleChangeAllowed(user.role, newRole)) {
+      alert('Ce changement de rôle n\'est pas autorisé. Seuls les rôles Client et Admin peuvent être échangés.');
+      // Remettre la valeur précédente dans le select
+      this.resetRoleSelect(userId, user.role);
+      return;
+    }
+    
+    const oldRole = user.role;
+    console.log(`🔄 Changing user ${userId} role from ${oldRole} to ${newRole}`);
+    
+    // Confirmer le changement avec l'utilisateur
+    if (!confirm(`Êtes-vous sûr de vouloir changer le rôle de ${user.fullName || user.name} de ${this.getRoleDisplayName(oldRole)} vers ${this.getRoleDisplayName(newRole)} ?`)) {
+      this.resetRoleSelect(userId, oldRole);
+      return;
+    }
+    
+    // Mise à jour locale temporaire pour feedback immédiat
+    const originalRole = user.role;
+    user.role = newRole;
+    this.filterUsers();
+    
+    // Appel API pour persister en base de données
+    this.userService.updateUser(userId, { role: newRole }).subscribe({
+      next: (response) => {
+        console.log('✅ User role updated in database:', response);
+        alert(`Rôle mis à jour avec succès pour ${user.fullName || user.name}`);
+      },
+      error: (error) => {
+        console.error('❌ Error updating user role in database:', error);
+        alert('Erreur lors de la mise à jour du rôle en base de données');
+        
+        // Rollback en cas d'erreur
+        user.role = originalRole;
+        this.resetRoleSelect(userId, originalRole);
+        this.filterUsers();
+      }
+    });
+  }
+
+  // Vérifier si un changement de rôle est autorisé
+  private isRoleChangeAllowed(currentRole: string, newRole: string): boolean {
+    const allowedRoles = ['client', 'admin'];
+    
+    // Les rôles provider et delivery ne peuvent pas être changés
+    if (currentRole === 'provider' || currentRole === 'delivery') {
+      return false;
+    }
+    
+    // Les nouveaux rôles provider et delivery ne sont pas autorisés
+    if (newRole === 'provider' || newRole === 'delivery') {
+      return false;
+    }
+    
+    // Seuls client et admin peuvent être échangés
+    return allowedRoles.includes(currentRole) && allowedRoles.includes(newRole);
+  }
+
+  // Vérifier si un utilisateur peut changer de rôle
+  canChangeRole(user: any): boolean {
+    return user.role === 'client' || user.role === 'admin';
+  }
+
+  // Remettre la valeur précédente dans le select
+  private resetRoleSelect(userId: number, originalRole: string) {
+    // Utiliser setTimeout pour s'assurer que le DOM est mis à jour
+    setTimeout(() => {
+      const selectElement = document.querySelector(`select[data-user-id="${userId}"]`) as HTMLSelectElement;
+      if (selectElement) {
+        selectElement.value = originalRole;
+      }
+    }, 0);
   }
 
   onRoleChange(userId: number, event: Event) {
