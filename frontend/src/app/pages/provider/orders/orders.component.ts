@@ -183,6 +183,11 @@ export class OrdersComponent implements OnInit {
     return status === 'livraison';
   }
 
+  isDeliveryDisabled(status: string): boolean {
+    // Désactiver le bouton si déjà en cours de livraison
+    return status === 'livraison';
+  }
+
   canCancel(status: string): boolean {
     return status === 'en attente' || status === 'en cours' || status === 'préparée';
   }

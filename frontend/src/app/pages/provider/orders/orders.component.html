@@ -149,7 +149,9 @@
           <!-- Bouton Marquer comme Livrée -->
           <button *ngIf="canMarkAsDelivered(order.status)" 
                   (click)="markAsDelivered(order.id)" 
-                  class="action-btn delivered" 
+                  class="action-btn delivered"
+                  [class.disabled]="isDeliveryDisabled(order.status)"
+                  [disabled]="isDeliveryDisabled(order.status)"
                   title="Marquer comme Livrée">
             ✅
           </button>
@@ -278,7 +280,9 @@
       <!-- Bouton Marquer comme Livrée -->
       <button *ngIf="canMarkAsDelivered(selectedOrder.status)" 
               (click)="markAsDelivered(selectedOrder.id); closeOrderDetails()" 
-              class="btn-delivered">
+              class="btn-delivered"
+              [class.disabled]="isDeliveryDisabled(selectedOrder.status)"
+              [disabled]="isDeliveryDisabled(selectedOrder.status)">
         ✅ Marquer Livrée
       </button>
       

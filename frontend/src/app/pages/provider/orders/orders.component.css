@@ -488,6 +488,19 @@
   background: #059669;
 }
 
+.action-btn.delivered.disabled {
+  background: #9ca3af !important;
+  color: #6b7280 !important;
+  cursor: not-allowed !important;
+  opacity: 0.5;
+}
+
+.action-btn.delivered.disabled:hover {
+  background: #9ca3af !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 .action-btn.reject {
   background: #e74c3c;
   color: white;
@@ -673,6 +686,17 @@
 
 .btn-delivered:hover {
   background: #059669;
+}
+
+.btn-delivered.disabled {
+  background: #9ca3af !important;
+  color: #6b7280 !important;
+  cursor: not-allowed !important;
+  opacity: 0.5;
+}
+
+.btn-delivered.disabled:hover {
+  background: #9ca3af !important;
 }
 
 .btn-deny {
