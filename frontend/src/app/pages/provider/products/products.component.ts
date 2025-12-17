@@ -567,7 +567,39 @@ export class ProductsComponent implements OnInit {
   }
 
   deleteProduct(productId: number) {
-    console.log('Delete product:', productId);
+    const product = this.products.find(p => p.id === productId);
+    if (!product) {
+      console.error('Product not found');
+      return;
+    }
+
+    // Confirmation dialog
+    const confirmMessage = `Êtes-vous sûr de vouloir supprimer le produit "${product.name}" ?\n\nCette action est irréversible.`;
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    console.log('🗑️ Deleting product:', productId);
+
+    this.productService.deleteProduct(productId).subscribe({
+      next: (response) => {
+        console.log('✅ Product deleted successfully:', response);
+        
+        // Remove product from local arrays
+        this.products = this.products.filter(p => p.id !== productId);
+        this.filterProducts(); // Update filtered products
+        
+        // Show success message (you can replace with a toast notification)
+        alert(`Produit "${product.name}" supprimé avec succès !`);
+      },
+      error: (error) => {
+        console.error('❌ Error deleting product:', error);
+        
+        // Show error message
+        const errorMessage = error?.error?.message || 'Erreur lors de la suppression du produit';
+        alert(`Erreur: ${errorMessage}`);
+      }
+    });
   }
 
   toggleStatus(productId: number) {
