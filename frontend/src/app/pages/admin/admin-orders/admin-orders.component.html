@@ -132,22 +132,29 @@
         </div>
         
         <div class="col-actions">
+          <!-- Debug ID -->
+          <span class="debug-id" style="font-size: 10px; color: #999;">ID: {{ order.id }} ({{ typeof order.id }})</span>
+          
+          <!-- Bouton Rejeter (seulement pour commandes "en cours") -->
+          <button *ngIf="canRejectOrder(order.status)" 
+                  (click)="rejectOrder(order.id)" 
+                  class="action-btn reject-btn" 
+                  title="Rejeter la Commande">
+            ❌ 
+          </button>
+          
+          <!-- Bouton Marquer comme Livrée -->
           <button *ngIf="canMarkAsReady(order.status)" 
                   (click)="markAsReady(order.id)" 
                   class="action-btn ready-btn" 
-                  title="Mark as Ready">
-            ✅
+                  title="Marquer comme Livrée">
+            🏁 
           </button>
-          <button *ngIf="canMarkAsReady(order.status)" 
-                  (click)="cancelOrder(order.id)" 
-                  class="action-btn cancel-btn" 
-                  title="Cancel Order">
-            ❌
-          </button>
+          
           <button (click)="viewOrder(order.id)" 
                   class="action-btn view-btn" 
                   title="View Details">
-            👁️
+            🔍
           </button>
           <button (click)="printOrder(order.id)" 
                   class="action-btn print-btn" 

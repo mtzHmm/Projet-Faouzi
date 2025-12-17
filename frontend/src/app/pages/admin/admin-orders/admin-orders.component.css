@@ -379,20 +379,43 @@
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
 }
 
-/* Status Colors - Order Status */
-.status-select.en-cours {
-  background: #f59e0b;
+/* Status Badge Styles - Similar to Provider Page */
+.status-badge {
+  padding: 0.6rem 1.2rem;
+  border-radius: 25px;
   color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  display: inline-block;
+  min-width: 110px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
-.status-select.livree {
-  background: #10b981;
-  color: white;
+.status-badge.en-attente {
+  background-color: #f59e0b;
 }
 
-.status-select.annulee {
-  background: #e74c3c;
-  color: white;
+.status-badge.en-cours {
+  background-color: #3b82f6;
+}
+
+.status-badge.preparee {
+  background-color: #06b6d4;
+}
+
+.status-badge.livraison {
+  background-color: #8b5cf6;
+}
+
+.status-badge.livree {
+  background-color: #059669;
+}
+
+.status-badge.annulee {
+  background-color: #e74c3c;
 }
 
 .time-info strong {
@@ -427,46 +450,76 @@
 
 .action-btn {
   background: none;
-  border: none;
+  border: 1px solid #e5e7eb;
   cursor: pointer;
-  padding: 8px;
-  border-radius: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
   transition: all 0.3s ease;
-  font-size: 1.2rem;
+  font-size: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 2px;
+  min-width: 36px;
+  height: 36px;
 }
 
-.action-btn.view {
+.action-btn.accept-btn {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+.action-btn.accept-btn:hover {
+  background: #059669;
+  border-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.action-btn.reject-btn {
+  background: #e74c3c;
+  color: white;
+  border-color: #e74c3c;
+}
+
+.action-btn.reject-btn:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.action-btn.ready-btn {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.action-btn.ready-btn:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.action-btn.view-btn {
   color: #64748b;
 }
 
-.action-btn.view:hover {
+.action-btn.view-btn:hover {
   background: rgba(100, 116, 139, 0.1);
   color: #475569;
+  transform: translateY(-1px);
 }
 
-.action-btn.edit {
-  color: #f39c12;
-}
-
-.action-btn.edit:hover {
-  background: rgba(243, 156, 18, 0.1);
-  color: #e67e22;
-}
-
-.action-btn.print {
+.action-btn.print-btn {
   color: #9b59b6;
 }
 
-.action-btn.print:hover {
+.action-btn.print-btn:hover {
   background: rgba(155, 89, 182, 0.1);
   color: #8e44ad;
-}
-
-.action-btn:hover {
   transform: translateY(-1px);
 }
 

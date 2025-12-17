@@ -25,7 +25,7 @@ export class AdminOrdersComponent implements OnInit {
   searchTerm = '';
   selectedStatus = 'all';
 
-  statuses = ['en cours', 'livrée', 'annulée'];
+  statuses = ['en attente', 'en cours', 'préparée', 'livraison', 'livrée', 'annulée'];
 
   constructor(
     private orderService: OrderService,
@@ -112,8 +112,16 @@ export class AdminOrdersComponent implements OnInit {
   async updateStatus(orderId: string | number, newStatus: string) {
     try {
       console.log(`🔄 Admin updating order ${orderId} status to: ${newStatus}`);
+      console.log('🔍 OrderId type:', typeof orderId, 'Value:', orderId);
       
-      await this.orderService.updateOrderStatus(Number(orderId), newStatus).toPromise();
+      if (!orderId || isNaN(Number(orderId))) {
+        console.error('❌ Invalid orderId in updateStatus:', orderId);
+        alert('Erreur: ID de commande invalide');
+        return;
+      }
+      
+      const numericId = Number(orderId);
+      await this.orderService.updateOrderStatus(numericId, newStatus).toPromise();
       
       // Update local order
       const order = this.orders.find(o => o.id == orderId);
@@ -129,17 +137,49 @@ export class AdminOrdersComponent implements OnInit {
     }
   }
 
-  markAsReady(orderId: string | number) {
-    this.updateStatus(orderId, 'livrée');
+
+
+  rejectOrder(orderId: string | number) {
+    console.log('🔍 Debug orderId:', orderId, typeof orderId);
+    
+    if (!orderId || isNaN(Number(orderId))) {
+      console.error('❌ Invalid orderId:', orderId);
+      alert('Erreur: ID de commande invalide');
+      return;
+    }
+    
+    const confirmReject = confirm('Voulez-vous vraiment rejeter cette commande ? Cette action est irréversible.');
+    if (confirmReject) {
+      this.updateStatus(orderId, 'annulée');
+    }
   }
 
   cancelOrder(orderId: string | number) {
-    this.updateStatus(orderId, 'annulée');
+    this.rejectOrder(orderId);
+  }
+
+  markAsReady(orderId: string | number) {
+    console.log('🔍 Debug markAsReady orderId:', orderId, typeof orderId);
+    
+    if (!orderId || isNaN(Number(orderId))) {
+      console.error('❌ Invalid orderId in markAsReady:', orderId);
+      alert('Erreur: ID de commande invalide');
+      return;
+    }
+    
+    this.updateStatus(orderId, 'livrée');
+  }
+
+  canRejectOrder(status: string): boolean {
+    // Admin peut seulement rejeter les commandes "en cours"
+    return status === 'en cours';
   }
 
   canMarkAsReady(status: string): boolean {
-    return status === 'en cours';
+    return status === 'en cours' || status === 'préparée' || status === 'livraison';
   }
+
+
 
   viewOrder(orderId: string | number) {
     const order = this.orders.find(o => o.id == orderId);
@@ -164,16 +204,22 @@ export class AdminOrdersComponent implements OnInit {
 
   getStatusColor(status: string): string {
     const colors: { [key: string]: string } = {
-      'en cours': '#3b82f6',
-      'livrée': '#10b981',
-      'annulée': '#e74c3c'
+      'en attente': '#f59e0b',     // Orange pour en attente
+      'en cours': '#3b82f6',       // Bleu pour en cours
+      'préparée': '#06b6d4',       // Cyan pour préparée
+      'livraison': '#8b5cf6',      // Violet pour livraison
+      'livrée': '#10b981',         // Vert pour livrée
+      'annulée': '#e74c3c'         // Rouge pour annulée
     };
     return colors[status] || '#6b7280';
   }
 
   getStatusClass(status: string): string {
     const classes: { [key: string]: string } = {
+      'en attente': 'en-attente',
       'en cours': 'en-cours',
+      'préparée': 'preparee',
+      'livraison': 'livraison',
       'livrée': 'livree',
       'annulée': 'annulee'
     };
@@ -182,7 +228,10 @@ export class AdminOrdersComponent implements OnInit {
 
   getStatusText(status: string): string {
     const texts: { [key: string]: string } = {
+      'en attente': 'En Attente',
       'en cours': 'En Cours',
+      'préparée': 'Préparée',
+      'livraison': 'En Livraison',
       'livrée': 'Livrée',
       'annulée': 'Annulée'
     };

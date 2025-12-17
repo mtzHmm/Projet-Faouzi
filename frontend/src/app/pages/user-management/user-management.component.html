@@ -30,6 +30,10 @@
       <div class="header">
         <h1>User Management</h1>
         <div class="header-actions">
+          <button class="btn-refresh" (click)="loadUsers()" [disabled]="loading" title="Actualiser la liste">
+            <span class="refresh-icon">🔄</span>
+            {{ loading ? 'Chargement...' : 'Actualiser' }}
+          </button>
           <button class="btn-add" (click)="addNewUser()">
             <span class="add-icon">+</span>
             Add New User
@@ -43,12 +47,13 @@
             type="text" 
             placeholder="Rechercher utilisateurs..." 
             [(ngModel)]="searchTerm"
+            (ngModelChange)="onSearchChange()"
             class="search-input"
           >
           <span class="search-icon">🔍</span>
         </div>
         
-        <select [(ngModel)]="selectedRole" class="role-filter">
+        <select [(ngModel)]="selectedRole" (ngModelChange)="onRoleFilterChange()" class="role-filter">
           <option value="all">Tous les rôles</option>
           <option value="admin">Administrateur</option>
           <option value="client">Client</option>
@@ -124,7 +129,9 @@
               <td class="user-orders">
                 <span class="orders-count">{{ user.totalOrders || 0 }}</span>
               </td>
-              <td class="user-date">{{ user.registrationDate | date:'dd/MM/yyyy' }}</td>
+              <td class="user-date">
+                {{ formatDate(user.registrationDate) }}
+              </td>
               <td class="user-actions">
                 <button class="action-btn edit-btn" (click)="editUser(user.id)" title="Modifier utilisateur">
                   <span class="icon">✏️</span>
