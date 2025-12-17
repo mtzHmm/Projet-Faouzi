@@ -26,6 +26,15 @@
 
   <!-- Main Content -->
   <div class="main-content">
+    <!-- Message de succès -->
+    <div *ngIf="showSuccessMessage" class="success-notification">
+      <div class="success-content">
+        <span class="success-icon">✅</span>
+        <span class="success-text">{{ successMessage }}</span>
+        <button class="success-close" (click)="hideSuccessMessage()">×</button>
+      </div>
+    </div>
+    
     <div class="user-management-container">
       <div class="header">
         <h1>User Management</h1>
@@ -162,8 +171,12 @@
                 {{ formatDate(user.registrationDate) }}
               </td>
               <td class="user-actions">
-                <button class="action-btn edit-btn" (click)="editUser(user.id)" title="Modifier utilisateur">
-                  <span class="icon">✏️</span>
+                <button class="action-btn edit-btn" 
+                        (click)="editUser(user.id)" 
+                        [disabled]="editingUserId === user.id"
+                        title="Modifier utilisateur">
+                  <span class="icon" *ngIf="editingUserId !== user.id">✏️</span>
+                  <span class="icon loading-icon" *ngIf="editingUserId === user.id">⏳</span>
                 </button>
                 <button class="action-btn toggle-btn" (click)="toggleUserStatus(user.id)" 
                         title="{{ user.status === 'active' ? 'Suspendre' : 'Activer' }}">
@@ -181,6 +194,196 @@
       <div class="pagination">
         <span class="results-count">Affichage de {{ filteredUsers.length }} utilisateur(s)</span>
       </div>
+    </div>
+  </div>
+  
+  <!-- Modal d'édition -->
+  <div *ngIf="showEditModal && editingUser && editingUser.id" class="modal-overlay" (click)="closeEditModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Modifier {{ getEditModalTitle() }}</h3>
+        <button class="modal-close" (click)="closeEditModal()">×</button>
+      </div>
+      
+      <form class="edit-form" (ngSubmit)="saveUser()" #editForm="ngForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editNom">Nom *</label>
+            <input 
+              id="editNom" 
+              type="text" 
+              [(ngModel)]="editingUser.nom" 
+              name="nom" 
+              required 
+              class="form-input"
+              maxlength="50">
+          </div>
+          <div class="form-group" *ngIf="editingUser.userType === 'client' || editingUser.userType === 'livreur'">
+            <label for="editPrenom">Prénom *</label>
+            <input 
+              id="editPrenom" 
+              type="text" 
+              [(ngModel)]="editingUser.prenom" 
+              name="prenom" 
+              required 
+              class="form-input"
+              maxlength="50">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editEmail">Email *</label>
+            <input 
+              id="editEmail" 
+              type="email" 
+              [(ngModel)]="editingUser.email" 
+              name="email" 
+              required 
+              class="form-input"
+              maxlength="100">
+          </div>
+          <div class="form-group">
+            <label for="editTel">Téléphone</label>
+            <input 
+              id="editTel" 
+              type="tel" 
+              [(ngModel)]="editingUser.tel" 
+              name="tel" 
+              class="form-input">
+          </div>
+        </div>
+
+        <!-- Champs spécifiques Client -->
+        <div *ngIf="editingUser.userType === 'client'" class="client-fields">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editRole">Rôle *</label>
+              <select 
+                id="editRole" 
+                [(ngModel)]="editingUser.role" 
+                name="role" 
+                required 
+                class="form-select">
+                <option value="CLIENT">Client</option>
+                <option value="ADMIN">Administrateur</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="editGouv">Gouvernorat</label>
+              <input 
+                id="editGouv" 
+                type="text" 
+                [(ngModel)]="editingUser.gouv_client" 
+                name="gouv_client" 
+                class="form-input"
+                maxlength="100">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="editVille">Ville</label>
+            <input 
+              id="editVille" 
+              type="text" 
+              [(ngModel)]="editingUser.ville_client" 
+              name="ville_client" 
+              class="form-input"
+              maxlength="100">
+          </div>
+        </div>
+
+        <!-- Champs spécifiques Livreur -->
+        <div *ngIf="editingUser.userType === 'livreur'" class="livreur-fields">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editVehicule">Véhicule *</label>
+              <select 
+                id="editVehicule" 
+                [(ngModel)]="editingUser.vehicule" 
+                name="vehicule" 
+                required 
+                class="form-select">
+                <option value="voiture">Voiture</option>
+                <option value="moto">Moto</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="editDisponibilite">Disponibilité</label>
+              <input 
+                id="editDisponibilite" 
+                type="time" 
+                [(ngModel)]="editingUser.disponibilite" 
+                name="disponibilite" 
+                class="form-input">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editVilleLivraison">Ville de livraison</label>
+              <input 
+                id="editVilleLivraison" 
+                type="text" 
+                [(ngModel)]="editingUser.ville_livraison" 
+                name="ville_livraison" 
+                class="form-input"
+                maxlength="100">
+            </div>
+            <div class="form-group">
+              <label for="editGouvLivreur">Gouvernorat</label>
+              <input 
+                id="editGouvLivreur" 
+                type="text" 
+                [(ngModel)]="editingUser.gouv_livreur" 
+                name="gouv_livreur" 
+                class="form-input"
+                maxlength="100">
+            </div>
+          </div>
+        </div>
+
+        <!-- Champs spécifiques Magasin -->
+        <div *ngIf="editingUser.userType === 'magasin'" class="magasin-fields">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editType">Type de magasin</label>
+              <input 
+                id="editType" 
+                type="text" 
+                [(ngModel)]="editingUser.type" 
+                name="type" 
+                class="form-input"
+                maxlength="50">
+            </div>
+            <div class="form-group">
+              <label for="editGouvMagasin">Gouvernorat</label>
+              <input 
+                id="editGouvMagasin" 
+                type="text" 
+                [(ngModel)]="editingUser.gouv_magasin" 
+                name="gouv_magasin" 
+                class="form-input"
+                maxlength="100">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="editVilleMagasin">Ville</label>
+            <input 
+              id="editVilleMagasin" 
+              type="text" 
+              [(ngModel)]="editingUser.ville_magasin" 
+              name="ville_magasin" 
+              class="form-input"
+              maxlength="100">
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" (click)="closeEditModal()">Annuler</button>
+          <button type="submit" class="btn-save" [disabled]="!editForm.valid || saving">
+            {{ saving ? 'Sauvegarde...' : 'Sauvegarder' }}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>

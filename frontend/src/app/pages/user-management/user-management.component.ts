@@ -37,6 +37,18 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   // Auto-refresh
   private refreshInterval: any;
   autoRefresh = true;
+  
+  // Edit functionality
+  showEditModal = false;
+  editingUser: any = null;
+  editingUserId: number | null = null;
+  saving = false;
+
+  // Success/Error messages
+  showSuccessMessage = false;
+  successMessage = '';
+  showErrorMessage = false;
+  errorMessage = '';
 
   constructor(private userService: UserService) {}
 
@@ -202,54 +214,50 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     console.log('🔄 Manual refresh requested');
     this.loadUsers();
   }
-  getRoleDisplayName(role: string): string {
-    switch (role) {
-      case 'admin': return 'Administrateur';
-      case 'client': return 'Client';
-      case 'provider': return 'Fournisseur';
-      case 'delivery': return 'Livreur';
-      default: return role;
-    }
-  }
-
-  getStatusDisplayName(status: string): string {
-    switch (status) {
-      case 'active': return 'Actif';
-      case 'inactive': return 'Inactif';
-      case 'suspended': return 'Suspendu';
-      default: return status;
-    }
-  }
-
-  // Méthode pour formater les dates de manière sécurisée
-  formatDate(date: any): string {
-    if (!date) return 'N/A';
-    
-    try {
-      const dateObj = date instanceof Date ? date : new Date(date);
-      if (isNaN(dateObj.getTime())) return 'N/A';
-      
-      return dateObj.toLocaleDateString('fr-FR');
-    } catch (error) {
-      return 'N/A';
-    }
-  }
-
-  getStatusClass(status: string): string {
-    return `status-${status}`;
-  }
-
-  getRoleClass(role: string): string {
-    return `role-${role}`;
-  }
-
-  getRoleCount(role: 'admin' | 'client' | 'provider' | 'delivery'): number {
-    return this.users.filter(user => user.role === role).length;
-  }
 
   editUser(userId: number) {
     console.log('Edit user:', userId);
-    // Implement edit functionality
+    const user = this.users.find(u => u.id === userId);
+    if (user) {
+      this.editingUser = { ...user, userType: user.role };
+      this.editingUserId = userId;
+      this.showEditModal = true;
+    }
+  }
+
+  closeEditModal() {
+    this.showEditModal = false;
+    this.editingUser = null;
+    this.editingUserId = null;
+    this.saving = false;
+  }
+
+  getEditModalTitle(): string {
+    if (!this.editingUser) return '';
+    return this.getUserTypeText(this.editingUser.userType);
+  }
+
+  async saveUser() {
+    if (!this.editingUser || !this.editingUserId) return;
+    
+    this.saving = true;
+    try {
+      // Simulate API call for now
+      console.log('Saving user:', this.editingUser);
+      
+      // Update local data
+      const userIndex = this.users.findIndex(u => u.id === this.editingUserId);
+      if (userIndex !== -1) {
+        this.users[userIndex] = { ...this.users[userIndex], ...this.editingUser };
+        this.filterUsers();
+      }
+      
+      this.closeEditModal();
+    } catch (error) {
+      console.error('Error saving user:', error);
+    } finally {
+      this.saving = false;
+    }
   }
 
   changeUserRole(userId: number, newRole: 'admin' | 'client' | 'provider' | 'delivery') {
@@ -356,5 +364,156 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   addNewUser() {
     console.log('Add new user');
     // Implement add user functionality
+  }
+
+  getRoleDisplayName(role: string): string {
+    switch (role) {
+      case 'admin': return 'Administrateur';
+      case 'client': return 'Client';
+      case 'provider': return 'Fournisseur';
+      case 'delivery': return 'Livreur';
+      default: return role;
+    }
+  }
+
+  getStatusDisplayName(status: string): string {
+    switch (status) {
+      case 'active': return 'Actif';
+      case 'inactive': return 'Inactif';
+      case 'suspended': return 'Suspendu';
+      default: return status;
+    }
+  }
+
+  formatDate(dateString: string | Date | undefined): string {
+    if (!dateString) {
+      return 'N/A';
+    }
+    try {
+      const dateObj = dateString instanceof Date ? dateString : new Date(dateString);
+      if (isNaN(dateObj.getTime())) {
+        return 'N/A';
+      }
+      return dateObj.toLocaleDateString('fr-FR');
+    } catch (error) {
+      return 'N/A';
+    }
+  }
+
+  getStatusCssClass(status: string): string {
+    return `status-${status}`;
+  }
+
+  getRoleCssClass(role: string): string {
+    return `role-${role}`;
+  }
+
+  // Legacy method names for template compatibility
+  getStatusClass(status: string): string {
+    return this.getStatusCssClass(status);
+  }
+
+  getRoleClass(role: string): string {
+    return this.getRoleCssClass(role);
+  }
+
+  getUserCountByRole(role: string): number {
+    return this.users.filter(user => user.role === role).length;
+  }
+
+  // Template compatibility method
+  getRoleCount(role: 'admin' | 'client' | 'provider' | 'delivery'): number {
+    return this.getUserCountByRole(role);
+  }
+
+  showSuccess(message: string) {
+    this.successMessage = message;
+    this.showSuccessMessage = true;
+    this.showErrorMessage = false;
+    setTimeout(() => {
+      this.showSuccessMessage = false;
+    }, 3000);
+  }
+
+  showError(message: string) {
+    this.errorMessage = message;
+    this.showErrorMessage = true;
+    this.showSuccessMessage = false;
+    setTimeout(() => {
+      this.showErrorMessage = false;
+    }, 5000);
+  }
+
+  hideSuccessMessage() {
+    this.showSuccessMessage = false;
+  }
+
+  getUserTypeText(role: string): string {
+    switch (role) {
+      case 'client': return 'l\'utilisateur';
+      case 'livreur': return 'le livreur';
+      case 'magasin': return 'le magasin';
+      default: return 'l\'utilisateur';
+    }
+  }
+
+  isEditableRole(role: string): boolean {
+    return ['client', 'livreur', 'magasin'].includes(role);
+  }
+
+  getFieldsForRole(role: string): string[] {
+    switch (role) {
+      case 'client':
+        return ['email', 'name', 'adresse', 'telephone'];
+      case 'livreur':
+        return ['email', 'fullName', 'adresse', 'telephone', 'ville', 'vehicule'];
+      case 'magasin':
+        return ['email', 'nom', 'adresse', 'telephone', 'ville'];
+      default:
+        return ['email'];
+    }
+  }
+
+  prepareUpdateData(userData: any): any {
+    if (!userData || !userData.role) return userData;
+
+    const data: any = {};
+    const fieldsForRole = this.getFieldsForRole(userData.role);
+
+    fieldsForRole.forEach(field => {
+      if (userData.hasOwnProperty(field)) {
+        data[field] = userData[field];
+      }
+    });
+
+    return data;
+  }
+
+  isFieldRequired(field: string, role: string): boolean {
+    const requiredFields = ['email'];
+    return requiredFields.includes(field);
+  }
+
+  validateUserData(): boolean {
+    // Implementation for validation
+    return true;
+  }
+
+  private canEditRole(currentRole: string, newRole: string): boolean {
+    const allowedRoles = ['client', 'admin'];
+    
+    if (!allowedRoles.includes(currentRole)) {
+      return false;
+    }
+    
+    if (!allowedRoles.includes(newRole)) {
+      return false;
+    }
+    
+    return allowedRoles.includes(currentRole) && allowedRoles.includes(newRole);
+  }
+
+  canEditUser(user: any): boolean {
+    return user.role === 'client' || user.role === 'admin';
   }
 }
