@@ -191,6 +191,67 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+/* Section de filtres avec organisation */
+.filter-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Boutons de filtrage spéciaux */
+.special-filters {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 8px 16px;
+  border: 2px solid;
+  border-radius: 8px;
+  background: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.filter-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.filter-btn.provider {
+  color: #7c3aed;
+  border-color: #7c3aed;
+}
+
+.filter-btn.provider:hover,
+.filter-btn.provider.active {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: white;
+}
+
+.filter-btn.delivery {
+  color: #059669;
+  border-color: #059669;
+}
+
+.filter-btn.delivery:hover,
+.filter-btn.delivery.active {
+  background: linear-gradient(135deg, #059669, #047857);
+  color: white;
+}
+
+.filter-icon {
+  font-size: 16px;
+}
+
 /* Role Summary */
 .role-summary {
   display: flex;
@@ -544,4 +605,43 @@
   color: #9ca3af;
   background: #f3f4f6;
   cursor: not-allowed;
+}
+
+/* Styles pour les rôles fixes (fournisseurs et livreurs) */
+.fixed-role {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  border: 2px solid;
+  min-width: 100px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.role-badge.role-provider {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: white;
+  border-color: #7c3aed;
+}
+
+.role-badge.role-delivery {
+  background: linear-gradient(135deg, #059669, #047857);
+  color: white;
+  border-color: #059669;
+}
+
+.role-notice {
+  font-size: 11px;
+  color: #6b7280;
+  font-style: italic;
+  font-weight: 500;
 }

@@ -192,6 +192,11 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     this.filterUsers();
   }
 
+  selectSpecialRole(role: string) {
+    this.selectedRole = role;
+    this.filterUsers();
+  }
+
   // Refresh manuel
   refreshUsers() {
     console.log('🔄 Manual refresh requested');

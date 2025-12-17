@@ -53,13 +53,32 @@
           <span class="search-icon">🔍</span>
         </div>
         
-        <select [(ngModel)]="selectedRole" (ngModelChange)="onRoleFilterChange()" class="role-filter">
-          <option value="all">Tous les rôles</option>
-          <option value="admin">Administrateur</option>
-          <option value="client">Client</option>
-          <option value="provider">Fournisseur</option>
-          <option value="delivery">Livreur</option>
-        </select>
+        <div class="filter-section">
+          <select [(ngModel)]="selectedRole" (ngModelChange)="onRoleFilterChange()" class="role-filter">
+            <option value="all">Tous les rôles</option>
+            <option value="admin">Administrateur</option>
+            <option value="client">Client</option>
+          </select>
+          
+          <div class="special-filters">
+            <button 
+              class="filter-btn provider" 
+              [class.active]="selectedRole === 'provider'"
+              (click)="selectSpecialRole('provider')"
+              title="Afficher les fournisseurs">
+              <span class="filter-icon">🏪</span>
+              Fournisseurs
+            </button>
+            <button 
+              class="filter-btn delivery" 
+              [class.active]="selectedRole === 'delivery'"
+              (click)="selectSpecialRole('delivery')"
+              title="Afficher les livreurs">
+              <span class="filter-icon">🚚</span>
+              Livreurs
+            </button>
+          </div>
+        </div>
       </div>
 
       <div class="role-summary">
@@ -109,20 +128,26 @@
               </td>
               <td class="user-email">{{ user.email }}</td>
               <td class="user-role">
-                <select 
-                  [value]="user.role"
-                  (change)="onRoleChange(user.id, $event)"
-                  class="role-select"
-                  [ngClass]="getRoleClass(user.role)"
-                  [attr.data-user-id]="user.id"
-                  [disabled]="!canChangeRole(user)"
-                  [title]="canChangeRole(user) ? 'Changer le rôle' : 'Ce rôle ne peut pas être modifié'">
-                  <option value="admin">Administrateur</option>
-                  <option value="client">Client</option>
-                  <!-- Les options provider et delivery sont affichées mais ne peuvent être sélectionnées pour client/admin -->
-                  <option value="provider" [disabled]="true">Fournisseur</option>
-                  <option value="delivery" [disabled]="true">Livreur</option>
-                </select>
+                <!-- Affichage différent selon le type d'utilisateur -->
+                <div *ngIf="user.role === 'provider' || user.role === 'delivery'" class="fixed-role">
+                  <span class="role-badge" [ngClass]="getRoleClass(user.role)">
+                    {{ user.role === 'provider' ? 'Fournisseur' : 'Livreur' }}
+                  </span>
+                  <small class="role-notice">Rôle fixe</small>
+                </div>
+                <div *ngIf="user.role !== 'provider' && user.role !== 'delivery'">
+                  <select 
+                    [value]="user.role"
+                    (change)="onRoleChange(user.id, $event)"
+                    class="role-select"
+                    [ngClass]="getRoleClass(user.role)"
+                    [attr.data-user-id]="user.id"
+                    [disabled]="!canChangeRole(user)"
+                    [title]="canChangeRole(user) ? 'Changer le rôle' : 'Ce rôle ne peut pas être modifié'">
+                    <option value="admin">Administrateur</option>
+                    <option value="client">Client</option>
+                  </select>
+                </div>
               </td>
               <td class="user-phone">{{ user.phone }}</td>
               <td class="user-status">
