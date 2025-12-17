@@ -200,7 +200,7 @@ router.post('/', async (req, res) => {
       deliveryFee, 
       total, 
       dateCommande, 
-      status = 'en cours'  // Use French status that matches DB constraint 
+      status = 'en attente'  // Nouvelles commandes commencent en attente 
     } = req.body;
     
     // Debug: Log extracted values
@@ -323,7 +323,7 @@ router.put('/:id/status', async (req, res) => {
     const orderId = parseInt(req.params.id);
     const db = database.getPool();
     
-    const validStatuses = ['en cours', 'livrée', 'annulée'];
+    const validStatuses = ['en attente', 'en cours', 'préparée', 'livraison', 'livrée', 'annulée'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ error: 'Invalid status. Valid statuses: ' + validStatuses.join(', ') });
     }
@@ -357,8 +357,11 @@ router.get('/stats/summary', async (req, res) => {
     const statsQuery = `
       SELECT 
         COUNT(*) as totalOrders,
-        COUNT(CASE WHEN status = 'en cours' THEN 1 END) as pendingOrders,
+        COUNT(CASE WHEN status = 'en attente' THEN 1 END) as waitingOrders,
+        COUNT(CASE WHEN status = 'préparée' THEN 1 END) as preparedOrders,
+        COUNT(CASE WHEN status = 'en livraison' THEN 1 END) as inDeliveryOrders,
         COUNT(CASE WHEN status = 'livrée' THEN 1 END) as completedOrders,
+        COUNT(CASE WHEN status = 'annulée' THEN 1 END) as cancelledOrders,
         COALESCE(SUM(total), 0) as totalRevenue,
         COALESCE(AVG(total), 0) as averageOrderValue
       FROM commande
@@ -369,8 +372,11 @@ router.get('/stats/summary', async (req, res) => {
     
     res.json({
       totalOrders: parseInt(stats.totalorders),
-      pendingOrders: parseInt(stats.pendingorders),
+      waitingOrders: parseInt(stats.waitingorders),
+      preparedOrders: parseInt(stats.preparedorders), 
+      inDeliveryOrders: parseInt(stats.indeliveryorders),
       completedOrders: parseInt(stats.completedorders),
+      cancelledOrders: parseInt(stats.cancelledorders),
       totalRevenue: parseFloat(stats.totalrevenue),
       averageOrderValue: parseFloat(stats.averageordervalue)
     });

@@ -121,18 +121,47 @@
           <button (click)="viewOrder(order.id)" class="action-btn view" title="View Details">
             👁️
           </button>
-          <button *ngIf="canMarkAsReady(order.status)" 
-                  (click)="markAsReady(order.id)" 
+          
+          <!-- Bouton Accepter la Commande -->
+          <button *ngIf="canAccept(order.status)" 
+                  (click)="acceptOrder(order.id)" 
                   class="action-btn accept" 
-                  title="Mark as Ready">
+                  title="Accepter la Commande">
             ✅
           </button>
-          <button *ngIf="canMarkAsReady(order.status)" 
+          
+          <!-- Bouton Marquer comme Préparée -->
+          <button *ngIf="canMarkAsPrepared(order.status)" 
+                  (click)="markAsPrepared(order.id)" 
+                  class="action-btn prepared" 
+                  title="Marquer comme Préparée">
+            🍳
+          </button>
+          
+          <!-- Bouton Marquer en Livraison -->
+          <button *ngIf="canMarkAsInDelivery(order.status)" 
+                  (click)="markAsInDelivery(order.id)" 
+                  class="action-btn delivery" 
+                  title="Envoyer en Livraison">
+            🚛
+          </button>
+          
+          <!-- Bouton Marquer comme Livrée -->
+          <button *ngIf="canMarkAsDelivered(order.status)" 
+                  (click)="markAsDelivered(order.id)" 
+                  class="action-btn delivered" 
+                  title="Marquer comme Livrée">
+            ✅
+          </button>
+          
+          <!-- Bouton Annuler -->
+          <button *ngIf="canCancel(order.status)" 
                   (click)="cancelOrder(order.id)" 
                   class="action-btn reject" 
-                  title="Cancel Order">
+                  title="Annuler la Commande">
             ❌
           </button>
+          
           <button (click)="printOrder(order.id)" class="action-btn print" title="Print Order">
             🖨️
           </button>
@@ -225,16 +254,41 @@
     </div>
 
     <div class="modal-footer">
-      <button *ngIf="canMarkAsReady(selectedOrder.status)" 
-              (click)="markAsReady(selectedOrder.id); closeOrderDetails()" 
+      <!-- Bouton Accepter -->
+      <button *ngIf="canAccept(selectedOrder.status)" 
+              (click)="acceptOrder(selectedOrder.id); closeOrderDetails()" 
               class="btn-accept">
-        ✅ Mark as Ready
+        ✅ Accepter la Commande
       </button>
-      <button *ngIf="canMarkAsReady(selectedOrder.status)" 
+      
+      <!-- Bouton Marquer comme Préparée -->
+      <button *ngIf="canMarkAsPrepared(selectedOrder.status)" 
+              (click)="markAsPrepared(selectedOrder.id); closeOrderDetails()" 
+              class="btn-prepared">
+        🍳 Marquer Préparée
+      </button>
+      
+      <!-- Bouton Marquer en Livraison -->
+      <button *ngIf="canMarkAsInDelivery(selectedOrder.status)" 
+              (click)="markAsInDelivery(selectedOrder.id); closeOrderDetails()" 
+              class="btn-delivery">
+        🚛 Envoyer en Livraison
+      </button>
+      
+      <!-- Bouton Marquer comme Livrée -->
+      <button *ngIf="canMarkAsDelivered(selectedOrder.status)" 
+              (click)="markAsDelivered(selectedOrder.id); closeOrderDetails()" 
+              class="btn-delivered">
+        ✅ Marquer Livrée
+      </button>
+      
+      <!-- Bouton Annuler -->
+      <button *ngIf="canCancel(selectedOrder.status)" 
               (click)="cancelOrder(selectedOrder.id); closeOrderDetails()" 
               class="btn-deny">
-        ❌ Cancel Order
+        ❌ Annuler
       </button>
+      
       <button (click)="printOrder(selectedOrder.id)" class="btn-print">
         🖨️ Print
       </button>

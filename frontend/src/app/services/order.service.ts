@@ -11,7 +11,10 @@ export interface OrderItem {
   total?: number; // Optional - calculated in backend
 }
 export type OrderStatus =
+  | 'en attente'
   | 'en cours'
+  | 'préparée'
+  | 'livraison'
   | 'livrée'
   | 'annulée'
 ;

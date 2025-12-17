@@ -427,12 +427,24 @@
   background-color: #10b981;
 }
 
-.status-badge.refusee {
+.status-badge.annulee {
   background-color: #e74c3c;
+}
+
+.status-badge.en-attente {
+  background-color: #f59e0b;
 }
 
 .status-badge.en-cours {
   background-color: #3b82f6;
+}
+
+.status-badge.preparee {
+  background-color: #06b6d4;
+}
+
+.status-badge.livraison {
+  background-color: #8b5cf6;
 }
 
 .status-badge.livree {
@@ -449,12 +461,39 @@
   background: #059669;
 }
 
-.action-btn.deny {
+.action-btn.prepared {
+  background: #06b6d4;
+  color: white;
+}
+
+.action-btn.prepared:hover {
+  background: #0891b2;
+}
+
+.action-btn.delivery {
+  background: #8b5cf6;
+  color: white;
+}
+
+.action-btn.delivery:hover {
+  background: #7c3aed;
+}
+
+.action-btn.delivered {
+  background: #10b981;
+  color: white;
+}
+
+.action-btn.delivered:hover {
+  background: #059669;
+}
+
+.action-btn.reject {
   background: #e74c3c;
   color: white;
 }
 
-.action-btn.deny:hover {
+.action-btn.reject:hover {
   background: #dc2626;
 }
 
@@ -595,7 +634,9 @@
   background: #f9fafb;
 }
 
-.btn-accept,
+.btn-prepared,
+.btn-delivery,
+.btn-delivered,
 .btn-deny,
 .btn-print,
 .btn-close {
@@ -607,12 +648,30 @@
   transition: all 0.2s ease;
 }
 
-.btn-accept {
+.btn-prepared {
+  background: #f59e0b;
+  color: white;
+}
+
+.btn-prepared:hover {
+  background: #d97706;
+}
+
+.btn-delivery {
+  background: #8b5cf6;
+  color: white;
+}
+
+.btn-delivery:hover {
+  background: #7c3aed;
+}
+
+.btn-delivered {
   background: #10b981;
   color: white;
 }
 
-.btn-accept:hover {
+.btn-delivered:hover {
   background: #059669;
 }
 

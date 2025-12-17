@@ -140,7 +140,7 @@ export class CheckoutComponent implements OnInit {
       deliveryFee: this.deliveryFee,
       total: this.total,
       dateCommande: new Date().toISOString().split('T')[0],
-      status: 'en cours'  // Use French status that matches DB constraint
+      status: 'en attente'  // Les nouvelles commandes commencent en attente
     };
 
     console.log('📦 Creating order:', orderData);

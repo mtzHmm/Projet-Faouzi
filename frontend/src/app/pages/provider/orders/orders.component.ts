@@ -25,7 +25,7 @@ export class OrdersComponent implements OnInit {
   searchTerm = '';
   selectedStatus = 'all';
 
-  statuses = ['en cours', 'livrée', 'annulée'];
+  statuses = ['en attente', 'en cours', 'préparée', 'livraison', 'livrée', 'annulée'];
 
   constructor(
     private orderService: OrderService,
@@ -145,16 +145,46 @@ export class OrdersComponent implements OnInit {
     }
   }
 
-  markAsReady(orderId: string | number) {
-    this.updateStatus(orderId, 'livrée'); // Mark as ready for delivery
+  // Méthodes de transition de statut
+  acceptOrder(orderId: string | number) {
+    this.updateStatus(orderId, 'en cours'); // Accepter la commande (en préparation)
+  }
+
+  markAsPrepared(orderId: string | number) {
+    this.updateStatus(orderId, 'préparée'); 
+  }
+
+  markAsInDelivery(orderId: string | number) {
+    this.updateStatus(orderId, 'livraison'); // En cours de livraison
+  }
+
+  markAsDelivered(orderId: string | number) {
+    this.updateStatus(orderId, 'livrée');
   }
 
   cancelOrder(orderId: string | number) {
-    this.updateStatus(orderId, 'annulée'); // Cancel the order
+    this.updateStatus(orderId, 'annulée');
   }
 
-  canMarkAsReady(status: string): boolean {
-    return status === 'en cours'; // Only allow marking ready for in-progress orders
+  // Méthodes pour déterminer quelles actions sont possibles selon le statut
+  canAccept(status: string): boolean {
+    return status === 'en attente';
+  }
+
+  canMarkAsPrepared(status: string): boolean {
+    return status === 'en cours'; // En cours = en préparation
+  }
+
+  canMarkAsInDelivery(status: string): boolean {
+    return status === 'préparée';
+  }
+
+  canMarkAsDelivered(status: string): boolean {
+    return status === 'livraison';
+  }
+
+  canCancel(status: string): boolean {
+    return status === 'en attente' || status === 'en cours' || status === 'préparée';
   }
 
   viewOrder(orderId: string | number) {
@@ -180,16 +210,22 @@ export class OrdersComponent implements OnInit {
 
   getStatusColor(status: string): string {
     const colors: { [key: string]: string } = {
-      'en cours': '#3b82f6',    // Blue for in progress
-      'livrée': '#10b981',      // Green for delivered
-      'annulée': '#e74c3c'      // Red for cancelled
+      'en attente': '#f59e0b',     // Orange pour en attente
+      'en cours': '#3b82f6',       // Bleu pour en cours (préparation)
+      'préparée': '#06b6d4',       // Cyan pour préparée
+      'livraison': '#8b5cf6',      // Violet pour livraison
+      'livrée': '#10b981',         // Vert pour livrée
+      'annulée': '#e74c3c'         // Rouge pour annulée
     };
     return colors[status] || '#6b7280';
   }
 
   getStatusClass(status: string): string {
     const classes: { [key: string]: string } = {
+      'en attente': 'en-attente',
       'en cours': 'en-cours',
+      'préparée': 'preparee',
+      'livraison': 'livraison',
       'livrée': 'livree',
       'annulée': 'annulee'
     };
@@ -198,7 +234,10 @@ export class OrdersComponent implements OnInit {
 
   getStatusText(status: string): string {
     const texts: { [key: string]: string } = {
+      'en attente': 'En Attente',
       'en cours': 'En Cours',
+      'préparée': 'Préparée',
+      'livraison': 'En Livraison',
       'livrée': 'Livrée',
       'annulée': 'Annulée'
     };
