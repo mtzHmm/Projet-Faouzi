@@ -26,26 +26,56 @@
 
   <!-- Main Content -->
   <div class="main-content">
-    <!-- Message de succès -->
-    <div *ngIf="showSuccessMessage" class="success-notification">
-      <div class="success-content">
-        <span class="success-icon">✅</span>
-        <span class="success-text">{{ successMessage }}</span>
-        <button class="success-close" (click)="hideSuccessMessage()">×</button>
+    <!-- Toast Notifications -->
+    <div class="toast-container">
+      <div *ngIf="showSuccessMessage" class="toast toast-success">
+        <div class="toast-icon">✅</div>
+        <div class="toast-content">
+          <div class="toast-title">Succès!</div>
+          <div class="toast-message">{{ successMessage }}</div>
+        </div>
+        <button class="toast-close" (click)="showSuccessMessage = false">×</button>
+      </div>
+      
+      <div *ngIf="showErrorMessage" class="toast toast-error">
+        <div class="toast-icon">❌</div>
+        <div class="toast-content">
+          <div class="toast-title">Erreur!</div>
+          <div class="toast-message">{{ errorMessage }}</div>
+        </div>
+        <button class="toast-close" (click)="showErrorMessage = false">×</button>
       </div>
     </div>
     
     <div class="user-management-container">
+      <!-- Table Navigation Tabs -->
+      <div class="table-tabs">
+        <button 
+          class="tab-button" 
+          [class.active]="activeTable === 'clients'"
+          (click)="switchTable('clients')">
+          👤 Clients & Admins ({{ filteredClients.length }})
+        </button>
+        <button 
+          class="tab-button" 
+          [class.active]="activeTable === 'providers'"
+          (click)="switchTable('providers')">
+          🏪 Fournisseurs ({{ filteredProviders.length }})
+        </button>
+        <button 
+          class="tab-button" 
+          [class.active]="activeTable === 'delivery'"
+          (click)="switchTable('delivery')">
+          🚚 Livreurs ({{ filteredDeliveryUsers.length }})
+        </button>
+      </div>
+      
       <div class="header">
-        <h1>User Management</h1>
+        <h1>Gestion des Utilisateurs</h1>
         <div class="header-actions">
-          <button class="btn-refresh" (click)="loadUsers()" [disabled]="loading" title="Actualiser la liste">
+          <button class="btn-refresh" (click)="refreshUsers()" [disabled]="loading" title="Actualiser la liste">
             <span class="refresh-icon">🔄</span>
             {{ loading ? 'Chargement...' : 'Actualiser' }}
-          </button>
-          <button class="btn-add" (click)="addNewUser()">
-            <span class="add-icon">+</span>
-            Add New User
           </button>
         </div>
       </div>
@@ -61,129 +91,45 @@
           >
           <span class="search-icon">🔍</span>
         </div>
-        
-        <div class="filter-section">
-          <select [(ngModel)]="selectedRole" (ngModelChange)="onRoleFilterChange()" class="role-filter">
-            <option value="all">Tous les rôles</option>
-            <option value="admin">Administrateur</option>
-            <option value="client">Client</option>
-          </select>
-          
-          <div class="special-filters">
-            <button 
-              class="filter-btn provider" 
-              [class.active]="selectedRole === 'provider'"
-              (click)="selectSpecialRole('provider')"
-              title="Afficher les fournisseurs">
-              <span class="filter-icon">🏪</span>
-              Fournisseurs
-            </button>
-            <button 
-              class="filter-btn delivery" 
-              [class.active]="selectedRole === 'delivery'"
-              (click)="selectSpecialRole('delivery')"
-              title="Afficher les livreurs">
-              <span class="filter-icon">🚚</span>
-              Livreurs
-            </button>
-          </div>
-        </div>
       </div>
 
-      <div class="role-summary">
-        <div class="summary-item">
-          <span class="role-count admin">{{ getRoleCount('admin') }}</span>
-          <span class="role-label">Admins</span>
-        </div>
-        <div class="summary-item">
-          <span class="role-count client">{{ getRoleCount('client') }}</span>
-          <span class="role-label">Clients</span>
-        </div>
-        <div class="summary-item">
-          <span class="role-count provider">{{ getRoleCount('provider') }}</span>
-          <span class="role-label">Fournisseurs</span>
-        </div>
-        <div class="summary-item">
-          <span class="role-count delivery">{{ getRoleCount('delivery') }}</span>
-          <span class="role-label">Livreurs</span>
-        </div>
-      </div>
-
-      <div class="users-table-container">
+      <!-- Clients Table -->
+      <div class="users-table-container" *ngIf="activeTable === 'clients'">
+        <h2 class="table-title">👤 Clients et Administrateurs</h2>
         <table class="users-table">
           <thead>
             <tr>
               <th>ID</th>
-              <th>Nom complet</th>
+              <th>Prénom</th>
+              <th>Nom</th>
               <th>Email</th>
-              <th>Rôle</th>
               <th>Téléphone</th>
-              <th>Statut</th>
-              <th>Total Commandes</th>
-              <th>Date d'inscription</th>
+              <th>Rôle</th>
+              <th>Gouvernorat</th>
+              <th>Ville</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let user of filteredUsers" class="user-row">
-              <td class="user-id">{{ user.id }}</td>
-              <td class="user-name">
-                <div class="name-info">
-                  <strong>{{ user.fullName }}</strong>
-                  <div *ngIf="user.storeInfo" class="store-info">
-                    <small>{{ user.storeInfo.storeName }} - {{ user.storeInfo.storeType }}</small>
-                  </div>
-                </div>
-              </td>
-              <td class="user-email">{{ user.email }}</td>
-              <td class="user-role">
-                <!-- Affichage différent selon le type d'utilisateur -->
-                <div *ngIf="user.role === 'provider' || user.role === 'delivery'" class="fixed-role">
-                  <span class="role-badge" [ngClass]="getRoleClass(user.role)">
-                    {{ user.role === 'provider' ? 'Fournisseur' : 'Livreur' }}
-                  </span>
-                  <small class="role-notice">Rôle fixe</small>
-                </div>
-                <div *ngIf="user.role !== 'provider' && user.role !== 'delivery'">
-                  <select 
-                    [value]="user.role"
-                    (change)="onRoleChange(user.id, $event)"
-                    class="role-select"
-                    [ngClass]="getRoleClass(user.role)"
-                    [attr.data-user-id]="user.id"
-                    [disabled]="!canChangeRole(user)"
-                    [title]="canChangeRole(user) ? 'Changer le rôle' : 'Ce rôle ne peut pas être modifié'">
-                    <option value="admin">Administrateur</option>
-                    <option value="client">Client</option>
-                  </select>
-                </div>
-              </td>
-              <td class="user-phone">{{ user.phone }}</td>
-              <td class="user-status">
-                <span class="status-badge" [class]="getStatusClass(user.status)">
-                  {{ getStatusDisplayName(user.status) }}
+            <tr *ngFor="let user of filteredClients" class="user-row">
+              <td>{{ user.id }}</td>
+              <td>{{ user.prenom || '-' }}</td>
+              <td>{{ user.nom || '-' }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.tel || user.phone || '-' }}</td>
+              <td>
+                <span class="role-badge" [ngClass]="user.role">
+                  {{ user.role === 'admin' ? 'Administrateur' : 'Client' }}
                 </span>
               </td>
-              <td class="user-orders">
-                <span class="orders-count">{{ user.totalOrders || 0 }}</span>
-              </td>
-              <td class="user-date">
-                {{ formatDate(user.registrationDate) }}
-              </td>
-              <td class="user-actions">
-                <button class="action-btn edit-btn" 
-                        (click)="editUser(user.id)" 
-                        [disabled]="editingUserId === user.id"
-                        title="Modifier utilisateur">
-                  <span class="icon" *ngIf="editingUserId !== user.id">✏️</span>
-                  <span class="icon loading-icon" *ngIf="editingUserId === user.id">⏳</span>
+              <td>{{ user.gouv_client || '-' }}</td>
+              <td>{{ user.ville_client || '-' }}</td>
+              <td>
+                <button class="btn-edit" (click)="editUser(user.id_client || user.id, 'client')" title="Modifier">
+                  ✏️
                 </button>
-                <button class="action-btn toggle-btn" (click)="toggleUserStatus(user.id)" 
-                        title="{{ user.status === 'active' ? 'Suspendre' : 'Activer' }}">
-                  <span class="icon">{{ user.status === 'active' ? '⏸️' : '▶️' }}</span>
-                </button>
-                <button class="action-btn delete-btn" (click)="deleteUser(user.id)" title="Supprimer utilisateur">
-                  <span class="icon">🗑️</span>
+                <button class="btn-delete" (click)="deleteUser(user.id, 'client')" title="Supprimer">
+                  🗑️
                 </button>
               </td>
             </tr>
@@ -191,196 +137,398 @@
         </table>
       </div>
 
-      <div class="pagination">
-        <span class="results-count">Affichage de {{ filteredUsers.length }} utilisateur(s)</span>
+      <!-- Providers Table -->
+      <div class="users-table-container" *ngIf="activeTable === 'providers'">
+        <h2 class="table-title">🏪 Fournisseurs</h2>
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nom Magasin</th>
+              <th>Email</th>
+              <th>Téléphone</th>
+              <th>Type</th>
+              <th>Gouvernorat</th>
+              <th>Ville</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of filteredProviders" class="user-row">
+              <td>{{ user.id }}</td>
+              <td>{{ user.name || user.fullName || user.nom || '-' }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.tel || user.phone || '-' }}</td>
+              <td>{{ user.type || '-' }}</td>
+              <td>{{ user.gouv_magasin || '-' }}</td>
+              <td>{{ user.ville_magasin || '-' }}</td>
+              <td>
+                <button class="btn-edit" (click)="editUser(user.id_magazin || user.id, 'magasin')" title="Modifier">
+                  ✏️
+                </button>
+                <button class="btn-delete" (click)="deleteUser(user.id, 'magasin')" title="Supprimer">
+                  🗑️
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Delivery Users Table -->
+      <div class="users-table-container" *ngIf="activeTable === 'delivery'">
+        <h2 class="table-title">🚚 Livreurs</h2>
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Prénom</th>
+              <th>Nom</th>
+              <th>Email</th>
+              <th>Téléphone</th>
+              <th>Véhicule</th>
+              <th>Gouvernorat</th>
+              <th>Ville Livraison</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of filteredDeliveryUsers" class="user-row">
+              <td>{{ user.id }}</td>
+              <td>{{ user.prenom || '-' }}</td>
+              <td>{{ user.nom || '-' }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.tel || user.phone || '-' }}</td>
+              <td>{{ user.vehicule || '-' }}</td>
+              <td>{{ user.gouv_livreur || '-' }}</td>
+              <td>{{ user.ville_livraison || '-' }}</td>
+              <td>
+                <button class="btn-edit" (click)="editUser(user.id_liv || user.id, 'livreur')" title="Modifier">
+                  ✏️
+                </button>
+                <button class="btn-delete" (click)="deleteUser(user.id, 'livreur')" title="Supprimer">
+                  🗑️
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="loading-container" *ngIf="loading">
+        <div class="loading-spinner">⏳</div>
+        <p>Chargement des utilisateurs...</p>
+      </div>
+
+      <div class="empty-state" *ngIf="!loading && activeTable === 'clients' && filteredClients.length === 0">
+        <div class="empty-icon">👥</div>
+        <h3>Aucun client trouvé</h3>
+        <p>Il n'y a aucun client dans la base de données.</p>
+      </div>
+
+      <div class="empty-state" *ngIf="!loading && activeTable === 'providers' && filteredProviders.length === 0">
+        <div class="empty-icon">🏪</div>
+        <h3>Aucun fournisseur trouvé</h3>
+        <p>Il n'y a aucun fournisseur dans la base de données.</p>
+      </div>
+
+      <div class="empty-state" *ngIf="!loading && activeTable === 'delivery' && filteredDeliveryUsers.length === 0">
+        <div class="empty-icon">🚚</div>
+        <h3>Aucun livreur trouvé</h3>
+        <p>Il n'y a aucun livreur dans la base de données.</p>
       </div>
     </div>
   </div>
-  
-  <!-- Modal d'édition -->
-  <div *ngIf="showEditModal && editingUser && editingUser.id" class="modal-overlay" (click)="closeEditModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3>Modifier {{ getEditModalTitle() }}</h3>
-        <button class="modal-close" (click)="closeEditModal()">×</button>
-      </div>
-      
-      <form class="edit-form" (ngSubmit)="saveUser()" #editForm="ngForm">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="editNom">Nom *</label>
-            <input 
-              id="editNom" 
-              type="text" 
-              [(ngModel)]="editingUser.nom" 
-              name="nom" 
-              required 
-              class="form-input"
-              maxlength="50">
-          </div>
-          <div class="form-group" *ngIf="editingUser.userType === 'client' || editingUser.userType === 'livreur'">
-            <label for="editPrenom">Prénom *</label>
-            <input 
-              id="editPrenom" 
-              type="text" 
-              [(ngModel)]="editingUser.prenom" 
-              name="prenom" 
-              required 
-              class="form-input"
-              maxlength="50">
-          </div>
-        </div>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label for="editEmail">Email *</label>
-            <input 
-              id="editEmail" 
-              type="email" 
-              [(ngModel)]="editingUser.email" 
-              name="email" 
-              required 
-              class="form-input"
-              maxlength="100">
-          </div>
-          <div class="form-group">
-            <label for="editTel">Téléphone</label>
-            <input 
-              id="editTel" 
-              type="tel" 
-              [(ngModel)]="editingUser.tel" 
-              name="tel" 
-              class="form-input">
-          </div>
-        </div>
+</div>
 
-        <!-- Champs spécifiques Client -->
-        <div *ngIf="editingUser.userType === 'client'" class="client-fields">
+<!-- Edit User Modal -->
+<div *ngIf="showEditModal" class="modal-overlay" (click)="closeEditModal()">
+  <div class="edit-modal wide-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ getEditModalTitle() }}</h2>
+      <button class="close-btn" (click)="closeEditModal()">✕</button>
+    </div>
+    
+    <div class="modal-body" *ngIf="editingUser">
+      <form (ngSubmit)="saveUser()" class="edit-form">
+        
+        <!-- CLIENT/ADMIN TABLE FIELDS -->
+        <div *ngIf="editingUser.userType === 'client' || editingUser.userType === 'admin'">
           <div class="form-row">
-            <div class="form-group">
-              <label for="editRole">Rôle *</label>
+            <div class="form-group half-width">
+              <label for="editNom">Nom de famille *</label>
+              <input 
+                type="text" 
+                id="editNom"
+                [(ngModel)]="editingUser.nom"
+                name="editNom"
+                required
+                placeholder="Entrez le nom de famille"
+                class="form-input">
+            </div>
+
+            <div class="form-group half-width">
+              <label for="editPrenom">Prénom *</label>
+              <input 
+                type="text" 
+                id="editPrenom"
+                [(ngModel)]="editingUser.prenom"
+                name="editPrenom"
+                required
+                placeholder="Entrez le prénom"
+                class="form-input">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group half-width">
+              <label for="editEmail">Adresse email *</label>
+              <input 
+                type="email" 
+                id="editEmail"
+                [(ngModel)]="editingUser.email"
+                name="editEmail"
+                required
+                placeholder="exemple@email.com"
+                class="form-input">
+            </div>
+
+            <div class="form-group half-width">
+              <label for="editTel">Numéro de téléphone</label>
+              <input 
+                type="number" 
+                id="editTel"
+                [(ngModel)]="editingUser.tel"
+                name="editTel"
+                placeholder="Numéro de téléphone"
+                class="form-input">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group half-width">
+              <label for="editRole">Rôle utilisateur *</label>
               <select 
-                id="editRole" 
-                [(ngModel)]="editingUser.role" 
-                name="role" 
-                required 
+                id="editRole"
+                [(ngModel)]="editingUser.role"
+                name="editRole"
+                required
                 class="form-select">
-                <option value="CLIENT">Client</option>
                 <option value="ADMIN">Administrateur</option>
+                <option value="CLIENT">Client</option>
               </select>
             </div>
-            <div class="form-group">
-              <label for="editGouv">Gouvernorat</label>
-              <input 
-                id="editGouv" 
-                type="text" 
-                [(ngModel)]="editingUser.gouv_client" 
-                name="gouv_client" 
-                class="form-input"
-                maxlength="100">
-            </div>
           </div>
-          <div class="form-group">
-            <label for="editVille">Ville</label>
-            <input 
-              id="editVille" 
-              type="text" 
-              [(ngModel)]="editingUser.ville_client" 
-              name="ville_client" 
-              class="form-input"
-              maxlength="100">
+
+          <div class="form-row">
+            <div class="form-group half-width">
+              <label for="editGouvClient">Gouvernorat</label>
+              <input 
+                type="text" 
+                id="editGouvClient"
+                [(ngModel)]="editingUser.gouv_client"
+                name="editGouvClient"
+                placeholder="Gouvernorat du client"
+                class="form-input">
+            </div>
+
+            <div class="form-group half-width">
+              <label for="editVilleClient">Ville</label>
+              <input 
+                type="text" 
+                id="editVilleClient"
+                [(ngModel)]="editingUser.ville_client"
+                name="editVilleClient"
+                placeholder="Ville du client"
+                class="form-input">
+            </div>
           </div>
         </div>
 
-        <!-- Champs spécifiques Livreur -->
-        <div *ngIf="editingUser.userType === 'livreur'" class="livreur-fields">
+        <!-- LIVREUR TABLE FIELDS -->
+        <div *ngIf="editingUser.userType === 'delivery'" class="delivery-fields">
+          <h3 class="section-title">Informations du livreur</h3>
+          
           <div class="form-row">
-            <div class="form-group">
-              <label for="editVehicule">Véhicule *</label>
+            <div class="form-group half-width">
+              <label for="editNomLiv">Nom de famille *</label>
+              <input 
+                type="text" 
+                id="editNomLiv"
+                [(ngModel)]="editingUser.nom"
+                name="editNomLiv"
+                required
+                placeholder="Nom du livreur"
+                class="form-input">
+            </div>
+
+            <div class="form-group half-width">
+              <label for="editPrenomLiv">Prénom *</label>
+              <input 
+                type="text" 
+                id="editPrenomLiv"
+                [(ngModel)]="editingUser.prenom"
+                name="editPrenomLiv"
+                required
+                placeholder="Prénom du livreur"
+                class="form-input">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group half-width">
+              <label for="editEmailLiv">Adresse email *</label>
+              <input 
+                type="email" 
+                id="editEmailLiv"
+                [(ngModel)]="editingUser.email"
+                name="editEmailLiv"
+                required
+                placeholder="exemple@email.com"
+                class="form-input">
+            </div>
+
+            <div class="form-group half-width">
+              <label for="editTelLiv">Numéro de téléphone</label>
+              <input 
+                type="number" 
+                id="editTelLiv"
+                [(ngModel)]="editingUser.tel"
+                name="editTelLiv"
+                placeholder="Numéro de téléphone"
+                class="form-input">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group half-width">
+              <label for="editVehicule">Type de véhicule *</label>
               <select 
-                id="editVehicule" 
-                [(ngModel)]="editingUser.vehicule" 
-                name="vehicule" 
-                required 
+                id="editVehicule"
+                [(ngModel)]="editingUser.vehicule"
+                name="editVehicule"
+                required
                 class="form-select">
+                <option value="">Sélectionner un véhicule</option>
                 <option value="voiture">Voiture</option>
                 <option value="moto">Moto</option>
               </select>
             </div>
-            <div class="form-group">
-              <label for="editDisponibilite">Disponibilité</label>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group half-width">
+              <label for="editGouvLivreur">Gouvernorat du livreur</label>
               <input 
-                id="editDisponibilite" 
-                type="time" 
-                [(ngModel)]="editingUser.disponibilite" 
-                name="disponibilite" 
+                type="text" 
+                id="editGouvLivreur"
+                [(ngModel)]="editingUser.gouv_livreur"
+                name="editGouvLivreur"
+                placeholder="Gouvernorat du livreur"
                 class="form-input">
             </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="editVilleLivraison">Ville de livraison</label>
+
+            <div class="form-group half-width">
+              <label for="editVilleLivraison">Zone de livraison</label>
               <input 
-                id="editVilleLivraison" 
                 type="text" 
-                [(ngModel)]="editingUser.ville_livraison" 
-                name="ville_livraison" 
-                class="form-input"
-                maxlength="100">
-            </div>
-            <div class="form-group">
-              <label for="editGouvLivreur">Gouvernorat</label>
-              <input 
-                id="editGouvLivreur" 
-                type="text" 
-                [(ngModel)]="editingUser.gouv_livreur" 
-                name="gouv_livreur" 
-                class="form-input"
-                maxlength="100">
+                id="editVilleLivraison"
+                [(ngModel)]="editingUser.ville_livraison"
+                name="editVilleLivraison"
+                placeholder="Ville de livraison"
+                class="form-input">
             </div>
           </div>
         </div>
 
-        <!-- Champs spécifiques Magasin -->
-        <div *ngIf="editingUser.userType === 'magasin'" class="magasin-fields">
+        <!-- FOURNISSEUR/MAGASIN TABLE FIELDS -->
+        <div *ngIf="editingUser.userType === 'provider'" class="provider-fields">
+          <h3 class="section-title">Informations du fournisseur</h3>
+          
           <div class="form-row">
             <div class="form-group">
-              <label for="editType">Type de magasin</label>
+              <label for="editNomMag">Nom de l'entreprise/magasin *</label>
               <input 
-                id="editType" 
                 type="text" 
-                [(ngModel)]="editingUser.type" 
-                name="type" 
-                class="form-input"
-                maxlength="50">
-            </div>
-            <div class="form-group">
-              <label for="editGouvMagasin">Gouvernorat</label>
-              <input 
-                id="editGouvMagasin" 
-                type="text" 
-                [(ngModel)]="editingUser.gouv_magasin" 
-                name="gouv_magasin" 
-                class="form-input"
-                maxlength="100">
+                id="editNomMag"
+                [(ngModel)]="editingUser.nom"
+                name="editNomMag"
+                required
+                placeholder="Nom de l'entreprise ou du magasin"
+                class="form-input">
             </div>
           </div>
-          <div class="form-group">
-            <label for="editVilleMagasin">Ville</label>
-            <input 
-              id="editVilleMagasin" 
-              type="text" 
-              [(ngModel)]="editingUser.ville_magasin" 
-              name="ville_magasin" 
-              class="form-input"
-              maxlength="100">
+
+          <div class="form-row">
+            <div class="form-group half-width">
+              <label for="editEmailMag">Adresse email *</label>
+              <input 
+                type="email" 
+                id="editEmailMag"
+                [(ngModel)]="editingUser.email"
+                name="editEmailMag"
+                required
+                placeholder="contact@entreprise.com"
+                class="form-input">
+            </div>
+
+            <div class="form-group half-width">
+              <label for="editTelMag">Numéro de téléphone</label>
+              <input 
+                type="number" 
+                id="editTelMag"
+                [(ngModel)]="editingUser.tel"
+                name="editTelMag"
+                placeholder="Numéro de téléphone"
+                class="form-input">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editType">Type d'activité</label>
+              <input 
+                type="text" 
+                id="editType"
+                [(ngModel)]="editingUser.type"
+                name="editType"
+                placeholder="Ex: Pharmacie, Restaurant, Boutique, Épicerie..."
+                class="form-input">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group half-width">
+              <label for="editGouvMagasin">Gouvernorat</label>
+              <input 
+                type="text" 
+                id="editGouvMagasin"
+                [(ngModel)]="editingUser.gouv_magasin"
+                name="editGouvMagasin"
+                placeholder="Gouvernorat du magasin"
+                class="form-input">
+            </div>
+
+            <div class="form-group half-width">
+              <label for="editVilleMagasin">Ville</label>
+              <input 
+                type="text" 
+                id="editVilleMagasin"
+                [(ngModel)]="editingUser.ville_magasin"
+                name="editVilleMagasin"
+                placeholder="Ville du magasin"
+                class="form-input">
+            </div>
           </div>
         </div>
 
         <div class="form-actions">
-          <button type="button" class="btn-cancel" (click)="closeEditModal()">Annuler</button>
-          <button type="submit" class="btn-save" [disabled]="!editForm.valid || saving">
-            {{ saving ? 'Sauvegarde...' : 'Sauvegarder' }}
+          <button type="button" class="cancel-btn" (click)="closeEditModal()" [disabled]="saving">
+            Annuler
+          </button>
+          <button type="submit" class="save-btn" [disabled]="saving">
+            <span *ngIf="!saving">Sauvegarder les modifications</span>
+            <span *ngIf="saving">Enregistrement en cours...</span>
           </button>
         </div>
       </form>

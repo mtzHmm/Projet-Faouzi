@@ -6,9 +6,25 @@ import { environment } from '../../environments/environment';
 export interface User {
   id: number;
   name: string;
+  nom?: string;
+  prenom?: string;
+  firstName?: string;
   email: string;
   role: string;
   status: string;
+  phone?: string;
+  tel?: string;
+  userType?: string;
+  gouvernorat?: string;
+  ville?: string;
+  gouv_client?: string;
+  ville_client?: string;
+  gouv_livreur?: string;
+  ville_livraison?: string;
+  gouv_magasin?: string;
+  ville_magasin?: string;
+  vehicule?: string;
+  type?: string;
   createdAt: Date;
 }
 
@@ -24,6 +40,9 @@ export interface UsersResponse {
 })
 export class UserService {
   private apiUrl = `${environment.apiUrl}/users`;
+  private clientsUrl = `${environment.apiUrl}/clients`;
+  private providersUrl = `${environment.apiUrl}/providers`;
+  private deliveryUrl = `${environment.apiUrl}/delivery`;
 
   constructor(private http: HttpClient) {}
 
@@ -51,8 +70,40 @@ export class UserService {
     return this.http.post<User>(this.apiUrl, user);
   }
 
-  updateUser(id: number, user: Partial<User>): Observable<User> {
-    return this.http.put<User>(`${this.apiUrl}/${id}`, user);
+  updateUser(id: number, userData: any, userRole?: string): Observable<User> {
+    console.log('🔄 UserService - Updating user:', id, 'role:', userRole);
+    console.log('🔄 UserService - User data:', userData);
+    
+    // Remove frontend-only fields
+    const dbData = { ...userData };
+    delete dbData.id;
+    delete dbData.userType;
+    delete dbData.tableType;
+    
+    // Choose the correct endpoint based on user type
+    let endpoint = '';
+    switch (userRole) {
+      case 'client':
+        endpoint = this.clientsUrl;
+        console.log('🎯 Using CLIENTS endpoint');
+        break;
+      case 'magasin':
+        endpoint = this.providersUrl;
+        console.log('🎯 Using PROVIDERS endpoint');
+        break;
+      case 'livreur':
+        endpoint = this.deliveryUrl;
+        console.log('🎯 Using DELIVERY endpoint');
+        break;
+      default:
+        endpoint = this.apiUrl; // Fallback to old endpoint
+        console.log('⚠️ Using fallback USERS endpoint');
+    }
+    
+    console.log('🔄 UserService - Final data for backend:', dbData);
+    console.log('📍 Sending to endpoint:', `${endpoint}/${id}`);
+    
+    return this.http.put<User>(`${endpoint}/${id}`, dbData);
   }
 
   deleteUser(id: number): Observable<any> {

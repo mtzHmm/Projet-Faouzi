@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+﻿import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -8,8 +8,36 @@ import { UserService, User } from '../../services/user.service';
 interface ExtendedUser extends User {
   fullName?: string;
   phone?: string;
+  tel?: string;
+  firstName?: string;
+  prenom?: string;
+  nom?: string;
+  userType?: string;
+  gouvernorat?: string;
+  ville?: string;
   registrationDate?: Date;
   totalOrders?: number;
+  tableType?: 'client' | 'magasin' | 'livreur'; // Add table identifier
+  
+  // Table-specific ID fields
+  id_client?: number;
+  id_magazin?: number;
+  id_liv?: number;
+  
+  // Client fields
+  gouv_client?: string;
+  ville_client?: string;
+  
+  // Provider/Magasin fields
+  type?: string;
+  gouv_magasin?: string;
+  ville_magasin?: string;
+  
+  // Delivery/Livreur fields
+  vehicule?: string;
+  ville_livraison?: string;
+  gouv_livreur?: string;
+  
   storeInfo?: {
     storeName: string;
     storeType: string;
@@ -25,14 +53,24 @@ interface ExtendedUser extends User {
   styleUrl: './user-management.component.css'
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
-  users: ExtendedUser[] = [];
-  filteredUsers: ExtendedUser[] = [];
+  // Separate arrays for each user type
+  clients: ExtendedUser[] = [];
+  providers: ExtendedUser[] = [];
+  deliveryUsers: ExtendedUser[] = [];
+  
+  // Filtered arrays
+  filteredClients: ExtendedUser[] = [];
+  filteredProviders: ExtendedUser[] = [];
+  filteredDeliveryUsers: ExtendedUser[] = [];
+  
   loading = false;
   error: string | null = null;
   
+  // Active table view
+  activeTable: 'clients' | 'providers' | 'delivery' = 'clients';
+  
   // Filtres
   searchTerm = '';
-  selectedRole = 'all';
   
   // Auto-refresh
   private refreshInterval: any;
@@ -42,6 +80,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   showEditModal = false;
   editingUser: any = null;
   editingUserId: number | null = null;
+  editingUserType: string | undefined = undefined;  // Will be 'client', 'magasin', or 'livreur'
   saving = false;
 
   // Success/Error messages
@@ -50,16 +89,19 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   showErrorMessage = false;
   errorMessage = '';
 
-  constructor(private userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
-    this.loadUsers();
+    this.loadAllUserTypes();
     
     // Auto-refresh every 30 seconds
     if (this.autoRefresh) {
       this.refreshInterval = setInterval(() => {
         console.log('🔄 Auto-refreshing users...');
-        this.loadUsers(true); // Silent refresh
+        this.loadAllUserTypes(true); // Silent refresh
       }, 30000);
     }
   }
@@ -70,112 +112,223 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
   }
 
-  loadUsers(silent = false) {
+  loadAllUserTypes(silent = false) {
     if (!silent) {
       this.loading = true;
       this.error = null;
     }
     
-    console.log('🔄 Loading users from database...');
+    console.log('🔄 Loading all user types from database...');
     
     this.userService.getUsers().subscribe({
       next: (response) => {
-        console.log('📊 Users response:', response);
+        console.log('📊 Raw Users response:', response);
         
-        // Traitement en lot de toutes les données
-        const processedUsers = this.processUsersData(response.users);
-        
-        // Mise à jour atomique
-        this.users = processedUsers;
-        this.filterUsers();
-        
-        if (!silent) {
-          this.loading = false;
+        if (response && response.users && Array.isArray(response.users)) {
+          this.separateUsersByType(response.users);
+          
+          if (!silent) {
+            this.loading = false;
+          }
+          
+          this.cdr.detectChanges();
+          console.log(`✅ Loaded users: ${this.clients.length} clients, ${this.providers.length} providers, ${this.deliveryUsers.length} delivery`);
+        } else {
+          console.warn('⚠️ Invalid response format:', response);
+          this.loadMockUsers();
         }
-        
-        console.log(`✅ Loaded ${this.users.length} users from database`);
       },
       error: (error) => {
         console.error('❌ Error loading users:', error);
+        
         if (!silent) {
           this.error = 'Failed to load users. Please try again.';
           this.loading = false;
         }
         
-        // Fallback vers des données mock en cas d'erreur
-        if (this.users.length === 0) {
-          this.loadMockUsers();
-        }
+        console.log('🔄 Loading mock data as fallback...');
+        this.loadMockUsers();
       }
-    });
-  }
-  
-  // Traitement optimisé des données utilisateurs
-  private processUsersData(rawUsers: any[]): ExtendedUser[] {
-    return rawUsers.map(user => {
-      // Création de la date de manière sécurisée
-      let registrationDate: Date;
-      try {
-        registrationDate = user.createdAt ? new Date(user.createdAt) : new Date();
-        if (isNaN(registrationDate.getTime())) {
-          registrationDate = new Date();
-        }
-      } catch {
-        registrationDate = new Date();
-      }
-      
-      return {
-        ...user,
-        fullName: user.name || (user.nom + ' ' + (user.prenom || '')).trim(),
-        registrationDate: registrationDate,
-        totalOrders: 0, // Par défaut, sera mis à jour plus tard
-        phone: user.tel ? user.tel.toString() : '',
-      };
     });
   }
 
-  loadMockUsers() {
-    console.log('⚠️ Using fallback mock data - database connection failed');
-    
-    this.users = [
-      {
-        id: 1,
-        name: 'hamam Mootaz',
-        fullName: 'hamam Mootaz',
-        email: 'hamam.mootaz@email.com',
-        role: 'admin',
-        phone: '+216 98 765 432',
-        registrationDate: new Date(2024, 0, 10),
-        status: 'active',
-        totalOrders: 12,
-        createdAt: new Date(2024, 0, 10)
-      },
-      {
-        id: 2,
-        name: 'jaafeer seif',
-        fullName: 'jaafeer seif',
-        email: 'jaafeer.seif@email.com',
-        role: 'client',
-        phone: '+216 22 334 455',
-        registrationDate: new Date(2024, 0, 8),
-        status: 'active',
-        totalOrders: 8,
-        createdAt: new Date(2024, 0, 8)
+  private separateUsersByType(rawUsers: any[]) {
+    this.clients = [];
+    this.providers = [];
+    this.deliveryUsers = [];
+
+    rawUsers.forEach(user => {
+      const processedUser = this.processUserData(user);
+      
+      console.log('🔍 Raw user data for classification:', {
+        id: user.id,
+        name: user.name || user.nom,
+        hasVehicule: user.vehicule !== undefined,
+        hasVilleLivraison: user.ville_livraison !== undefined,
+        hasGouvLivreur: user.gouv_livreur !== undefined,
+        hasType: user.type !== undefined,
+        hasGouvMagasin: user.gouv_magasin !== undefined,
+        hasVilleMagasin: user.ville_magasin !== undefined,
+        hasIdLiv: user.id_liv !== undefined,
+        hasIdMagazin: user.id_magazin !== undefined,
+        hasIdClient: user.id_client !== undefined,
+        allFields: Object.keys(user)
+      });
+      
+      // Use database ID fields as primary indicator, fallback to field presence
+      if (user.id_liv !== undefined) {
+        // Definitely from livreur table
+        processedUser.role = 'delivery';
+        processedUser.tableType = 'livreur';
+        this.deliveryUsers.push(processedUser);
+        console.log(`🚚 Added to delivery (id_liv): ${processedUser.fullName}`);
+      } else if (user.id_magazin !== undefined) {
+        // Definitely from magasin table
+        processedUser.role = 'provider';
+        processedUser.tableType = 'magasin';
+        this.providers.push(processedUser);
+        console.log(`🏪 Added to providers (id_magazin): ${processedUser.fullName}`);
+      } else if (user.id_client !== undefined) {
+        // Definitely from client table
+        processedUser.role = user.role?.toLowerCase() === 'admin' ? 'admin' : 'client';
+        processedUser.tableType = 'client';
+        this.clients.push(processedUser);
+        console.log(`👤 Added to clients (id_client): ${processedUser.fullName} (${processedUser.role})`);
+      } else {
+        // Fallback to field presence detection (old logic)
+        if (user.vehicule !== undefined || user.ville_livraison !== undefined || user.gouv_livreur !== undefined) {
+          processedUser.role = 'delivery';
+          processedUser.tableType = 'livreur';
+          this.deliveryUsers.push(processedUser);
+          console.log(`🚚 Added to delivery (fields): ${processedUser.fullName}`);
+        } else if (user.type !== undefined || user.gouv_magasin !== undefined || user.ville_magasin !== undefined) {
+          processedUser.role = 'provider';
+          processedUser.tableType = 'magasin';
+          this.providers.push(processedUser);
+          console.log(`🏪 Added to providers (fields): ${processedUser.fullName}`);
+        } else {
+          processedUser.role = user.role?.toLowerCase() === 'admin' ? 'admin' : 'client';
+          processedUser.tableType = 'client';
+          this.clients.push(processedUser);
+          console.log(`👤 Added to clients (default): ${processedUser.fullName} (${processedUser.role})`);
+        }
       }
-    ];
-    
+    });
+
+    // Apply filters to each array
     this.filterUsers();
   }
 
-  filterUsers() {
-    if (!this.users || this.users.length === 0) {
-      this.filteredUsers = [];
-      return;
+  private processUserData(user: any): ExtendedUser {
+    let registrationDate: Date;
+    try {
+      registrationDate = user.createdAt ? new Date(user.createdAt) : new Date();
+      if (isNaN(registrationDate.getTime())) {
+        registrationDate = new Date();
+      }
+    } catch {
+      registrationDate = new Date();
     }
     
-    let filtered = [...this.users];
+    // Preserve table-specific IDs in the processed user
+    const processedUser: ExtendedUser = {
+      ...user,
+      fullName: user.name || (user.nom + ' ' + (user.prenom || '')).trim(),
+      registrationDate: registrationDate,
+      totalOrders: 0,
+      phone: user.tel ? user.tel.toString() : '',
+    };
+    
+    // Ensure table-specific IDs are preserved
+    if (user.id_client) processedUser.id_client = user.id_client;
+    if (user.id_magazin) processedUser.id_magazin = user.id_magazin;
+    if (user.id_liv) processedUser.id_liv = user.id_liv;
+    
+    return processedUser;
+  }
 
-    // Filtre de recherche
+  private loadMockUsers() {
+    this.clients = [
+      {
+        id: 1,
+        name: 'Jean Dupont',
+        nom: 'Dupont',
+        prenom: 'Jean',
+        email: 'jean.dupont@email.com',
+        tel: '0123456789',
+        role: 'client',
+        status: 'active',
+        createdAt: new Date(),
+        tableType: 'client',
+        fullName: 'Jean Dupont',
+        registrationDate: new Date(),
+        totalOrders: 5,
+        phone: '0123456789'
+      }
+    ];
+
+    this.providers = [
+      {
+        id: 1,
+        name: 'Pharmacie Central',
+        nom: 'Pharmacie Central',
+        email: 'contact@pharmacie-central.fr',
+        tel: '0223456789',
+        type: 'Pharmacie',
+        gouv_magasin: 'Tunis',
+        role: 'provider',
+        status: 'active',
+        createdAt: new Date(),
+        tableType: 'magasin',
+        fullName: 'Pharmacie Central',
+        registrationDate: new Date(),
+        totalOrders: 25,
+        phone: '0223456789'
+      }
+    ];
+
+    this.deliveryUsers = [
+      {
+        id: 1,
+        name: 'Ahmed Mokhtar',
+        nom: 'Mokhtar',
+        prenom: 'Ahmed',
+        email: 'ahmed.livreur@email.com',
+        tel: '0323456789',
+        vehicule: 'Moto',
+        ville_livraison: 'Tunis Centre',
+        role: 'delivery',
+        status: 'active',
+        createdAt: new Date(),
+        tableType: 'livreur',
+        fullName: 'Ahmed Mokhtar',
+        registrationDate: new Date(),
+        totalOrders: 150,
+        phone: '0323456789'
+      }
+    ];
+
+    console.log('🔄 Mock data loaded separated by tables');
+    this.filterUsers();
+    this.loading = false;
+  }
+
+  filterUsers() {
+    // Filter each user type array separately
+    this.filteredClients = this.filterUserArray(this.clients);
+    this.filteredProviders = this.filterUserArray(this.providers);
+    this.filteredDeliveryUsers = this.filterUserArray(this.deliveryUsers);
+    
+    console.log(`🔍 Filtered - Clients: ${this.filteredClients.length}, Providers: ${this.filteredProviders.length}, Delivery: ${this.filteredDeliveryUsers.length}`);
+  }
+
+  private filterUserArray(users: ExtendedUser[]): ExtendedUser[] {
+    if (!users || users.length === 0) {
+      return [];
+    }
+    
+    let filtered = [...users];
+
     if (this.searchTerm && this.searchTerm.trim()) {
       const searchLower = this.searchTerm.toLowerCase();
       filtered = filtered.filter(user => {
@@ -186,42 +339,166 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       });
     }
 
-    // Filtre de rôle
-    if (this.selectedRole && this.selectedRole !== 'all') {
-      filtered = filtered.filter(user => user.role === this.selectedRole);
-    }
-
-    this.filteredUsers = filtered;
-    console.log(`🔍 Filtered ${this.filteredUsers.length}/${this.users.length} users`);
+    // For individual table filtering, we can add specific filters
+    return filtered;
   }
 
-  // Méthodes réactives pour les filtres
   onSearchChange() {
     this.filterUsers();
+    this.cdr.detectChanges();
   }
   
-  onRoleFilterChange() {
+  switchTable(table: 'clients' | 'providers' | 'delivery') {
+    console.log('🔄 Switching to table:', table);
+    this.activeTable = table;
     this.filterUsers();
+    this.cdr.detectChanges();
   }
 
-  selectSpecialRole(role: string) {
-    this.selectedRole = role;
-    this.filterUsers();
-  }
-
-  // Refresh manuel
   refreshUsers() {
     console.log('🔄 Manual refresh requested');
-    this.loadUsers();
+    this.loadAllUserTypes();
   }
 
-  editUser(userId: number) {
-    console.log('Edit user:', userId);
-    const user = this.users.find(u => u.id === userId);
-    if (user) {
-      this.editingUser = { ...user, userType: user.role };
-      this.editingUserId = userId;
-      this.showEditModal = true;
+  editUser(userId: number, tableType: string) {
+    console.log('✏️ Edit user:', userId, 'from table:', tableType);
+    console.log('🔍 Active table view:', this.activeTable);
+    
+    let user;
+    let actualUserId = userId;
+    let actualTableType = tableType;
+    
+    // Find the user based on the specified table type to avoid ID conflicts
+    switch (tableType) {
+      case 'magasin':
+        // Look in providers array using id_magazin
+        user = this.providers.find(u => u.id_magazin === userId || u.id === userId);
+        if (user) {
+          actualTableType = 'magasin';
+          actualUserId = user.id_magazin || userId;
+          console.log('🏪 Found provider in magasin table - using id_magazin:', actualUserId);
+        }
+        break;
+        
+      case 'livreur':
+        // Look in delivery array using id_liv
+        user = this.deliveryUsers.find(u => u.id_liv === userId || u.id === userId);
+        if (user) {
+          actualTableType = 'livreur';
+          actualUserId = user.id_liv || userId;
+          console.log('🚚 Found delivery user in livreur table - using id_liv:', actualUserId);
+        }
+        break;
+        
+      case 'client':
+        // Look in clients array using id_client
+        user = this.clients.find(u => u.id_client === userId || u.id === userId);
+        if (user) {
+          actualTableType = 'client';
+          actualUserId = user.id_client || userId;
+          console.log('👤 Found client in client table - using id_client:', actualUserId);
+        }
+        break;
+        
+      default:
+        console.error('❌ Unknown table type:', tableType);
+        return;
+    }
+    
+    if (!user) {
+      console.error('❌ User not found:', userId, 'in table:', tableType);
+      return;
+    }
+
+    console.log('📝 Original user data:', user);
+    console.log('🔍 User role from database:', user.role);
+    console.log('🔍 Table type:', user.tableType);
+    console.log('🔍 Available ID fields:', {
+      id: user.id,
+      id_client: user.id_client,
+      id_magazin: user.id_magazin,
+      id_liv: user.id_liv
+    });
+    console.log('🔑 Using table-specific ID:', actualUserId, 'for table:', actualTableType);
+    console.log('🎯 Table mapping - Input:', tableType, '-> Backend:', actualTableType);
+    
+    // Determine user type based on actual table
+    let userType = 'client';
+    switch (actualTableType) {
+      case 'client':
+        userType = user.role === 'admin' ? 'admin' : 'client';
+        break;
+      case 'magasin':
+        userType = 'provider';
+        break;
+      case 'livreur':
+        userType = 'delivery';
+        break;
+    }
+    
+    console.log('✅ Final detected userType:', userType);
+    
+    // Map exact database fields based on detected user type
+    this.editingUser = {
+      id: actualUserId,  // Use table-specific ID
+      userType: userType,
+      email: user.email,
+      tableType: actualTableType  // Use the corrected table type
+    };
+    
+    // Map table-specific fields exactly as they are in database
+    if (userType === 'client' || userType === 'admin') {
+      this.editingUser = {
+        ...this.editingUser,
+        nom: user.nom || '',
+        prenom: user.prenom || '',
+        tel: user.tel || null,
+        role: user.role?.toUpperCase() || 'CLIENT',
+        gouv_client: user.gouv_client || '',
+        ville_client: user.ville_client || ''
+      };
+      console.log('📋 CLIENT/ADMIN fields mapped');
+    } else if (userType === 'delivery') {
+      this.editingUser = {
+        ...this.editingUser,
+        nom: user.nom || '',
+        prenom: user.prenom || '',
+        tel: user.tel || null,
+        vehicule: user.vehicule || '',
+        ville_livraison: user.ville_livraison || '',
+        gouv_livreur: user.gouv_livreur || ''
+      };
+      console.log('🚚 DELIVERY fields mapped');
+    } else if (userType === 'provider') {
+      this.editingUser = {
+        ...this.editingUser,
+        nom: user.name || user.fullName || user.nom || '',
+        tel: user.tel || null,
+        type: user.type || '',
+        gouv_magasin: user.gouv_magasin || '',
+        ville_magasin: user.ville_magasin || ''
+      };
+      console.log('🏪 PROVIDER fields mapped');
+    }
+    
+    this.editingUserId = actualUserId;  // Store the table-specific ID
+    this.editingUserType = actualTableType;  // Store corrected table type (client/magasin/livreur)
+    this.showEditModal = true;
+    
+    console.log('📝 Edit form data mapped to database structure:', this.editingUser);
+    console.log('✅ Final userType set to:', this.editingUser.userType);
+    console.log('🔑 FINAL - Using ID for backend:', actualUserId, 'for table:', actualTableType);
+    console.log('🎯 FINAL - editingUserType set to:', actualTableType);
+    console.log('🏪 PROVIDERS WILL USE MAGASIN TABLE - Confirmed!');
+  }
+
+  deleteUser(userId: number, tableType: string) {
+    console.log('🗑️ Delete user:', userId, 'from table:', tableType);
+    
+    if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur?')) {
+      // Implementation for deletion
+      console.log('User deletion confirmed for ID:', userId, 'table:', tableType);
+      // TODO: Implement actual deletion logic with backend API
     }
   }
 
@@ -229,48 +506,102 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     this.showEditModal = false;
     this.editingUser = null;
     this.editingUserId = null;
+    this.editingUserType = undefined;
     this.saving = false;
   }
 
   getEditModalTitle(): string {
-    if (!this.editingUser) return '';
-    return this.getUserTypeText(this.editingUser.userType);
-  }
-
-  async saveUser() {
-    if (!this.editingUser || !this.editingUserId) return;
-    
-    this.saving = true;
-    try {
-      // Simulate API call for now
-      console.log('Saving user:', this.editingUser);
-      
-      // Update local data
-      const userIndex = this.users.findIndex(u => u.id === this.editingUserId);
-      if (userIndex !== -1) {
-        this.users[userIndex] = { ...this.users[userIndex], ...this.editingUser };
-        this.filterUsers();
-      }
-      
-      this.closeEditModal();
-    } catch (error) {
-      console.error('Error saving user:', error);
-    } finally {
-      this.saving = false;
+    if (!this.editingUser) return 'Modifier l\'utilisateur';
+    switch(this.editingUser.userType) {
+      case 'admin': return 'Modifier l\'administrateur';
+      case 'client': return 'Modifier le client';
+      case 'delivery': return 'Modifier le livreur';
+      case 'provider': return 'Modifier le fournisseur';
+      default: return 'Modifier l\'utilisateur';
     }
   }
 
+  saveUser() {
+    if (!this.editingUser || !this.editingUserId) return;
+    
+    this.saving = true;
+    
+    console.log('💾 Saving user to database:', this.editingUser);
+    console.log('🔍 User role/type:', this.editingUser.userType, this.editingUser.role);
+    console.log('🎯 Backend will use - ID:', this.editingUserId, 'UserType:', this.editingUser.userType, 'Table:', this.editingUserType);
+    console.log('🔑 CRITICAL: Using table type for backend:', this.editingUserType);
+    
+    // Use the actual table type (client/magasin/livreur) instead of logical type (client/provider/delivery)
+    this.userService.updateUser(this.editingUserId, this.editingUser, this.editingUserType).subscribe({
+      next: (response) => {
+        console.log('✅ User updated successfully:', response);
+        
+        // Show success notification immediately
+        this.showSuccessMessage = true;
+        this.successMessage = 'Utilisateur mis à jour avec succès';
+        this.saving = false;
+        
+        // Update the user in the appropriate array using table-specific ID
+        if (this.editingUserType === 'client') {
+          const userIndex = this.clients.findIndex((u: ExtendedUser) => {
+            return (u.id_client && u.id_client === this.editingUserId) || u.id === this.editingUserId;
+          });
+          if (userIndex !== -1) {
+            this.clients[userIndex] = { ...this.clients[userIndex], ...this.editingUser };
+          }
+        } else if (this.editingUserType === 'magasin') {
+          const userIndex = this.providers.findIndex((u: ExtendedUser) => {
+            return (u.id_magazin && u.id_magazin === this.editingUserId) || u.id === this.editingUserId;
+          });
+          if (userIndex !== -1) {
+            this.providers[userIndex] = { ...this.providers[userIndex], ...this.editingUser };
+          }
+        } else if (this.editingUserType === 'livreur') {
+          const userIndex = this.deliveryUsers.findIndex((u: ExtendedUser) => {
+            return (u.id_liv && u.id_liv === this.editingUserId) || u.id === this.editingUserId;
+          });
+          if (userIndex !== -1) {
+            this.deliveryUsers[userIndex] = { ...this.deliveryUsers[userIndex], ...this.editingUser };
+          }
+        }
+        
+        this.filterUsers();
+        
+        // Auto-close modal after 1.5 seconds to let user see success message
+        setTimeout(() => {
+          this.closeEditModal();
+        }, 1500);
+        
+        // Hide success message after 4 seconds
+        setTimeout(() => {
+          this.showSuccessMessage = false;
+        }, 4000);
+      },
+      error: (error) => {
+        console.error('❌ Error saving user:', error);
+        
+        this.showErrorMessage = true;
+        this.errorMessage = error.error?.message || 'Erreur lors de la mise à jour de l\'utilisateur';
+        
+        setTimeout(() => {
+          this.showErrorMessage = false;
+        }, 5000);
+        
+        this.saving = false;
+      }
+    });
+  }
+
   changeUserRole(userId: number, newRole: 'admin' | 'client' | 'provider' | 'delivery') {
-    const user = this.users.find(u => u.id === userId);
+    // Only allow role changes for clients (since providers and delivery users are in separate tables)
+    const user = this.clients.find((u: ExtendedUser) => u.id === userId);
     if (!user) {
       alert('Utilisateur introuvable');
       return;
     }
     
-    // Vérifier si le changement de rôle est autorisé
     if (!this.isRoleChangeAllowed(user.role, newRole)) {
-      alert('Ce changement de rôle n\'est pas autorisé. Seuls les rôles Client et Admin peuvent être échangés.');
-      // Remettre la valeur précédente dans le select
+      alert('Ce changement de rôle n\'est pas autorisé.');
       this.resetRoleSelect(userId, user.role);
       return;
     }
@@ -278,61 +609,18 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     const oldRole = user.role;
     console.log(`🔄 Changing user ${userId} role from ${oldRole} to ${newRole}`);
     
-    // Confirmer le changement avec l'utilisateur
-    if (!confirm(`Êtes-vous sûr de vouloir changer le rôle de ${user.fullName || user.name} de ${this.getRoleDisplayName(oldRole)} vers ${this.getRoleDisplayName(newRole)} ?`)) {
-      this.resetRoleSelect(userId, oldRole);
-      return;
-    }
-    
-    // Mise à jour locale temporaire pour feedback immédiat
-    const originalRole = user.role;
     user.role = newRole;
     this.filterUsers();
     
-    // Appel API pour persister en base de données
-    this.userService.updateUser(userId, { role: newRole }).subscribe({
-      next: (response) => {
-        console.log('✅ User role updated in database:', response);
-        alert(`Rôle mis à jour avec succès pour ${user.fullName || user.name}`);
-      },
-      error: (error) => {
-        console.error('❌ Error updating user role in database:', error);
-        alert('Erreur lors de la mise à jour du rôle en base de données');
-        
-        // Rollback en cas d'erreur
-        user.role = originalRole;
-        this.resetRoleSelect(userId, originalRole);
-        this.filterUsers();
-      }
-    });
+    alert(`Rôle de l'utilisateur changé de ${oldRole} à ${newRole}`);
   }
 
-  // Vérifier si un changement de rôle est autorisé
-  private isRoleChangeAllowed(currentRole: string, newRole: string): boolean {
-    const allowedRoles = ['client', 'admin'];
-    
-    // Les rôles provider et delivery ne peuvent pas être changés
-    if (currentRole === 'provider' || currentRole === 'delivery') {
-      return false;
-    }
-    
-    // Les nouveaux rôles provider et delivery ne sont pas autorisés
-    if (newRole === 'provider' || newRole === 'delivery') {
-      return false;
-    }
-    
-    // Seuls client et admin peuvent être échangés
-    return allowedRoles.includes(currentRole) && allowedRoles.includes(newRole);
+  isRoleChangeAllowed(currentRole: string, newRole: string): boolean {
+    const allowedChanges = ['client', 'admin'];
+    return allowedChanges.includes(currentRole) && allowedChanges.includes(newRole);
   }
 
-  // Vérifier si un utilisateur peut changer de rôle
-  canChangeRole(user: any): boolean {
-    return user.role === 'client' || user.role === 'admin';
-  }
-
-  // Remettre la valeur précédente dans le select
-  private resetRoleSelect(userId: number, originalRole: string) {
-    // Utiliser setTimeout pour s'assurer que le DOM est mis à jour
+  resetRoleSelect(userId: number, originalRole: string) {
     setTimeout(() => {
       const selectElement = document.querySelector(`select[data-user-id="${userId}"]`) as HTMLSelectElement;
       if (selectElement) {
@@ -342,22 +630,81 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   }
 
   onRoleChange(userId: number, event: Event) {
-    const select = event.target as HTMLSelectElement;
-    if (select) {
-      this.changeUserRole(userId, select.value as any);
+    const target = event.target as HTMLSelectElement;
+    const newRole = target.value as 'admin' | 'client' | 'provider' | 'delivery';
+    
+    console.log(`🔄 Role change requested for user ${userId} to ${newRole}`);
+    
+    if (!newRole) {
+      console.log('❌ No role selected');
+      return;
+    }
+    
+    this.changeUserRole(userId, newRole);
+  }
+
+  canChangeRole(user: any): boolean {
+    return this.isRoleChangeAllowed(user.role, 'admin') || this.isRoleChangeAllowed(user.role, 'client');
+  }
+
+  getRoleClass(role: string): string {
+    switch (role) {
+      case 'admin': return 'role-admin';
+      case 'client': return 'role-client';
+      case 'provider': return 'role-provider';
+      case 'delivery': return 'role-delivery';
+      default: return '';
     }
   }
 
-  deleteUser(userId: number) {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
-      this.users = this.users.filter(user => user.id !== userId);
+  getStatusDisplayName(status: string): string {
+    switch (status) {
+      case 'active': return 'Actif';
+      case 'inactive': return 'Inactif';
+      case 'suspended': return 'Suspendu';
+      default: return status;
     }
   }
 
-  toggleUserStatus(userId: number) {
-    const user = this.users.find(u => u.id === userId);
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'active': return 'status-active';
+      case 'inactive': return 'status-inactive';
+      case 'suspended': return 'status-suspended';
+      default: return '';
+    }
+  }
+
+  formatDate(date: Date | string | undefined): string {
+    if (!date) return 'N/A';
+    
+    const d = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(d.getTime())) return 'N/A';
+    
+    return d.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  }
+
+  toggleUserStatus(userId: number, tableType: string) {
+    let user: ExtendedUser | undefined;
+    
+    switch (tableType) {
+      case 'client':
+        user = this.clients.find((u: ExtendedUser) => u.id === userId);
+        break;
+      case 'magasin':
+        user = this.providers.find((u: ExtendedUser) => u.id === userId);
+        break;
+      case 'livreur':
+        user = this.deliveryUsers.find((u: ExtendedUser) => u.id === userId);
+        break;
+    }
     if (user) {
       user.status = user.status === 'active' ? 'suspended' : 'active';
+      this.filterUsers();
     }
   }
 
@@ -376,144 +723,13 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
   }
 
-  getStatusDisplayName(status: string): string {
-    switch (status) {
-      case 'active': return 'Actif';
-      case 'inactive': return 'Inactif';
-      case 'suspended': return 'Suspendu';
-      default: return status;
-    }
-  }
-
-  formatDate(dateString: string | Date | undefined): string {
-    if (!dateString) {
-      return 'N/A';
-    }
-    try {
-      const dateObj = dateString instanceof Date ? dateString : new Date(dateString);
-      if (isNaN(dateObj.getTime())) {
-        return 'N/A';
-      }
-      return dateObj.toLocaleDateString('fr-FR');
-    } catch (error) {
-      return 'N/A';
-    }
-  }
-
-  getStatusCssClass(status: string): string {
-    return `status-${status}`;
-  }
-
-  getRoleCssClass(role: string): string {
-    return `role-${role}`;
-  }
-
-  // Legacy method names for template compatibility
-  getStatusClass(status: string): string {
-    return this.getStatusCssClass(status);
-  }
-
-  getRoleClass(role: string): string {
-    return this.getRoleCssClass(role);
-  }
-
-  getUserCountByRole(role: string): number {
-    return this.users.filter(user => user.role === role).length;
-  }
-
-  // Template compatibility method
-  getRoleCount(role: 'admin' | 'client' | 'provider' | 'delivery'): number {
-    return this.getUserCountByRole(role);
-  }
-
-  showSuccess(message: string) {
-    this.successMessage = message;
-    this.showSuccessMessage = true;
-    this.showErrorMessage = false;
-    setTimeout(() => {
-      this.showSuccessMessage = false;
-    }, 3000);
-  }
-
-  showError(message: string) {
-    this.errorMessage = message;
-    this.showErrorMessage = true;
-    this.showSuccessMessage = false;
-    setTimeout(() => {
-      this.showErrorMessage = false;
-    }, 5000);
-  }
-
-  hideSuccessMessage() {
-    this.showSuccessMessage = false;
-  }
-
   getUserTypeText(role: string): string {
     switch (role) {
       case 'client': return 'l\'utilisateur';
-      case 'livreur': return 'le livreur';
-      case 'magasin': return 'le magasin';
+      case 'admin': return 'l\'administrateur';
+      case 'provider': return 'le fournisseur';
+      case 'delivery': return 'le livreur';
       default: return 'l\'utilisateur';
     }
-  }
-
-  isEditableRole(role: string): boolean {
-    return ['client', 'livreur', 'magasin'].includes(role);
-  }
-
-  getFieldsForRole(role: string): string[] {
-    switch (role) {
-      case 'client':
-        return ['email', 'name', 'adresse', 'telephone'];
-      case 'livreur':
-        return ['email', 'fullName', 'adresse', 'telephone', 'ville', 'vehicule'];
-      case 'magasin':
-        return ['email', 'nom', 'adresse', 'telephone', 'ville'];
-      default:
-        return ['email'];
-    }
-  }
-
-  prepareUpdateData(userData: any): any {
-    if (!userData || !userData.role) return userData;
-
-    const data: any = {};
-    const fieldsForRole = this.getFieldsForRole(userData.role);
-
-    fieldsForRole.forEach(field => {
-      if (userData.hasOwnProperty(field)) {
-        data[field] = userData[field];
-      }
-    });
-
-    return data;
-  }
-
-  isFieldRequired(field: string, role: string): boolean {
-    const requiredFields = ['email'];
-    return requiredFields.includes(field);
-  }
-
-  validateUserData(): boolean {
-    // Implementation for validation
-    return true;
-  }
-
-  private canEditRole(currentRole: string, newRole: string): boolean {
-    const allowedRoles = ['client', 'admin'];
-    
-    if (!allowedRoles.includes(currentRole)) {
-      return false;
-    }
-    
-    if (!allowedRoles.includes(newRole)) {
-      return false;
-    }
-    
-    return allowedRoles.includes(currentRole) && allowedRoles.includes(newRole);
-  }
-
-  canEditUser(user: any): boolean {
-    return user.role === 'client' || user.role === 'admin';
   }
 }

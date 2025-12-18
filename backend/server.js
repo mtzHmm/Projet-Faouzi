@@ -64,13 +64,19 @@ app.use((req, res, next) => {
 // Import routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
+const clientRoutes = require('./routes/clients');
+const providerRoutes = require('./routes/providers');
+const deliveryRoutes = require('./routes/delivery');
 const orderRoutes = require('./routes/orders');
 const productRoutes = require('./routes/products');
 const adminRoutes = require('./routes/admin');
 
 // API Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
+app.use('/api/users', userRoutes); // Keep old route for compatibility
+app.use('/api/clients', clientRoutes);
+app.use('/api/providers', providerRoutes);
+app.use('/api/delivery', deliveryRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/admin', adminRoutes);

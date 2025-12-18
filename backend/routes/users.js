@@ -252,63 +252,132 @@ router.put('/:id', async (req, res) => {
     const updates = req.body;
     
     console.log(`🔄 Updating user ${userId} with:`, updates);
+    console.log(`🎯 Frontend specified tableType: ${updates.tableType}`);
     
     const pool = database.getPool();
     if (!pool) {
       throw new Error('Database connection not available');
     }
 
-    // Chercher dans quelle table se trouve l'utilisateur
     let userFound = null;
     let tableInfo = null;
     
-    // Table client (avec support du role)
-    try {
-      const clientResult = await pool.query('SELECT *, \'client\' as table_type FROM client WHERE id_client = $1', [userId]);
-      if (clientResult.rows.length > 0) {
-        userFound = clientResult.rows[0];
-        tableInfo = { 
-          name: 'client', 
-          idCol: 'id_client', 
-          hasRoleCol: true,
-          roleCol: 'role'
-        };
+    // Use tableType from frontend if provided, otherwise fallback to search
+    if (updates.tableType) {
+      console.log(`🔑 Using frontend-specified table: ${updates.tableType}`);
+      
+      switch (updates.tableType) {
+        case 'client':
+          try {
+            const clientResult = await pool.query('SELECT *, \'client\' as table_type FROM client WHERE id_client = $1', [userId]);
+            if (clientResult.rows.length > 0) {
+              userFound = clientResult.rows[0];
+              tableInfo = { 
+                name: 'client', 
+                idCol: 'id_client', 
+                hasRoleCol: true,
+                roleCol: 'role'
+              };
+              console.log(`✅ Found user in CLIENT table as requested`);
+            }
+          } catch (err) {
+            console.log('❌ Error searching client table:', err.message);
+          }
+          break;
+          
+        case 'magasin':
+          try {
+            const magasinResult = await pool.query('SELECT *, \'magasin\' as table_type FROM magasin WHERE id_magazin = $1', [userId]);
+            if (magasinResult.rows.length > 0) {
+              userFound = magasinResult.rows[0];
+              tableInfo = { 
+                name: 'magasin', 
+                idCol: 'id_magazin', 
+                hasRoleCol: false 
+              };
+              console.log(`✅ Found user in MAGASIN table as requested`);
+            }
+          } catch (err) {
+            console.log('❌ Error searching magasin table:', err.message);
+          }
+          break;
+          
+        case 'livreur':
+          try {
+            const livreurResult = await pool.query('SELECT *, \'livreur\' as table_type FROM livreur WHERE id_liv = $1', [userId]);
+            if (livreurResult.rows.length > 0) {
+              userFound = livreurResult.rows[0];
+              tableInfo = { 
+                name: 'livreur', 
+                idCol: 'id_liv', 
+                hasRoleCol: false 
+              };
+              console.log(`✅ Found user in LIVREUR table as requested`);
+            }
+          } catch (err) {
+            console.log('❌ Error searching livreur table:', err.message);
+          }
+          break;
+          
+        default:
+          console.log(`⚠️ Unknown tableType: ${updates.tableType}, falling back to search`);
       }
-    } catch (err) {
-      console.log('Not found in client table');
     }
     
-    // Table livreur (si pas trouvé dans client)
+    // Fallback: search all tables if tableType not provided or user not found
     if (!userFound) {
-      try {
-        const livreurResult = await pool.query('SELECT *, \'livreur\' as table_type FROM livreur WHERE id_liv = $1', [userId]);
-        if (livreurResult.rows.length > 0) {
-          userFound = livreurResult.rows[0];
-          tableInfo = { 
-            name: 'livreur', 
-            idCol: 'id_liv', 
-            hasRoleCol: false 
-          };
+      console.log(`🔍 Fallback: Searching all tables for user ${userId}...`);
+      
+      // Table client (avec support du role)
+      if (!userFound) {
+        try {
+          const clientResult = await pool.query('SELECT *, \'client\' as table_type FROM client WHERE id_client = $1', [userId]);
+          if (clientResult.rows.length > 0) {
+            userFound = clientResult.rows[0];
+            tableInfo = { 
+              name: 'client', 
+              idCol: 'id_client', 
+              hasRoleCol: true,
+              roleCol: 'role'
+            };
+          }
+        } catch (err) {
+          console.log('Not found in client table');
         }
-      } catch (err) {
-        console.log('Not found in livreur table');
       }
-    }
-    
-    // Table magasin (si pas trouvé ailleurs)
-    if (!userFound) {
-      try {
-        const magasinResult = await pool.query('SELECT *, \'magasin\' as table_type FROM magasin WHERE id_magazin = $1', [userId]);
-        if (magasinResult.rows.length > 0) {
-          userFound = magasinResult.rows[0];
-          tableInfo = { 
-            name: 'magasin', 
-            idCol: 'id_magazin', 
-            hasRoleCol: false 
-          };
+      
+      // Table livreur (si pas trouvé dans client)
+      if (!userFound) {
+        try {
+          const livreurResult = await pool.query('SELECT *, \'livreur\' as table_type FROM livreur WHERE id_liv = $1', [userId]);
+          if (livreurResult.rows.length > 0) {
+            userFound = livreurResult.rows[0];
+            tableInfo = { 
+              name: 'livreur', 
+              idCol: 'id_liv', 
+              hasRoleCol: false 
+            };
+          }
+        } catch (err) {
+          console.log('Not found in livreur table');
         }
-      } catch (err) {
-        console.log('Not found in magasin table');
+      }
+      
+      // Table magasin (si pas trouvé ailleurs)
+      if (!userFound) {
+        try {
+          const magasinResult = await pool.query('SELECT *, \'magasin\' as table_type FROM magasin WHERE id_magazin = $1', [userId]);
+          if (magasinResult.rows.length > 0) {
+            userFound = magasinResult.rows[0];
+            tableInfo = { 
+              name: 'magasin', 
+              idCol: 'id_magazin', 
+              hasRoleCol: false 
+            };
+          }
+        } catch (err) {
+          console.log('Not found in magasin table');
+        }
       }
     }
     
@@ -340,11 +409,71 @@ router.put('/:id', async (req, res) => {
     if (updates.nom) {
       updateFields.push(`nom = $${++paramCount}`);
       updateValues.push(updates.nom);
+      console.log(`📝 Updating nom to: ${updates.nom}`);
+    }
+
+    if (updates.prenom) {
+      updateFields.push(`prenom = $${++paramCount}`);
+      updateValues.push(updates.prenom);
+      console.log(`📝 Updating prenom to: ${updates.prenom}`);
     }
     
     if (updates.email) {
       updateFields.push(`email = $${++paramCount}`);
       updateValues.push(updates.email);
+      console.log(`📝 Updating email to: ${updates.email}`);
+    }
+
+    if (updates.tel) {
+      updateFields.push(`tel = $${++paramCount}`);
+      updateValues.push(parseInt(updates.tel));
+      console.log(`📝 Updating tel to: ${updates.tel}`);
+    }
+
+    // Champs spécifiques selon la table
+    if (tableInfo.name === 'client') {
+      if (updates.gouv_client) {
+        updateFields.push(`gouv_client = $${++paramCount}`);
+        updateValues.push(updates.gouv_client);
+        console.log(`📝 Updating gouv_client to: ${updates.gouv_client}`);
+      }
+      if (updates.ville_client) {
+        updateFields.push(`ville_client = $${++paramCount}`);
+        updateValues.push(updates.ville_client);
+        console.log(`📝 Updating ville_client to: ${updates.ville_client}`);
+      }
+    } else if (tableInfo.name === 'livreur') {
+      if (updates.gouv_livreur) {
+        updateFields.push(`gouv_livreur = $${++paramCount}`);
+        updateValues.push(updates.gouv_livreur);
+        console.log(`📝 Updating gouv_livreur to: ${updates.gouv_livreur}`);
+      }
+      if (updates.ville_livraison) {
+        updateFields.push(`ville_livraison = $${++paramCount}`);
+        updateValues.push(updates.ville_livraison);
+        console.log(`📝 Updating ville_livraison to: ${updates.ville_livraison}`);
+      }
+      if (updates.vehicule) {
+        updateFields.push(`vehicule = $${++paramCount}`);
+        updateValues.push(updates.vehicule);
+        console.log(`📝 Updating vehicule to: ${updates.vehicule}`);
+      }
+    } else if (tableInfo.name === 'magasin') {
+      if (updates.gouv_magasin) {
+        updateFields.push(`gouv_magasin = $${++paramCount}`);
+        updateValues.push(updates.gouv_magasin);
+        console.log(`📝 Updating gouv_magasin to: ${updates.gouv_magasin}`);
+      }
+      if (updates.ville_magasin) {
+        updateFields.push(`ville_magasin = $${++paramCount}`);
+        updateValues.push(updates.ville_magasin);
+        console.log(`📝 Updating ville_magasin to: ${updates.ville_magasin}`);
+      }
+      if (updates.type) {
+        updateFields.push(`type = $${++paramCount}`);
+        updateValues.push(updates.type);
+        console.log(`📝 Updating type to: ${updates.type}`);
+      }
     }
     
     if (updateFields.length === 0) {
@@ -370,17 +499,37 @@ router.put('/:id', async (req, res) => {
     }
     
     const updatedUser = result.rows[0];
-    console.log('✅ User updated successfully');
+    console.log('✅ User updated successfully:', updatedUser);
     
     // Retourner la réponse avec la structure attendue
-    res.json({
+    const response = {
       id: userId,
-      name: updatedUser.nom,
+      nom: updatedUser.nom,
+      prenom: updatedUser.prenom,
+      name: updatedUser.nom + ' ' + (updatedUser.prenom || ''),
       email: updatedUser.email,
-      role: updatedUser.role || (tableInfo.name === 'livreur' ? 'delivery' : 'provider'),
+      tel: updatedUser.tel,
+      role: updatedUser.role || (tableInfo.name === 'livreur' ? 'delivery' : (tableInfo.name === 'magasin' ? 'provider' : 'client')),
       status: 'active',
+      table_type: tableInfo.name,
       message: 'User updated successfully'
-    });
+    };
+
+    // Ajouter les champs spécifiques selon la table
+    if (tableInfo.name === 'client') {
+      response.gouv_client = updatedUser.gouv_client;
+      response.ville_client = updatedUser.ville_client;
+    } else if (tableInfo.name === 'livreur') {
+      response.gouv_livreur = updatedUser.gouv_livreur;
+      response.ville_livraison = updatedUser.ville_livraison;
+      response.vehicule = updatedUser.vehicule;
+    } else if (tableInfo.name === 'magasin') {
+      response.gouv_magasin = updatedUser.gouv_magasin;
+      response.ville_magasin = updatedUser.ville_magasin;
+      response.type = updatedUser.type;
+    }
+    
+    res.json(response);
     
   } catch (error) {
     console.error('❌ Error updating user:', error);
