@@ -34,20 +34,21 @@
 
   <!-- Tabs Navigation -->
   <div class="tabs-navigation">
-    <button 
-      class="tab-btn" 
-      [class.active]="selectedTab === 'pending'"
-      (click)="selectedTab = 'pending'"
-    >
-      <span class="badge-counter">{{ pendingOrders.length }}</span>
-      Pending Orders
-    </button>
-    <button 
-      class="tab-btn" 
-      [class.active]="selectedTab === 'accepted'"
-      (click)="selectedTab = 'accepted'"
-    >
-      <span class="badge-counter">{{ acceptedOrders.length }}</span>
+    <div class="tabs-buttons">
+      <button 
+        class="tab-btn" 
+        [class.active]="selectedTab === 'pending'"
+        (click)="selectedTab = 'pending'"
+      >
+        <span class="badge-counter">{{ pendingOrders.length }}</span>
+        Pending Orders
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="selectedTab === 'accepted'"
+        (click)="selectedTab = 'accepted'"
+      >
+        <span class="badge-counter">{{ acceptedOrders.length }}</span>
       In Progress
     </button>
     <button 
@@ -57,6 +58,10 @@
     >
       <span class="badge-counter">{{ deliveredOrders.length }}</span>
       Completed
+    </button>
+    </div>
+    <button class="refresh-btn" (click)="loadAllOrders()" title="Refresh orders">
+      🔄 Refresh
     </button>
   </div>
 

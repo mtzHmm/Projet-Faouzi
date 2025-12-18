@@ -119,4 +119,8 @@ export class DeliveryService {
   getMyDeliveries(deliveryId: number): Observable<any> {
     return this.http.get(`${environment.apiUrl}/delivery/my-deliveries/${deliveryId}`);
   }
+
+  completeDelivery(orderId: number): Observable<any> {
+    return this.http.put(`${environment.apiUrl}/delivery/complete-delivery/${orderId}`, {});
+  }
 }

@@ -205,6 +205,66 @@ router.get('/my-deliveries/:deliveryId', async (req, res) => {
   }
 });
 
+// PUT /api/delivery/complete-delivery/:orderId - Mark delivery as completed
+router.put('/complete-delivery/:orderId', async (req, res) => {
+  const db = database.getPool();
+  const client = await db.connect();
+  
+  try {
+    const orderId = parseInt(req.params.orderId);
+    
+    console.log(`✅ Marking delivery as completed for order ${orderId}`);
+    
+    // Start transaction
+    await client.query('BEGIN');
+    
+    // Update livraison status to 'livrée'
+    const updateLivraisonQuery = `
+      UPDATE livraison
+      SET status = $1
+      WHERE id_cmd = $2
+      RETURNING *
+    `;
+    
+    const livraisonResult = await client.query(updateLivraisonQuery, ['livrée', orderId]);
+    
+    if (livraisonResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Livraison not found for this order' });
+    }
+    
+    // Update order status to 'livrée'
+    const updateOrderQuery = `
+      UPDATE commande
+      SET status = $1
+      WHERE id_cmd = $2
+      RETURNING *
+    `;
+    
+    await client.query(updateOrderQuery, ['livrée', orderId]);
+    
+    // Commit transaction
+    await client.query('COMMIT');
+    
+    console.log(`✅ Delivery completed successfully for order ${orderId}`);
+    
+    res.json({
+      livraison: livraisonResult.rows[0],
+      message: 'Delivery completed successfully'
+    });
+    
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('❌ Error completing delivery:', error);
+    res.status(500).json({ 
+      error: 'Failed to complete delivery',
+      message: error.message
+    });
+  } finally {
+    client.release();
+  }
+});
+
 // POST /api/delivery/accept-order - Accept an order and create livraison
 router.post('/accept-order', async (req, res) => {
   const db = database.getPool();

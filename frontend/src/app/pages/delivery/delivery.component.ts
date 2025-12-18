@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
@@ -37,7 +37,7 @@ interface Order {
   templateUrl: './delivery.component.html',
   styleUrls: ['./delivery.component.css']
 })
-export class DeliveryComponent implements OnInit {
+export class DeliveryComponent implements OnInit, OnDestroy {
   deliveryName = 'Ahmed Ben Ali';
   totalEarnings = 1250.50;
   completedDeliveries = 24;
@@ -49,6 +49,9 @@ export class DeliveryComponent implements OnInit {
 
   // Orders array will be populated from database
   orders: Order[] = [];
+  
+  // Auto-refresh interval
+  private refreshInterval: any;
 
   constructor(
     private authService: AuthService,
@@ -59,6 +62,25 @@ export class DeliveryComponent implements OnInit {
   ngOnInit() {
     this.loadUserData();
     this.loadAllOrders();
+    this.startAutoRefresh();
+  }
+
+  ngOnDestroy() {
+    this.stopAutoRefresh();
+  }
+
+  startAutoRefresh() {
+    // Refresh every 10 seconds
+    this.refreshInterval = setInterval(() => {
+      console.log('🔄 Auto-refreshing orders...');
+      this.loadAllOrders();
+    }, 10000);
+  }
+
+  stopAutoRefresh() {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
   }
 
   loadAllOrders() {
@@ -133,33 +155,46 @@ export class DeliveryComponent implements OnInit {
         console.log('📦 Loaded my deliveries from database:', response.deliveries);
         
         // Convert livraison data to component format
-        const inProgressOrders: Order[] = response.deliveries.map((delivery: any) => ({
-          id: delivery.id_cmd.toString(),
-          storeName: 'Store',
-          storeAddress: '',
-          customer: {
-            firstName: delivery.user_name?.split(' ')[0] || '',
-            lastName: delivery.user_name?.split(' ')[1] || '',
-            fullName: delivery.user_name || ''
-          },
-          phone: delivery.user_phone || '',
-          address: `${delivery.delivery_address || ''}, ${delivery.city || ''}`,
-          items: delivery.items.map((item: any) => ({
-            name: item.name,
-            quantity: item.quantity,
-            price: item.price,
-            total: item.quantity * item.price
-          })),
-          itemsText: delivery.items.map((item: any) => `${item.name} x${item.quantity}`).join(', '),
-          status: 'en_livraison',
-          amount: delivery.total || 0,
-          createdAt: new Date(delivery.date_commande)
-        }));
+        const myDeliveries: Order[] = response.deliveries.map((delivery: any) => {
+          // Map livraison status to order status
+          let orderStatus: 'en_attente' | 'en_préparation' | 'préparée' | 'annulée' | 'en_livraison' | 'livrée';
+          if (delivery.livraison_status === 'livrée') {
+            orderStatus = 'livrée';
+          } else {
+            orderStatus = 'en_livraison';
+          }
+          
+          return {
+            id: delivery.id_cmd.toString(),
+            storeName: 'Store',
+            storeAddress: '',
+            customer: {
+              firstName: delivery.user_name?.split(' ')[0] || '',
+              lastName: delivery.user_name?.split(' ')[1] || '',
+              fullName: delivery.user_name || ''
+            },
+            phone: delivery.user_phone || '',
+            address: `${delivery.delivery_address || ''}, ${delivery.city || ''}`,
+            items: delivery.items.map((item: any) => ({
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price,
+              total: item.quantity * item.price
+            })),
+            itemsText: delivery.items.map((item: any) => `${item.name} x${item.quantity}`).join(', '),
+            status: orderStatus,
+            amount: delivery.total || 0,
+            createdAt: new Date(delivery.date_commande)
+          };
+        });
 
-        // Add in-progress orders to the orders array (remove old in-progress first to avoid duplicates)
-        this.orders = [...this.orders.filter(o => o.status !== 'en_livraison'), ...inProgressOrders];
+        // Add all deliveries to the orders array (remove old ones first to avoid duplicates)
+        this.orders = [
+          ...this.orders.filter(o => o.status !== 'en_livraison' && o.status !== 'livrée'), 
+          ...myDeliveries
+        ];
         
-        console.log(`✅ Loaded ${inProgressOrders.length} in-progress deliveries`);
+        console.log(`✅ Loaded ${myDeliveries.length} deliveries`);
       },
       error: (error) => {
         console.error('❌ Error loading my deliveries:', error);
@@ -214,12 +249,30 @@ export class DeliveryComponent implements OnInit {
   }
 
   completeDelivery(orderId: string) {
-    const order = this.orders.find(o => o.id === orderId);
-    if (order) {
-      order.status = 'livrée';
-      this.completedDeliveries++;
-      this.totalEarnings += order.amount * 0.15;
-    }
+    console.log(`✅ Marking delivery as completed for order ${orderId}`);
+    
+    this.deliveryService.completeDelivery(Number(orderId)).subscribe({
+      next: (response) => {
+        console.log('✅ Delivery completed successfully:', response);
+        
+        // Update order status locally
+        const order = this.orders.find(o => o.id === orderId);
+        if (order) {
+          order.status = 'livrée';
+          this.completedDeliveries++;
+          this.totalEarnings += order.amount * 0.15;
+        }
+        
+        // Reload all orders to refresh the lists
+        this.loadAllOrders();
+        
+        alert('Delivery completed successfully!');
+      },
+      error: (error) => {
+        console.error('❌ Error completing delivery:', error);
+        alert('Failed to complete delivery: ' + (error.error?.message || 'Unknown error'));
+      }
+    });
   }
 
   rejectOrder(orderId: string) {
