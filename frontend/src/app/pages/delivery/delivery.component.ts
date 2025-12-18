@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { OrderService, Order as DbOrder } from '../../services/order.service';
+import { DeliveryService } from '../../services/delivery.service';
 
 interface OrderItem {
   name: string;
@@ -41,10 +43,31 @@ export class DeliveryComponent implements OnInit {
   completedDeliveries = 24;
   rating = 4.8;
 
-  constructor(private authService: AuthService) {}
+  selectedTab: 'pending' | 'accepted' | 'delivered' = 'pending';
+  selectedOrder: Order | null = null;
+  showModal = false;
+
+  // Orders array will be populated from database
+  orders: Order[] = [];
+
+  constructor(
+    private authService: AuthService,
+    private orderService: OrderService,
+    private deliveryService: DeliveryService
+  ) {}
 
   ngOnInit() {
     this.loadUserData();
+    this.loadAllOrders();
+  }
+
+  loadAllOrders() {
+    // Clear orders first
+    this.orders = [];
+    
+    // Load both pending and in-progress orders
+    this.loadPreparedOrders();
+    this.loadMyDeliveries();
   }
 
   loadUserData() {
@@ -54,119 +77,102 @@ export class DeliveryComponent implements OnInit {
     }
   }
 
-  selectedTab: 'pending' | 'accepted' | 'delivered' = 'pending';
-  selectedOrder: Order | null = null;
-  showModal = false;
+  loadPreparedOrders() {
+    // Fetch ONLY orders with status "préparée" from database for pending orders
+    this.orderService.getOrders({ status: 'préparée' }).subscribe({
+      next: (response) => {
+        console.log('📦 Loaded prepared orders from database:', response.orders);
+        
+        // Convert database orders to component format
+        const preparedOrders: Order[] = response.orders.map(dbOrder => ({
+          id: dbOrder.id.toString(),
+          storeName: 'Store',
+          storeAddress: '',
+          customer: {
+            firstName: dbOrder.userName.split(' ')[0] || '',
+            lastName: dbOrder.userName.split(' ')[1] || '',
+            fullName: dbOrder.userName
+          },
+          phone: dbOrder.userPhone,
+          address: `${dbOrder.deliveryAddress}, ${dbOrder.city}`,
+          items: dbOrder.items.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price,
+            total: item.total || (item.quantity * item.price)
+          })),
+          itemsText: dbOrder.items.map(item => `${item.name} x${item.quantity}`).join(', '),
+          status: 'préparée',
+          amount: dbOrder.total,
+          createdAt: new Date(dbOrder.createdAt)
+        }));
 
-  orders: Order[] = [
-    {
-      id: 'ORD001',
-      storeName: 'Bella Pizza',
-      storeAddress: '45 Avenue Habib Bourguiba, Tunis',
-      customer: {
-        firstName: 'hamam',
-        lastName: 'Mootaz',
-        fullName: 'hamam Mootaz'
+        // Add prepared orders to the orders array
+        this.orders = [...this.orders.filter(o => o.status !== 'préparée'), ...preparedOrders];
+        
+        console.log(`✅ Loaded ${preparedOrders.length} prepared orders for delivery`);
       },
-      phone: '+216 20 123 456',
-      address: '123 Rue de la République, Tunis',
-      items: [
-        { name: 'pizza neptune', quantity: 2, price: 4.00, total: 8.00 },
-        { name: 'pizza pepperoni', quantity: 1, price: 10.00, total: 10.00 }
-      ],
-      itemsText: 'pizza neptune x2, pizza pepperoni x1',
-      status: 'en_attente',
-      amount: 18.00,
-      createdAt: new Date('2024-12-14T10:30:00')
-    },
-    {
-      id: 'ORD002',
-      storeName: 'Urban Fashion',
-      storeAddress: '78 Rue de la Paix, Sfax',
-      customer: {
-        firstName: 'jaafeer',
-        lastName: 'seif',
-        fullName: 'jaafeer seif'
-      },
-      phone: '+216 25 987 654',
-      address: '456 Avenue Habib Bourguiba, Sfax',
-      items: [
-        { name: 'T-shirt Homme', quantity: 1, price: 25.00, total: 25.00 },
-        { name: 'Jean Slim', quantity: 1, price: 65.00, total: 65.00 }
-      ],
-      itemsText: 'T-shirt Homme x1, Jean Slim x1',
-      status: 'en_préparation',
-      amount: 90.00,
-      createdAt: new Date('2024-12-14T09:15:00')
-    },
-    {
-      id: 'ORD003',
-      storeName: 'Pharma Plus',
-      storeAddress: '52 Rue du Port, Sousse',
-      customer: {
-        firstName: 'Test',
-        lastName: 'Client',
-        fullName: 'Test Client'
-      },
-      phone: '+216 22 456 789',
-      address: '789 Rue Mongi Slim, Sousse',
-      items: [
-        { name: 'Doliprane', quantity: 2, price: 20.00, total: 40.00 },
-        { name: 'Panadole', quantity: 1, price: 30.00, total: 30.00 }
-      ],
-      itemsText: 'Doliprane x2, Panadole x1',
-      status: 'en_livraison',
-      amount: 70.00,
-      createdAt: new Date('2024-12-13T16:45:00')
-    },
-    {
-      id: 'ORD004',
-      storeName: 'Green Market',
-      storeAddress: '33 Boulevard du 7 Novembre, Monastir',
-      customer: {
-        firstName: 'uac',
-        lastName: 'hend',
-        fullName: 'uac hend'
-      },
-      phone: '+216 29 654 321',
-      address: '321 Boulevard du 7 Novembre, Monastir',
-      items: [
-        { name: 'Pain complet', quantity: 3, price: 2.50, total: 7.50 },
-        { name: 'Œufs bio', quantity: 2, price: 4.80, total: 9.60 },
-        { name: 'Eau minérale', quantity: 6, price: 1.20, total: 7.20 }
-      ],
-      itemsText: 'Pain complet x3, Œufs bio x2, Eau minérale x6',
-      status: 'préparée',
-      amount: 24.30,
-      createdAt: new Date('2024-12-14T14:20:00')
-    },
-    {
-      id: 'ORD005',
-      storeName: 'Test Store',
-      storeAddress: '19 Rue Ibn Khaldoun, Bizerte',
-      customer: {
-        firstName: 'fadit',
-        lastName: 'ali',
-        fullName: 'fadit ali'
-      },
-      phone: '+216 24 789 123',
-      address: '654 Rue Ibn Khaldoun, Bizerte',
-      items: [
-        { name: 'Baskets', quantity: 1, price: 85.00, total: 85.00 }
-      ],
-      itemsText: 'Baskets x1',
-      status: 'livrée',
-      amount: 85.00,
-      createdAt: new Date('2024-12-13T11:30:00')
+      error: (error) => {
+        console.error('❌ Error loading prepared orders:', error);
+      }
+    });
+  }
+
+  loadMyDeliveries() {
+    const deliveryId = this.authService.getDeliveryId();
+    
+    if (!deliveryId) {
+      console.log('⚠️ No delivery ID found, skipping livraisons load');
+      return;
     }
-  ];
+    
+    console.log(`🚚 Loading livraisons for delivery person ${deliveryId}`);
+    
+    this.deliveryService.getMyDeliveries(deliveryId).subscribe({
+      next: (response) => {
+        console.log('📦 Loaded my deliveries from database:', response.deliveries);
+        
+        // Convert livraison data to component format
+        const inProgressOrders: Order[] = response.deliveries.map((delivery: any) => ({
+          id: delivery.id_cmd.toString(),
+          storeName: 'Store',
+          storeAddress: '',
+          customer: {
+            firstName: delivery.user_name?.split(' ')[0] || '',
+            lastName: delivery.user_name?.split(' ')[1] || '',
+            fullName: delivery.user_name || ''
+          },
+          phone: delivery.user_phone || '',
+          address: `${delivery.delivery_address || ''}, ${delivery.city || ''}`,
+          items: delivery.items.map((item: any) => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price,
+            total: item.quantity * item.price
+          })),
+          itemsText: delivery.items.map((item: any) => `${item.name} x${item.quantity}`).join(', '),
+          status: 'en_livraison',
+          amount: delivery.total || 0,
+          createdAt: new Date(delivery.date_commande)
+        }));
+
+        // Add in-progress orders to the orders array (remove old in-progress first to avoid duplicates)
+        this.orders = [...this.orders.filter(o => o.status !== 'en_livraison'), ...inProgressOrders];
+        
+        console.log(`✅ Loaded ${inProgressOrders.length} in-progress deliveries`);
+      },
+      error: (error) => {
+        console.error('❌ Error loading my deliveries:', error);
+      }
+    });
+  }
 
   get pendingOrders(): Order[] {
-    return this.orders.filter(o => o.status === 'en_attente');
+    return this.orders.filter(o => o.status === 'préparée');
   }
 
   get acceptedOrders(): Order[] {
-    return this.orders.filter(o => o.status === 'en_préparation' || o.status === 'préparée' || o.status === 'en_livraison');
+    return this.orders.filter(o => o.status === 'en_préparation' || o.status === 'en_livraison');
   }
 
   get deliveredOrders(): Order[] {
@@ -174,10 +180,30 @@ export class DeliveryComponent implements OnInit {
   }
 
   acceptOrder(orderId: string) {
-    const order = this.orders.find(o => o.id === orderId);
-    if (order) {
-      order.status = 'en_préparation';
+    const deliveryId = this.authService.getDeliveryId();
+    
+    if (!deliveryId) {
+      console.error('❌ No delivery ID found for current user');
+      alert('Unable to identify delivery person. Please check your login.');
+      return;
     }
+    
+    console.log(`📦 Accepting order ${orderId} as delivery person ${deliveryId}`);
+    
+    this.deliveryService.acceptOrder(Number(orderId), deliveryId).subscribe({
+      next: (response) => {
+        console.log('✅ Order accepted and livraison created:', response);
+        
+        // Reload all orders to refresh both pending and in-progress
+        this.loadAllOrders();
+        
+        alert('Order accepted successfully! Livraison created.');
+      },
+      error: (error) => {
+        console.error('❌ Error accepting order:', error);
+        alert('Failed to accept order: ' + (error.error?.message || 'Unknown error'));
+      }
+    });
   }
 
   pickupOrder(orderId: string) {
@@ -192,7 +218,7 @@ export class DeliveryComponent implements OnInit {
     if (order) {
       order.status = 'livrée';
       this.completedDeliveries++;
-      this.totalEarnings += order.amount * 0.15; // 15% commission
+      this.totalEarnings += order.amount * 0.15;
     }
   }
 

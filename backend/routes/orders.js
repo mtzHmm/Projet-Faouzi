@@ -110,9 +110,12 @@ router.get('/', async (req, res) => {
     query += ' ORDER BY c.date_commande DESC';
     
     // Execute query to get total count
-    const countQuery = query.replace('c.*, cl.nom || \' \' || cl.prenom as user_name, cl.email as user_email, cl.tel as user_phone', 'COUNT(DISTINCT c.id_cmd)');
+    const countQuery = query.replace(
+      'SELECT DISTINCT c.*, cl.nom || \' \' || cl.prenom as user_name, cl.email as user_email, cl.tel as user_phone',
+      'SELECT COUNT(DISTINCT c.id_cmd) as count'
+    );
     const countResult = await db.query(countQuery, params);
-    const totalOrders = parseInt(countResult.rows[0].count);
+    const totalOrders = parseInt(countResult.rows[0]?.count || 0);
     
     // Add pagination
     const offset = (page - 1) * limit;

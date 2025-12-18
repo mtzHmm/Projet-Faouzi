@@ -108,4 +108,15 @@ export class DeliveryService {
   getDeliveriesByOrder(orderId: number): Observable<DeliveriesResponse> {
     return this.getDeliveries({ orderId });
   }
+
+  acceptOrder(orderId: number, deliveryId: number): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/delivery/accept-order`, {
+      orderId,
+      deliveryId
+    });
+  }
+
+  getMyDeliveries(deliveryId: number): Observable<any> {
+    return this.http.get(`${environment.apiUrl}/delivery/my-deliveries/${deliveryId}`);
+  }
 }

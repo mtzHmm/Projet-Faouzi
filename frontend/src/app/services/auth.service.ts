@@ -188,4 +188,13 @@ export class AuthService {
     }
     return null;
   }
+
+  // Get delivery person ID from user data
+  getDeliveryId(): number | null {
+    const userData = this.getUserData();
+    if (userData && this.isDelivery()) {
+      return userData.id_liv || userData.deliveryId || userData.id || null;
+    }
+    return null;
+  }
 }

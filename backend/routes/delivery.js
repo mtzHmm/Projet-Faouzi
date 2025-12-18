@@ -132,4 +132,148 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// GET /api/delivery/my-deliveries/:deliveryId - Get all livraisons for a delivery person
+router.get('/my-deliveries/:deliveryId', async (req, res) => {
+  try {
+    const deliveryId = parseInt(req.params.deliveryId);
+    const db = database.getPool();
+    
+    console.log(`📦 Fetching livraisons for delivery person ${deliveryId}`);
+    
+    // Fetch livraisons with order details
+    const query = `
+      SELECT 
+        l.id_livraison,
+        l.id_cmd,
+        l.id_liv,
+        l.status as livraison_status,
+        c.id_cmd,
+        c.date_commande,
+        c.status as order_status,
+        c.total,
+        c.user_name,
+        c.user_email,
+        c.user_phone,
+        c.delivery_address,
+        c.city,
+        c.governorate
+      FROM livraison l
+      JOIN commande c ON l.id_cmd = c.id_cmd
+      WHERE l.id_liv = $1
+      ORDER BY l.id_livraison DESC
+    `;
+    
+    const result = await db.query(query, [deliveryId]);
+    
+    // Fetch items for each order
+    const deliveriesWithItems = await Promise.all(
+      result.rows.map(async (delivery) => {
+        const itemsQuery = `
+          SELECT lc.quantite, p.id_produit as id, p.nom as name, p.prix as price
+          FROM ligne_commande lc
+          JOIN produit p ON lc.id_produit = p.id_produit
+          WHERE lc.id_cmd = $1
+        `;
+        
+        const itemsResult = await db.query(itemsQuery, [delivery.id_cmd]);
+        
+        return {
+          ...delivery,
+          items: itemsResult.rows.map(item => ({
+            id: item.id,
+            name: item.name,
+            quantity: item.quantite,
+            price: parseFloat(item.price)
+          }))
+        };
+      })
+    );
+    
+    console.log(`✅ Found ${deliveriesWithItems.length} livraisons for delivery person ${deliveryId}`);
+    
+    res.json({
+      deliveries: deliveriesWithItems,
+      total: deliveriesWithItems.length
+    });
+    
+  } catch (error) {
+    console.error('❌ Error fetching deliveries:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch deliveries',
+      message: error.message
+    });
+  }
+});
+
+// POST /api/delivery/accept-order - Accept an order and create livraison
+router.post('/accept-order', async (req, res) => {
+  const db = database.getPool();
+  const client = await db.connect();
+  
+  try {
+    const { orderId, deliveryId } = req.body;
+    
+    console.log(`📦 Delivery person ${deliveryId} accepting order ${orderId}`);
+    
+    if (!orderId || !deliveryId) {
+      return res.status(400).json({ error: 'orderId and deliveryId are required' });
+    }
+    
+    // Start transaction
+    await client.query('BEGIN');
+    
+    // Check if livraison already exists for this order
+    const checkQuery = 'SELECT id_livraison FROM livraison WHERE id_cmd = $1';
+    const checkResult = await client.query(checkQuery, [orderId]);
+    
+    if (checkResult.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Livraison already exists for this order' });
+    }
+    
+    // Create livraison record
+    const insertQuery = `
+      INSERT INTO livraison (id_cmd, id_liv, status)
+      VALUES ($1, $2, $3)
+      RETURNING *
+    `;
+    
+    const livraisonResult = await client.query(insertQuery, [
+      orderId,
+      deliveryId,
+      'en cours de livraison'
+    ]);
+    
+    // Update order status to 'livraison'
+    const updateOrderQuery = `
+      UPDATE commande
+      SET status = $1
+      WHERE id_cmd = $2
+      RETURNING *
+    `;
+    
+    await client.query(updateOrderQuery, ['livraison', orderId]);
+    
+    // Commit transaction
+    await client.query('COMMIT');
+    
+    console.log(`✅ Livraison created successfully:`, livraisonResult.rows[0]);
+    
+    res.status(201).json({
+      livraison: livraisonResult.rows[0],
+      message: 'Order accepted and livraison created'
+    });
+    
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('❌ Error accepting order:', error);
+    res.status(500).json({ 
+      error: 'Failed to accept order',
+      message: error.message
+    });
+  } finally {
+    client.release();
+  }
+});
+
 module.exports = router;
