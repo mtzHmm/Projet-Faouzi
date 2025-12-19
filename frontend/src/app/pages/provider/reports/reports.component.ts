@@ -44,7 +44,6 @@ export class ReportsComponent implements OnInit {
 
   reportTypes = [
     { value: 'sales', label: 'Sales Report' },
-    { value: 'inventory', label: 'Inventory Report' },
     { value: 'financial', label: 'Financial Report' },
     { value: 'customer', label: 'Customer Report' }
   ];
