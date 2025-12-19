@@ -38,10 +38,10 @@ interface Order {
   styleUrls: ['./delivery.component.css']
 })
 export class DeliveryComponent implements OnInit, OnDestroy {
-  deliveryName = 'Ahmed Ben Ali';
-  totalEarnings = 1250.50;
-  completedDeliveries = 24;
-  rating = 4.8;
+  deliveryName = 'Delivery Partner';
+  totalEarnings = 0;
+  completedDeliveries = 0;
+  rating = 0;
 
   selectedTab: 'pending' | 'accepted' | 'delivered' = 'pending';
   selectedOrder: Order | null = null;
@@ -61,6 +61,7 @@ export class DeliveryComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadUserData();
+    this.loadDeliveryStats();
     this.loadAllOrders();
     this.startAutoRefresh();
   }
@@ -97,6 +98,34 @@ export class DeliveryComponent implements OnInit, OnDestroy {
     if (userData) {
       this.deliveryName = this.authService.getFullUserName() || 'Delivery Partner';
     }
+  }
+
+  loadDeliveryStats() {
+    const deliveryId = this.authService.getDeliveryId();
+    
+    if (!deliveryId) {
+      console.log('⚠️ No delivery ID found, cannot load stats');
+      console.log('User data:', this.authService.getUserData());
+      return;
+    }
+
+    console.log(`📊 Loading stats for delivery person ${deliveryId}...`);
+    
+    this.deliveryService.getDeliveryPersonStats(deliveryId).subscribe({
+      next: (stats) => {
+        console.log('✅ Stats loaded:', stats);
+        this.completedDeliveries = stats.totalDeliveries;
+        this.totalEarnings = stats.totalEarnings;
+        this.rating = stats.rating;
+      },
+      error: (error) => {
+        console.error('❌ Error loading delivery stats:', error);
+        // Set defaults if error
+        this.completedDeliveries = 0;
+        this.totalEarnings = 0;
+        this.rating = 4.8;
+      }
+    });
   }
 
   loadPreparedOrders() {
@@ -259,9 +288,10 @@ export class DeliveryComponent implements OnInit, OnDestroy {
         const order = this.orders.find(o => o.id === orderId);
         if (order) {
           order.status = 'livrée';
-          this.completedDeliveries++;
-          this.totalEarnings += order.amount * 0.15;
         }
+        
+        // Reload stats from backend to get updated earnings (10% commission)
+        this.loadDeliveryStats();
         
         // Reload all orders to refresh the lists
         this.loadAllOrders();

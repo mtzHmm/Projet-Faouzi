@@ -123,4 +123,10 @@ export class DeliveryService {
   completeDelivery(orderId: number): Observable<any> {
     return this.http.put(`${environment.apiUrl}/delivery/complete-delivery/${orderId}`, {});
   }
+
+  getDeliveryPersonStats(deliveryId: number): Observable<{ totalDeliveries: number; totalEarnings: number; rating: number }> {
+    return this.http.get<{ totalDeliveries: number; totalEarnings: number; rating: number }>(
+      `${environment.apiUrl}/delivery/stats/${deliveryId}`
+    );
+  }
 }

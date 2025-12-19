@@ -336,4 +336,52 @@ router.post('/accept-order', async (req, res) => {
   }
 });
 
+// GET /api/delivery/stats/:deliveryId - Get delivery person statistics
+router.get('/stats/:deliveryId', async (req, res) => {
+  try {
+    const deliveryId = parseInt(req.params.deliveryId);
+    console.log(`📊 Loading stats for delivery person ${deliveryId}...`);
+    
+    const pool = database.getPool();
+    if (!pool) {
+      throw new Error('Database connection not available');
+    }
+
+    // Get total deliveries and earnings (10% of order totals)
+    const statsQuery = `
+      SELECT 
+        COUNT(*) as total_deliveries,
+        COALESCE(SUM(c.total * 0.10), 0) as total_earnings
+      FROM livraison l
+      INNER JOIN commande c ON l.id_cmd = c.id_cmd
+      WHERE l.id_liv = $1 AND l.status = 'livrée'
+    `;
+    
+    const statsResult = await pool.query(statsQuery, [deliveryId]);
+    const stats = statsResult.rows[0];
+
+    // Get average rating (if you have a rating system, otherwise return 4.8 as default)
+    const rating = 4.8; // Placeholder until rating system is implemented
+
+    console.log(`✅ Stats loaded:`, {
+      deliveries: stats.total_deliveries,
+      earnings: parseFloat(stats.total_earnings).toFixed(2),
+      rating
+    });
+
+    res.json({
+      totalDeliveries: parseInt(stats.total_deliveries),
+      totalEarnings: parseFloat(stats.total_earnings),
+      rating: rating
+    });
+
+  } catch (error) {
+    console.error('❌ Error loading delivery stats:', error);
+    res.status(500).json({ 
+      error: 'Failed to load delivery stats',
+      message: error.message
+    });
+  }
+});
+
 module.exports = router;
