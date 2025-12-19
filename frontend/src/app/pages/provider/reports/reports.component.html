@@ -67,15 +67,15 @@
     <!-- Key Metrics -->
     <div class="metrics-section">
       <h2>📊 Key Performance Indicators</h2>
-      <div class="metrics-grid">
+      <div class="metrics-grid" *ngIf="!loading; else loadingMetrics">
         <div class="metric-card">
           <div class="metric-icon revenue">💰</div>
           <div class="metric-info">
             <h3>{{ metrics.totalRevenue | number:'1.2-2' }} DT</h3>
             <p>Total Revenue</p>
-            <div class="metric-trend positive">
+            <div class="metric-trend" [ngClass]="getTrendClass(metrics.growthRate)">
               <span class="trend-icon">{{ getTrendIcon(metrics.growthRate) }}</span>
-              <span>+{{ metrics.growthRate }}%</span>
+              <span>{{ metrics.growthRate > 0 ? '+' : '' }}{{ metrics.growthRate | number:'1.1-1' }}%</span>
             </div>
           </div>
         </div>
@@ -85,9 +85,9 @@
           <div class="metric-info">
             <h3>{{ metrics.totalOrders }}</h3>
             <p>Total Orders</p>
-            <div class="metric-trend positive">
-              <span class="trend-icon">📈</span>
-              <span>+8.3%</span>
+            <div class="metric-trend neutral">
+              <span class="trend-icon">📊</span>
+              <span>All time</span>
             </div>
           </div>
         </div>
@@ -97,9 +97,9 @@
           <div class="metric-info">
             <h3>{{ metrics.averageOrderValue | number:'1.2-2' }} DT</h3>
             <p>Average Order Value</p>
-            <div class="metric-trend positive">
-              <span class="trend-icon">📈</span>
-              <span>+5.2%</span>
+            <div class="metric-trend neutral">
+              <span class="trend-icon">📊</span>
+              <span>Per order</span>
             </div>
           </div>
         </div>
@@ -110,18 +110,26 @@
             <h3>{{ metrics.customerSatisfaction }}/5</h3>
             <p>Customer Satisfaction</p>
             <div class="metric-trend positive">
-              <span class="trend-icon">📈</span>
-              <span>+2.1%</span>
+              <span class="trend-icon">⭐</span>
+              <span>Rating</span>
             </div>
           </div>
         </div>
       </div>
+      
+      <ng-template #loadingMetrics>
+        <div class="metrics-grid">
+          <div class="metric-card" *ngFor="let i of [1,2,3,4]" style="opacity: 0.5;">
+            <p style="text-align: center; padding: 20px;">Loading...</p>
+          </div>
+        </div>
+      </ng-template>
     </div>
 
     <!-- Sales Performance -->
     <div class="chart-section">
       <h2>📈 Sales Performance</h2>
-      <div class="chart-container">
+      <div class="chart-container" *ngIf="!loading && salesData.length > 0; else noSalesData">
         <div class="chart-header">
           <h3>Weekly Sales Overview</h3>
           <div class="chart-legend">
@@ -140,22 +148,29 @@
           <div *ngFor="let data of salesData" class="chart-bar">
             <div class="bar-label">{{ data.period }}</div>
             <div class="bar-container">
-              <div class="bar revenue" [style.height.px]="data.revenue / 20"></div>
-              <div class="bar orders" [style.height.px]="data.orders * 4"></div>
+              <div class="bar revenue" [style.height.px]="(data.revenue / 10) || 5"></div>
+              <div class="bar orders" [style.height.px]="(data.orders * 10) || 5"></div>
             </div>
             <div class="bar-values">
-              <div class="value revenue">{{ data.revenue | number:'1.0-0' }} DT</div>
+              <div class="value revenue">{{ data.revenue | number:'1.2-2' }} DT</div>
               <div class="value orders">{{ data.orders }} orders</div>
             </div>
           </div>
         </div>
       </div>
+      
+      <ng-template #noSalesData>
+        <div style="padding: 40px; text-align: center; color: #666; background: white; border-radius: 8px;">
+          <i class="fas fa-chart-line" style="font-size: 48px; opacity: 0.3; margin-bottom: 16px;"></i>
+          <p style="font-size: 16px;">{{ loading ? 'Loading sales data...' : 'No sales data available for the selected period' }}</p>
+        </div>
+      </ng-template>
     </div>
 
     <!-- Top Products -->
     <div class="products-section">
       <h2>🏆 Top Performing Products</h2>
-      <div class="products-table">
+      <div class="products-table" *ngIf="!loading && topProducts.length > 0; else noProductsData">
         <div class="table-header">
           <div>Rank</div>
           <div>Product</div>
@@ -175,33 +190,40 @@
           <div class="col-revenue">{{ product.revenue | number:'1.2-2' }} DT</div>
           <div class="col-performance">
             <div class="performance-bar">
-              <div class="performance-fill" [style.width.%]="(product.revenue / 25000) * 100"></div>
+              <div class="performance-fill" [style.width.%]="getPerformanceWidth(product.revenue)"></div>
             </div>
           </div>
         </div>
       </div>
+      
+      <ng-template #noProductsData>
+        <div style="padding: 40px; text-align: center; color: #666; background: white; border-radius: 8px;">
+          <i class="fas fa-box-open" style="font-size: 48px; opacity: 0.3; margin-bottom: 16px;"></i>
+          <p style="font-size: 16px;">{{ loading ? 'Loading product data...' : 'No product sales data available' }}</p>
+        </div>
+      </ng-template>
     </div>
 
     <!-- Financial Summary -->
-    <div class="financial-section">
+    <div class="financial-section" *ngIf="!loading">
       <h2>💼 Financial Summary</h2>
       <div class="financial-cards">
         <div class="financial-card profit">
           <div class="card-header">
-            <h3>Net Profit</h3>
+            <h3>Net Profit (Est.)</h3>
             <span class="card-icon">💰</span>
           </div>
-          <div class="card-value">3,960.19 DT</div>
-          <div class="card-change positive">+15.8% from last month</div>
+          <div class="card-value">{{ (metrics.totalRevenue * 0.25) | number:'1.2-2' }} DT</div>
+          <div class="card-change positive">Estimated at 25% margin</div>
         </div>
 
         <div class="financial-card expenses">
           <div class="card-header">
-            <h3>Total Expenses</h3>
+            <h3>Total Expenses (Est.)</h3>
             <span class="card-icon">💸</span>
           </div>
-          <div class="card-value">11,880.56 DT</div>
-          <div class="card-change negative">+5.2% from last month</div>
+          <div class="card-value">{{ (metrics.totalRevenue * 0.75) | number:'1.2-2' }} DT</div>
+          <div class="card-change neutral">Estimated at 75% of revenue</div>
         </div>
 
         <div class="financial-card margin">
@@ -210,7 +232,7 @@
             <span class="card-icon">📊</span>
           </div>
           <div class="card-value">25.0%</div>
-          <div class="card-change positive">+2.1% from last month</div>
+          <div class="card-change positive">Industry standard</div>
         </div>
       </div>
     </div>
