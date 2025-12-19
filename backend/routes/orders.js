@@ -356,8 +356,9 @@ router.put('/:id/status', async (req, res) => {
 router.get('/stats/summary', async (req, res) => {
   try {
     const db = database.getPool();
+    const { providerId } = req.query;
     
-    const statsQuery = `
+    let statsQuery = `
       SELECT 
         COUNT(*) as totalOrders,
         COUNT(CASE WHEN status = 'en attente' THEN 1 END) as waitingOrders,
@@ -370,7 +371,20 @@ router.get('/stats/summary', async (req, res) => {
       FROM commande
     `;
     
-    const result = await db.query(statsQuery);
+    const params = [];
+    
+    // Filter by provider if providerId is specified
+    if (providerId) {
+      console.log('🏪 Fetching stats for provider ID:', providerId);
+      statsQuery += ` WHERE EXISTS (
+        SELECT 1 FROM ligne_commande lc 
+        JOIN produit p ON lc.id_produit = p.id_produit 
+        WHERE lc.id_cmd = commande.id_cmd AND p.id_magazin = $1
+      )`;
+      params.push(parseInt(providerId));
+    }
+    
+    const result = await db.query(statsQuery, params);
     const stats = result.rows[0];
     
     res.json({

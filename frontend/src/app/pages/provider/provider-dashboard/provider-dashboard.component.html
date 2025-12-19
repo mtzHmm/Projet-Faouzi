@@ -45,15 +45,14 @@
     </div>
 
     <!-- Statistiques principales -->
-    <div class="stats-grid">
+    <div class="stats-grid" *ngIf="!loading; else loadingStats">
       <div class="stat-card products-stock">
         <div class="stat-content">
           <div class="stat-info">
             <p class="stat-label">Products in catalog</p>
             <h3 class="stat-value">{{ stats.totalProducts }}</h3>
             <div class="stat-bottom">
-              <span class="stat-trend positive">+8%</span>
-              <a href="#" class="view-link">View Details</a>
+              <a [routerLink]="['/provider/products']" class="view-link">View Details</a>
             </div>
           </div>
           <div class="stat-icon">
@@ -68,7 +67,6 @@
             <p class="stat-label">Total orders</p>
             <h3 class="stat-value">{{ stats.totalOrders }}</h3>
             <div class="stat-bottom">
-              <span class="stat-trend positive">+8%</span>
               <a [routerLink]="['/provider/orders']" class="view-link">View Orders</a>
             </div>
           </div>
@@ -82,9 +80,8 @@
         <div class="stat-content">
           <div class="stat-info">
             <p class="stat-label">Total revenue</p>
-            <h3 class="stat-value">€{{ stats.totalRevenue | number }}</h3>
+            <h3 class="stat-value">€{{ stats.totalRevenue | number:'1.2-2' }}</h3>
             <div class="stat-bottom">
-              <span class="stat-trend positive">+15%</span>
               <a [routerLink]="['/provider/reports']" class="view-link">View Report</a>
             </div>
           </div>
@@ -100,7 +97,6 @@
             <p class="stat-label">Pending orders</p>
             <h3 class="stat-value">{{ stats.pendingOrders }}</h3>
             <div class="stat-bottom">
-              <span class="stat-trend negative">-5%</span>
               <a [routerLink]="['/provider/orders']" class="view-link">Process Now</a>
             </div>
           </div>
@@ -110,6 +106,19 @@
         </div>
       </div>
     </div>
+
+    <ng-template #loadingStats>
+      <div class="stats-grid">
+        <div class="stat-card" *ngFor="let i of [1,2,3,4]">
+          <div class="stat-content" style="opacity: 0.5;">
+            <div class="stat-info">
+              <p class="stat-label">Loading...</p>
+              <h3 class="stat-value">--</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-template>
 
     <!-- Actions rapides -->
     <div class="quick-actions-section">
@@ -129,11 +138,18 @@
     <!-- Recent Orders -->
     <div class="recent-orders-section">
       <div class="section-header">
-        <h2><i class="fas fa-clock"></i> Recent Orders</h2>
+        <h2><i class="fas fa-clock"></i> Recent Orders ({{ recentOrders.length }})</h2>
         <a [routerLink]="['/provider/orders']" class="view-all-btn">View All</a>
       </div>
       
-      <div class="orders-table">
+      <!-- Debug info -->
+      <div style="padding: 10px; background: #f0f0f0; margin-bottom: 10px; font-size: 12px;">
+        <strong>Debug:</strong> recentOrders array length = {{ recentOrders?.length || 0 }} | 
+        Is array? {{ recentOrders?.constructor?.name }} |
+        First order ID: {{ recentOrders?.[0]?.id }}
+      </div>
+
+      <div class="orders-table" *ngIf="recentOrders && recentOrders.length > 0; else noOrders">
         <div class="table-header">
           <div class="col-id">Order ID</div>
           <div class="col-customer">Customer</div>
@@ -143,11 +159,11 @@
           <div class="col-time">Time</div>
         </div>
         
-        <div class="table-row" *ngFor="let order of recentOrders">
+        <div class="table-row" *ngFor="let order of recentOrders; trackBy: trackByOrderId">
           <div class="col-id">#{{ order.id }}</div>
           <div class="col-customer">{{ order.customerName }}</div>
           <div class="col-items">{{ order.items }} item(s)</div>
-          <div class="col-total">€{{ order.total }}</div>
+          <div class="col-total">€{{ order.total | number:'1.2-2' }}</div>
           <div class="col-status">
             <span 
               class="status-badge" 
@@ -155,9 +171,17 @@
               {{ getStatusText(order.status) }}
             </span>
           </div>
-          <div class="col-time">{{ order.createdAt | date:'HH:mm' }}</div>
+          <div class="col-time">{{ order.createdAt | date:'short' }}</div>
         </div>
       </div>
+
+      <ng-template #noOrders>
+        <div style="padding: 40px; text-align: center; color: #666;">
+          <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;"></i>
+          <p style="font-size: 18px; margin: 0;">No orders yet</p>
+          <p style="font-size: 14px; margin-top: 8px; opacity: 0.7;">Orders will appear here once customers place them</p>
+        </div>
+      </ng-template>
     </div>
   </div>
 </div>

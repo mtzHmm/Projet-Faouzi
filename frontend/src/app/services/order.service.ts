@@ -67,8 +67,12 @@ export interface CreateOrderRequest {
 
 export interface OrderStats {
   totalOrders: number;
-  pendingOrders: number;
+  waitingOrders?: number;
+  preparedOrders?: number;
+  inDeliveryOrders?: number;
   completedOrders: number;
+  cancelledOrders?: number;
+  pendingOrders?: number;
   totalRevenue: number;
   averageOrderValue: number;
 }
@@ -111,7 +115,11 @@ export class OrderService {
     return this.http.put<Order>(`${this.apiUrl}/${id}/status`, { status });
   }
 
-  getOrderStats(): Observable<OrderStats> {
-    return this.http.get<OrderStats>(`${this.apiUrl}/stats/summary`);
+  getOrderStats(providerId?: number): Observable<OrderStats> {
+    let params = new HttpParams();
+    if (providerId) {
+      params = params.set('providerId', providerId.toString());
+    }
+    return this.http.get<OrderStats>(`${this.apiUrl}/stats/summary`, { params });
   }
 }
