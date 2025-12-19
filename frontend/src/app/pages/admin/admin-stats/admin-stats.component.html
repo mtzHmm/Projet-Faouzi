@@ -1,0 +1,167 @@
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2>Admin Panel</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a routerLink="/admin" class="nav-item">
+        <span class="nav-icon">⚡</span>
+        <span class="nav-text">Dashboard</span>
+      </a>
+      <a routerLink="/admin/orders" class="nav-item">
+        <span class="nav-icon">📋</span>
+        <span class="nav-text">Orders</span>
+      </a>
+      <a routerLink="/user-management" class="nav-item users-nav">
+        <span class="nav-icon">👥</span>
+        <span class="nav-text">Users</span>
+      </a>
+      <a routerLink="/admin/stats" class="nav-item active">
+        <span class="nav-icon">📊</span>
+        <span class="nav-text">Stats</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="stats-header">
+      <div>
+        <h1>📊 Statistiques Détaillées</h1>
+        <p>Analyses et performances de la plateforme</p>
+      </div>
+      <button class="export-btn">
+        <i class="fas fa-download"></i> Exporter
+      </button>
+    </div>
+
+    <div *ngIf="isLoading" class="loading-container">
+      <div class="spinner"></div>
+      <p>Chargement des statistiques...</p>
+    </div>
+
+    <div *ngIf="!isLoading" class="stats-content">
+      <!-- Overview Cards -->
+      <div class="overview-grid">
+        <div class="stat-card revenue">
+          <div class="card-icon">💰</div>
+          <div class="card-content">
+            <p class="card-label">Revenu Total</p>
+            <h2 class="card-value">{{ totalRevenue | number:'1.2-2' }} DT</h2>
+            <span class="growth positive">{{ getGrowthTrend() }}% ce mois</span>
+          </div>
+        </div>
+
+        <div class="stat-card orders">
+          <div class="card-icon">📦</div>
+          <div class="card-content">
+            <p class="card-label">Total Commandes</p>
+            <h2 class="card-value">{{ totalOrders }}</h2>
+            <span class="growth neutral">Toutes périodes</span>
+          </div>
+        </div>
+
+        <div class="stat-card average">
+          <div class="card-icon">💵</div>
+          <div class="card-content">
+            <p class="card-label">Panier Moyen</p>
+            <h2 class="card-value">{{ averageOrderValue | number:'1.2-2' }} DT</h2>
+            <span class="growth positive">+5% vs mois dernier</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category Sales -->
+      <div class="section-card">
+        <h3>📈 Ventes par Catégorie</h3>
+        <div class="category-stats">
+          <div class="category-item">
+            <div class="category-header">
+              <span class="category-name">🍔 Restaurant</span>
+              <span class="category-amount">{{ categoryStats.restaurant | number:'1.2-2' }} DT</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill restaurant" 
+                   [style.width.%]="getCategoryPercentage('restaurant')">
+              </div>
+            </div>
+            <span class="percentage">{{ getCategoryPercentage('restaurant') }}%</span>
+          </div>
+
+          <div class="category-item">
+            <div class="category-header">
+              <span class="category-name">🛍️ Boutique</span>
+              <span class="category-amount">{{ categoryStats.boutique | number:'1.2-2' }} DT</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill boutique" 
+                   [style.width.%]="getCategoryPercentage('boutique')">
+              </div>
+            </div>
+            <span class="percentage">{{ getCategoryPercentage('boutique') }}%</span>
+          </div>
+
+          <div class="category-item">
+            <div class="category-header">
+              <span class="category-name">💊 Pharmacie</span>
+              <span class="category-amount">{{ categoryStats.pharmacie | number:'1.2-2' }} DT</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill pharmacie" 
+                   [style.width.%]="getCategoryPercentage('pharmacie')">
+              </div>
+            </div>
+            <span class="percentage">{{ getCategoryPercentage('pharmacie') }}%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly Performance -->
+      <div class="section-card">
+        <h3>📅 Performance Mensuelle</h3>
+        <div class="monthly-table">
+          <div class="table-header">
+            <div class="col-month">Mois</div>
+            <div class="col-revenue">Revenu</div>
+            <div class="col-orders">Commandes</div>
+            <div class="col-avg">Panier Moyen</div>
+          </div>
+          <div class="table-row" *ngFor="let data of monthlyData">
+            <div class="col-month">{{ data.month }}</div>
+            <div class="col-revenue">{{ data.revenue | number:'1.2-2' }} DT</div>
+            <div class="col-orders">{{ data.orders }}</div>
+            <div class="col-avg">{{ (data.revenue / data.orders) | number:'1.2-2' }} DT</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Stats -->
+      <div class="stats-grid">
+        <div class="stat-box">
+          <h4>🎯 Taux de Conversion</h4>
+          <div class="stat-number">85%</div>
+          <p class="stat-description">Visiteurs → Commandes</p>
+        </div>
+
+        <div class="stat-box">
+          <h4>⭐ Satisfaction Client</h4>
+          <div class="stat-number">4.5/5</div>
+          <p class="stat-description">Note moyenne</p>
+        </div>
+
+        <div class="stat-box">
+          <h4>🚚 Livraisons à Temps</h4>
+          <div class="stat-number">92%</div>
+          <p class="stat-description">Dans les délais</p>
+        </div>
+
+        <div class="stat-box">
+          <h4>🔄 Taux de Retour</h4>
+          <div class="stat-number">3.2%</div>
+          <p class="stat-description">Commandes retournées</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

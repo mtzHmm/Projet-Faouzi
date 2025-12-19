@@ -77,6 +77,26 @@ router.get('/dashboard', async (req, res) => {
       LIMIT 2)
     `);
     
+    // Get monthly statistics - only for months that have actual orders
+    const monthlyStats = await db.query(`
+      SELECT 
+        TO_CHAR(date_commande, 'Month') as month,
+        EXTRACT(MONTH FROM date_commande) as month_num,
+        EXTRACT(YEAR FROM date_commande) as year,
+        COUNT(*) as orders,
+        COALESCE(SUM(total), 0) as revenue
+      FROM commande
+      GROUP BY TO_CHAR(date_commande, 'Month'), EXTRACT(MONTH FROM date_commande), EXTRACT(YEAR FROM date_commande)
+      ORDER BY year DESC, month_num DESC
+      LIMIT 12
+    `);
+    
+    const monthlyData = monthlyStats.rows.map(row => ({
+      month: row.month.trim(),
+      orders: parseInt(row.orders),
+      revenue: parseFloat(row.revenue)
+    }));
+
     const dashboardStats = {
       totalUsers: totalUsers,
       totalOrders: parseInt(stats.total_orders),
@@ -85,6 +105,7 @@ router.get('/dashboard', async (req, res) => {
       pendingOrders: parseInt(stats.pending_orders),
       recentOrders: recentOrders,
       recentUsers: recentUsersResult.rows,
+      monthlyData: monthlyData,
       salesByCategory: {
         restaurant: 0,
         boutique: 0,

@@ -11,6 +11,7 @@ export interface DashboardStats {
   pendingOrders: number;
   recentOrders: any[];
   recentUsers: any[];
+  monthlyData?: Array<{ month: string; revenue: number; orders: number }>;
   salesByCategory: {
     restaurant: number;
     boutique: number;
