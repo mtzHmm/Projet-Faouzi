@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -57,57 +57,13 @@ export class AdminDashboardComponent implements OnInit {
 
   isLoading = true;
 
-  recentOrders: Order[] = [
-    {
-      id: 1001,
-      userId: 123,
-      userName: 'Sophie Martin',
-      total: 45.80,
-      status: 'en_cours',
-      createdAt: new Date('2025-11-28T14:30:00'),
-      items: 3
-    },
-    {
-      id: 1002,
-      userId: 456,
-      userName: 'Marc Dubois',
-      total: 28.90,
-      status: 'en_cours',
-      createdAt: new Date('2025-11-28T14:25:00'),
-      items: 2
-    },
-    {
-      id: 1003,
-      userId: 789,
-      userName: 'Laura Petit',
-      total: 67.30,
-      status: 'en_cours',
-      createdAt: new Date('2025-11-28T14:20:00'),
-      items: 5
-    },
-    {
-      id: 1004,
-      userId: 321,
-      userName: 'Thomas Bernard',
-      total: 15.40,
-      status: 'livrée',
-      createdAt: new Date('2025-11-28T13:45:00'),
-      items: 1
-    },
-    {
-      id: 1005,
-      userId: 654,
-      userName: 'Emma Rousseau',
-      total: 92.10,
-      status: 'annulée',
-      createdAt: new Date('2025-11-28T13:30:00'),
-      items: 7
-    }
-  ];
-
+  recentOrders: Order[] = [];
   recentUsers: User[] = [];
 
-  constructor(private adminService: AdminService) {}
+  constructor(
+    private adminService: AdminService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
     this.loadDashboardData();
@@ -115,22 +71,49 @@ export class AdminDashboardComponent implements OnInit {
 
   loadDashboardData() {
     this.isLoading = true;
+    console.log('📊 Loading admin dashboard data...');
+    
     this.adminService.getDashboardStats().subscribe({
       next: (data) => {
+        console.log('✅ Dashboard data received:', data);
+        
         this.stats = {
-          totalUsers: data.totalUsers,
-          totalOrders: data.totalOrders,
-          totalRevenue: data.totalRevenue,
-          activeDeliveries: data.activeDeliveries,
-          pendingOrders: data.pendingOrders
+          totalUsers: data.totalUsers || 0,
+          totalOrders: data.totalOrders || 0,
+          totalRevenue: data.totalRevenue || 0,
+          activeDeliveries: data.activeDeliveries || 0,
+          pendingOrders: data.pendingOrders || 0
         };
-        this.recentOrders = data.recentOrders as any;
-        this.recentUsers = data.recentUsers as any;
+        
+        console.log('📊 Stats updated:', this.stats);
+        
+        this.recentOrders = (data.recentOrders || []).map(order => ({
+          id: order.id,
+          userId: order.userId || 0,
+          userName: order.userName || 'Unknown',
+          total: order.total || 0,
+          status: order.status as any,
+          createdAt: new Date(order.createdAt),
+          items: order.items || 0
+        }));
+        
+        this.recentUsers = (data.recentUsers || []).map(user => ({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role as any,
+          status: user.status as any,
+          createdAt: new Date(user.createdAt)
+        }));
+        
+        console.log('📋 Orders:', this.recentOrders.length, 'Users:', this.recentUsers.length);
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
-      error: (error) => {
-        console.error('Error loading dashboard data:', error);
+      error: (error: any) => {
+        console.error('❌ Error loading dashboard data:', error);
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }

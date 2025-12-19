@@ -38,7 +38,7 @@
       <div class="stat-content">
         <div class="stat-info">
           <p class="stat-label">Total Users</p>
-          <h3 class="stat-value">{{ (stats.totalUsers / 1000) | number:'1.1-1' }}k</h3>
+          <h3 class="stat-value">{{ stats.totalUsers }}</h3>
           <div class="stat-bottom">
             <span class="stat-trend positive">+15%</span>
             <a routerLink="/user-management" class="view-link">View Users</a>
@@ -54,7 +54,7 @@
       <div class="stat-content">
         <div class="stat-info">
           <p class="stat-label">Total Revenue</p>
-          <h3 class="stat-value">{{ stats.totalRevenue | currency:'EUR':'symbol':'1.1-1' }}</h3>
+          <h3 class="stat-value">{{ stats.totalRevenue | number:'1.2-2' }} DT</h3>
           <div class="stat-bottom">
             <span class="stat-trend positive">+22%</span>
             <a href="#" class="view-link">View Report</a>
@@ -85,8 +85,8 @@
     <div class="stat-card orders-delivered">
       <div class="stat-content">
         <div class="stat-info">
-          <p class="stat-label">Orders Delivered</p>
-          <h3 class="stat-value">{{ (stats.totalOrders / 1000) | number:'1.1-1' }}k</h3>
+          <p class="stat-label">Total Orders</p>
+          <h3 class="stat-value">{{ stats.totalOrders }}</h3>
           <div class="stat-bottom">
             <span class="stat-trend positive">+18%</span>
             <a routerLink="/admin/orders" class="view-link">View More</a>
@@ -134,7 +134,7 @@
               {{ getStatusText(order.status) }}
             </span>
           </div>
-          <div class="col-time">{{ order.createdAt | date:'HH:mm' }}</div>
+          <div class="col-time">{{ order.createdAt ? (order.createdAt | date:'HH:mm') : 'N/A' }}</div>
           <div class="col-actions">
             <button class="action-icon-btn view" title="Voir">
               <i class="fas fa-eye"></i>
@@ -168,7 +168,7 @@
                 [style.background-color]="getRoleColor(user.role)">
                 {{ user.role }}
               </span>
-              <span class="join-date">{{ user.createdAt | date:'dd/MM/yyyy' }}</span>
+              <span class="join-date">{{ user.createdAt ? (user.createdAt | date:'dd/MM/yyyy') : 'N/A' }}</span>
             </div>
           </div>
           <div class="user-status">

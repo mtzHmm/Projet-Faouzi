@@ -1,67 +1,103 @@
 const express = require('express');
 const router = express.Router();
+const database = require('../config/database');
 
 // GET /api/admin/dashboard - Get dashboard statistics
-router.get('/dashboard', (req, res) => {
-  // Mock dashboard data
-  const dashboardStats = {
-    totalUsers: 25100,
-    totalOrders: 43500,
-    totalRevenue: 3500000,
-    activeDeliveries: 23,
-    pendingOrders: 12,
-    recentOrders: [
-      {
-        id: 1001,
-        userName: 'Sophie Martin',
-        total: 45.80,
-        status: 'en_livraison',
-        createdAt: new Date('2025-11-28T14:30:00'),
-        items: 3
+router.get('/dashboard', async (req, res) => {
+  try {
+    const db = database.getPool();
+    
+    // Get total users count from all tables
+    const clientsCount = await db.query('SELECT COUNT(*) as count FROM client');
+    const livreursCount = await db.query('SELECT COUNT(*) as count FROM livreur');
+    const providersCount = await db.query('SELECT COUNT(*) as count FROM magasin');
+    
+    const totalUsers = 
+      parseInt(clientsCount.rows[0]?.count || 0) + 
+      parseInt(livreursCount.rows[0]?.count || 0) + 
+      parseInt(providersCount.rows[0]?.count || 0);
+    
+    // Get orders statistics
+    const ordersStats = await db.query(`
+      SELECT 
+        COUNT(*) as total_orders,
+        COUNT(CASE WHEN status IN ('en attente', 'en cours') THEN 1 END) as pending_orders,
+        COALESCE(SUM(total), 0) as total_revenue
+      FROM commande
+    `);
+    
+    const stats = ordersStats.rows[0];
+    
+    // Get recent orders
+    const recentOrdersResult = await db.query(`
+      SELECT 
+        c.id_cmd as id,
+        c.total,
+        c.status,
+        c.date_commande as created_at,
+        COALESCE(cl.nom || ' ' || cl.prenom, c.user_name, 'Unknown') as user_name,
+        (SELECT COUNT(*) FROM ligne_commande WHERE id_cmd = c.id_cmd) as items
+      FROM commande c
+      LEFT JOIN client cl ON c.id_client = cl.id_client
+      ORDER BY c.date_commande DESC
+      LIMIT 5
+    `);
+    
+    const recentOrders = recentOrdersResult.rows.map(order => ({
+      id: order.id,
+      userName: order.user_name,
+      total: parseFloat(order.total),
+      status: order.status,
+      createdAt: order.created_at,
+      items: parseInt(order.items)
+    }));
+    
+    // Get recent users
+    const recentUsersResult = await db.query(`
+      (SELECT 
+        id_client as id,
+        nom || ' ' || prenom as name,
+        email,
+        'client' as role,
+        'actif' as status,
+        CURRENT_TIMESTAMP as created_at
+      FROM client
+      ORDER BY id_client DESC
+      LIMIT 3)
+      UNION ALL
+      (SELECT 
+        id_liv as id,
+        nom || ' ' || prenom as name,
+        email,
+        'livreur' as role,
+        'actif' as status,
+        CURRENT_TIMESTAMP as created_at
+      FROM livreur
+      ORDER BY id_liv DESC
+      LIMIT 2)
+    `);
+    
+    const dashboardStats = {
+      totalUsers: totalUsers,
+      totalOrders: parseInt(stats.total_orders),
+      totalRevenue: parseFloat(stats.total_revenue),
+      activeDeliveries: 0,
+      pendingOrders: parseInt(stats.pending_orders),
+      recentOrders: recentOrders,
+      recentUsers: recentUsersResult.rows,
+      salesByCategory: {
+        restaurant: 0,
+        boutique: 0,
+        pharmacie: 0
       },
-      {
-        id: 1002,
-        userName: 'Marc Dubois',
-        total: 28.90,
-        status: 'prepare',
-        createdAt: new Date('2025-11-28T14:25:00'),
-        items: 2
-      }
-    ],
-    recentUsers: [
-      {
-        id: 1,
-        name: 'Sophie Martin',
-        email: 'sophie.martin@email.com',
-        role: 'client',
-        status: 'active',
-        createdAt: new Date('2025-11-27T10:15:00')
-      },
-      {
-        id: 2,
-        name: 'Marc Dubois',
-        email: 'marc.dubois@email.com',
-        role: 'livreur',
-        status: 'active',
-        createdAt: new Date('2025-11-26T16:20:00')
-      }
-    ],
-    salesByCategory: {
-      restaurant: 1500000,
-      boutique: 1200000,
-      pharmacie: 800000
-    },
-    monthlyRevenue: [
-      { month: 'Jan', revenue: 280000 },
-      { month: 'Feb', revenue: 320000 },
-      { month: 'Mar', revenue: 290000 },
-      { month: 'Apr', revenue: 350000 },
-      { month: 'May', revenue: 400000 },
-      { month: 'Jun', revenue: 380000 }
-    ]
-  };
-  
-  res.json(dashboardStats);
+      monthlyRevenue: []
+    };
+    
+    res.json(dashboardStats);
+  } catch (error) {
+    console.error('❌ Error loading admin dashboard:', error);
+    res.status(500).json({ error: 'Failed to load dashboard data' });
+  }
 });
 
 // GET /api/admin/reports - Get various reports
