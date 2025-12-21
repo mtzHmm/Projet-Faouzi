@@ -34,6 +34,18 @@
   flex-shrink: 0;
 }
 
+.logo-image {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.logo-image:hover {
+  transform: scale(1.05);
+}
+
 .logo-emoji {
   font-size: 3.5rem;
   line-height: 1;
