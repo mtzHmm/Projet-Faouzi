@@ -72,14 +72,8 @@ logs
 .yarn-integrity
 
 # ===== ENVIRONMENT & SECRETS =====
-# Environment files - Now visible for team sharing
-# .env
-# .env.local
-# .env.development
-# .env.test
-# .env.production
-# .env.staging
-# .env.*.local
+# Environment files - committed for team sharing
+# Note: .env files will be tracked in git
 
 # API Keys & Secrets
 secrets/
