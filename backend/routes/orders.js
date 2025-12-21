@@ -67,26 +67,41 @@ router.get('/', async (req, res) => {
     
     console.log('📊 Orders query params:', { status, userId, providerId, page, limit });
     
+    // Optimized query: Get orders with their items in one query using JSON aggregation
     let query = `
-      SELECT DISTINCT c.*, 
-             cl.nom || ' ' || cl.prenom as user_name,
-             cl.email as user_email,
-             cl.tel as user_phone
+      SELECT 
+        c.*,
+        cl.nom || ' ' || cl.prenom as user_name,
+        cl.email as user_email,
+        cl.tel as user_phone,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', p.id_produit,
+              'name', p.nom,
+              'quantity', lc.quantite,
+              'price', p.prix
+            ) ORDER BY lc.id_produit
+          ) FILTER (WHERE p.id_produit IS NOT NULL),
+          '[]'::json
+        ) as items
       FROM commande c
       LEFT JOIN client cl ON c.id_client = cl.id_client
+      LEFT JOIN ligne_commande lc ON c.id_cmd = lc.id_cmd
+      LEFT JOIN produit p ON lc.id_produit = p.id_produit
       WHERE 1=1
     `;
     
     const params = [];
     let paramIndex = 1;
     
-    // Filter by provider (join with products to find orders containing products from specific provider)
+    // Filter by provider
     if (providerId) {
       console.log('🏪 Filtering orders for provider ID:', providerId);
       query += ` AND EXISTS (
-        SELECT 1 FROM ligne_commande lc 
-        JOIN produit p ON lc.id_produit = p.id_produit 
-        WHERE lc.id_cmd = c.id_cmd AND p.id_magazin = $${paramIndex}
+        SELECT 1 FROM ligne_commande lc2
+        JOIN produit p2 ON lc2.id_produit = p2.id_produit 
+        WHERE lc2.id_cmd = c.id_cmd AND p2.id_magazin = $${paramIndex}
       )`;
       params.push(parseInt(providerId));
       paramIndex++;
@@ -106,15 +121,27 @@ router.get('/', async (req, res) => {
       paramIndex++;
     }
     
+    // Group by all order columns
+    query += ` GROUP BY c.id_cmd, cl.nom, cl.prenom, cl.email, cl.tel`;
+    
     // Order by date desc
     query += ' ORDER BY c.date_commande DESC';
     
-    // Execute query to get total count
-    const countQuery = query.replace(
-      'SELECT DISTINCT c.*, cl.nom || \' \' || cl.prenom as user_name, cl.email as user_email, cl.tel as user_phone',
-      'SELECT COUNT(DISTINCT c.id_cmd) as count'
-    );
-    const countResult = await db.query(countQuery, params);
+    // Get total count (before pagination)
+    const countQuery = `
+      SELECT COUNT(DISTINCT c.id_cmd) as count
+      FROM commande c
+      LEFT JOIN client cl ON c.id_client = cl.id_client
+      WHERE 1=1
+      ${userId ? ` AND c.id_client = ${parseInt(userId)}` : ''}
+      ${status ? ` AND c.status = '${status}'` : ''}
+      ${providerId ? ` AND EXISTS (
+        SELECT 1 FROM ligne_commande lc2
+        JOIN produit p2 ON lc2.id_produit = p2.id_produit 
+        WHERE lc2.id_cmd = c.id_cmd AND p2.id_magazin = ${parseInt(providerId)}
+      )` : ''}
+    `;
+    const countResult = await db.query(countQuery);
     const totalOrders = parseInt(countResult.rows[0]?.count || 0);
     
     // Add pagination
@@ -122,17 +149,44 @@ router.get('/', async (req, res) => {
     query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     params.push(parseInt(limit), offset);
     
-    console.log('🔍 Executing query:', query);
-    console.log('📋 With params:', params);
+    console.log('🔍 Executing optimized query');
     
     const result = await db.query(query, params);
     
     console.log(`📊 Found ${result.rows.length} orders${providerId ? ` for provider ${providerId}` : ''}`);
     
-    // Format each order with its items
-    const formattedOrders = await Promise.all(
-      result.rows.map(order => formatOrderWithItems(order))
-    );
+    // Format orders (items are already included from the query)
+    const formattedOrders = result.rows.map(order => {
+      const items = Array.isArray(order.items) ? order.items.map(item => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        price: parseFloat(item.price)
+      })) : [];
+      
+      const calculatedSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      
+      return {
+        id: order.id_cmd,
+        userId: order.id_client,
+        userName: order.user_name || '',
+        userEmail: order.user_email || '',
+        userPhone: order.user_phone || '',
+        deliveryAddress: order.delivery_address || '',
+        city: order.city || '',
+        governorate: order.governorate || '',  
+        postalCode: order.postal_code || '',
+        additionalNotes: order.additional_notes || '',
+        subtotal: parseFloat(order.subtotal) || calculatedSubtotal,
+        tax: parseFloat(order.tax) || 0,
+        deliveryFee: parseFloat(order.delivery_fee) || 0,
+        total: parseFloat(order.total),
+        status: order.status,
+        dateCommande: order.date_commande,
+        createdAt: order.date_commande,
+        items: items
+      };
+    });
     
     console.log('📋 Returning formatted orders:', formattedOrders.length);
     

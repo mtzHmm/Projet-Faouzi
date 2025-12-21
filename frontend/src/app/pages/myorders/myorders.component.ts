@@ -36,7 +36,10 @@ export class MyordersComponent implements OnInit {
 
   ngOnInit() {
     this.loadUserData();
-    this.loadOrders();
+    // Wait a tick to ensure clientId is set before loading orders
+    setTimeout(() => {
+      this.loadOrders();
+    }, 0);
   }
 
   loadUserData() {

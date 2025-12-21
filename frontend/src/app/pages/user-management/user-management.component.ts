@@ -593,13 +593,21 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     console.log('📊 Loading orders for userId:', userId);
     this.loadingOrders = true;
     this.userOrders = [];
+    this.cdr.detectChanges();
     
     this.userService.getUserOrders(userId).subscribe({
       next: (orders) => {
         console.log('✅ Orders loaded successfully:', orders);
         console.log('📦 Number of orders:', orders?.length);
-        this.userOrders = orders || [];
-        this.loadingOrders = false;
+        
+        // Use setTimeout to ensure change detection runs
+        setTimeout(() => {
+          this.userOrders = Array.isArray(orders) ? orders : [];
+          this.loadingOrders = false;
+          this.cdr.markForCheck();
+          this.cdr.detectChanges();
+          console.log('🔄 UI updated. Orders in component:', this.userOrders.length);
+        }, 0);
       },
       error: (error) => {
         console.error('❌ Error loading orders:', error);
@@ -607,6 +615,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         this.showErrorMessage = true;
         this.errorMessage = 'Erreur lors du chargement des commandes';
         this.loadingOrders = false;
+        this.cdr.detectChanges();
         
         setTimeout(() => {
           this.showErrorMessage = false;
