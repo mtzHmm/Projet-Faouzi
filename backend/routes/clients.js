@@ -120,4 +120,41 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// DELETE /api/clients/:id - Delete a client
+router.delete('/:id', async (req, res) => {
+  try {
+    const clientId = parseInt(req.params.id);
+    console.log(`🗑️ Deleting client ${clientId}`);
+    
+    const pool = database.getPool();
+    if (!pool) {
+      throw new Error('Database connection not available');
+    }
+
+    // Check if client exists
+    const checkQuery = 'SELECT id_client FROM client WHERE id_client = $1';
+    const checkResult = await pool.query(checkQuery, [clientId]);
+    
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Client not found' });
+    }
+
+    // Delete the client
+    const deleteQuery = 'DELETE FROM client WHERE id_client = $1 RETURNING *';
+    const result = await pool.query(deleteQuery, [clientId]);
+    
+    console.log('✅ Client deleted successfully:', result.rows[0]);
+    res.json({ 
+      message: 'Client deleted successfully',
+      deletedClient: result.rows[0]
+    });
+  } catch (error) {
+    console.error('❌ Error deleting client:', error);
+    res.status(500).json({
+      error: 'Failed to delete client',
+      message: error.message
+    });
+  }
+});
+
 module.exports = router;

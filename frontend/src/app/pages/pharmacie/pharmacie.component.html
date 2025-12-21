@@ -62,7 +62,7 @@
         <p class="product-description">{{ product.description }}</p>
         <div class="product-meta">
           <span class="product-category">{{ product.category_name || 'Médicaments' }}</span>
-          <div class="product-price">{{ product.price | currency:'EUR':'symbol':'1.2-2' }}</div>
+          <div class="product-price">{{ product.price | number:'1.2-2' }} DT</div>
         </div>
         
         <button 
@@ -96,7 +96,7 @@
         <img [src]="item.image" [alt]="item.name" class="cart-item-image">
         <div class="cart-item-info">
           <span class="cart-item-name">{{ item.name }}</span>
-          <span class="cart-item-price">{{ item.price | currency:'EUR':'symbol':'1.2-2' }}</span>
+          <span class="cart-item-price">{{ item.price | number:'1.2-2' }} DT</span>
         </div>
         <button class="remove-item-btn" (click)="removeFromCart(item)">
           <i class="fas fa-times"></i>

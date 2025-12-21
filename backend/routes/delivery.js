@@ -384,4 +384,41 @@ router.get('/stats/:deliveryId', async (req, res) => {
   }
 });
 
+// DELETE /api/delivery/:id - Delete a delivery user
+router.delete('/:id', async (req, res) => {
+  try {
+    const deliveryId = parseInt(req.params.id);
+    console.log(`🗑️ Deleting delivery user ${deliveryId}`);
+    
+    const pool = database.getPool();
+    if (!pool) {
+      throw new Error('Database connection not available');
+    }
+
+    // Check if delivery user exists
+    const checkQuery = 'SELECT id_liv FROM livreur WHERE id_liv = $1';
+    const checkResult = await pool.query(checkQuery, [deliveryId]);
+    
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Delivery user not found' });
+    }
+
+    // Delete the delivery user
+    const deleteQuery = 'DELETE FROM livreur WHERE id_liv = $1 RETURNING *';
+    const result = await pool.query(deleteQuery, [deliveryId]);
+    
+    console.log('✅ Delivery user deleted successfully:', result.rows[0]);
+    res.json({ 
+      message: 'Delivery user deleted successfully',
+      deletedDelivery: result.rows[0]
+    });
+  } catch (error) {
+    console.error('❌ Error deleting delivery user:', error);
+    res.status(500).json({
+      error: 'Failed to delete delivery user',
+      message: error.message
+    });
+  }
+});
+
 module.exports = router;

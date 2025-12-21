@@ -43,14 +43,14 @@ async function formatOrderWithItems(order) {
     userName: order.user_name || '',
     userEmail: order.user_email || '',
     userPhone: order.user_phone || '',
-    deliveryAddress: '', // Not available in current schema
-    city: '', // Not available in current schema
-    governorate: '', // Not available in current schema  
-    postalCode: '', // Not available in current schema
-    additionalNotes: '', // Not available in current schema
-    subtotal: calculatedSubtotal,
-    tax: 0, // Not available, set to 0
-    deliveryFee: 0, // Not available, set to 0
+    deliveryAddress: order.delivery_address || '',
+    city: order.city || '',
+    governorate: order.governorate || '',  
+    postalCode: order.postal_code || '',
+    additionalNotes: order.additional_notes || '',
+    subtotal: parseFloat(order.subtotal) || calculatedSubtotal,
+    tax: parseFloat(order.tax) || 0,
+    deliveryFee: parseFloat(order.delivery_fee) || 0,
     total: parseFloat(order.total),
     status: order.status,
     dateCommande: order.date_commande,

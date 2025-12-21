@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface User {
@@ -106,7 +107,39 @@ export class UserService {
     return this.http.put<User>(`${endpoint}/${id}`, dbData);
   }
 
-  deleteUser(id: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/${id}`);
+  deleteUser(id: number, userRole?: string): Observable<any> {
+    console.log('🗑️ UserService - Deleting user:', id, 'role:', userRole);
+    
+    // Choose the correct endpoint based on user type
+    let endpoint = '';
+    switch (userRole) {
+      case 'client':
+        endpoint = this.clientsUrl;
+        break;
+      case 'magasin':
+        endpoint = this.providersUrl;
+        break;
+      case 'livreur':
+        endpoint = this.deliveryUrl;
+        break;
+      default:
+        endpoint = this.apiUrl;
+    }
+    
+    console.log('📍 Deleting from endpoint:', `${endpoint}/${id}`);
+    return this.http.delete(`${endpoint}/${id}`);
+  }
+  
+  getUserOrders(userId: number): Observable<any[]> {
+    const url = `${environment.apiUrl}/orders?userId=${userId}`;
+    console.log('🌐 Fetching orders from:', url);
+    console.log('🔑 For userId:', userId);
+    return this.http.get<any>(url).pipe(
+      map((response: any) => {
+        console.log('📦 Backend response:', response);
+        // Backend returns {orders: [...], total, page, totalPages}
+        return response.orders || response || [];
+      })
+    );
   }
 }

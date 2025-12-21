@@ -126,4 +126,41 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// DELETE /api/providers/:id - Delete a provider
+router.delete('/:id', async (req, res) => {
+  try {
+    const providerId = parseInt(req.params.id);
+    console.log(`🗑️ Deleting provider ${providerId}`);
+    
+    const pool = database.getPool();
+    if (!pool) {
+      throw new Error('Database connection not available');
+    }
+
+    // Check if provider exists
+    const checkQuery = 'SELECT id_magazin FROM magasin WHERE id_magazin = $1';
+    const checkResult = await pool.query(checkQuery, [providerId]);
+    
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Provider not found' });
+    }
+
+    // Delete the provider
+    const deleteQuery = 'DELETE FROM magasin WHERE id_magazin = $1 RETURNING *';
+    const result = await pool.query(deleteQuery, [providerId]);
+    
+    console.log('✅ Provider deleted successfully:', result.rows[0]);
+    res.json({ 
+      message: 'Provider deleted successfully',
+      deletedProvider: result.rows[0]
+    });
+  } catch (error) {
+    console.error('❌ Error deleting provider:', error);
+    res.status(500).json({
+      error: 'Failed to delete provider',
+      message: error.message
+    });
+  }
+});
+
 module.exports = router;

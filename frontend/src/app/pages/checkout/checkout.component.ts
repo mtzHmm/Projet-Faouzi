@@ -40,6 +40,12 @@ export class CheckoutComponent implements OnInit {
   isProcessing = false;
   isLoggedIn = false;
   userId: number = 0;
+  
+  // Notification state
+  showNotification = false;
+  notificationMessage = '';
+  notificationOrderId: number = 0;
+  notificationTotal = 0;
 
   constructor(
     private router: Router,
@@ -106,6 +112,10 @@ export class CheckoutComponent implements OnInit {
     );
   }
 
+  closeNotification() {
+    this.showNotification = false;
+  }
+
   confirmOrder() {
     if (!this.isFormValid()) {
       alert('Veuillez remplir tous les champs obligatoires');
@@ -155,17 +165,29 @@ export class CheckoutComponent implements OnInit {
         // Vider le panier
         this.cartService.clearCart();
         
-        // Afficher un message de succès
-        alert(`Commande confirmée avec succès!\nNuméro de commande: #${order.id}\nTotal: ${this.total.toFixed(2)} DT`);
+        // Afficher la notification de succès avec le total correct du serveur
+        this.notificationOrderId = order.id;
+        this.notificationTotal = order.total;
+        this.notificationMessage = 'success';
+        this.showNotification = true;
+        this.isProcessing = false;
         
-        // Rediriger vers la page d'accueil ou page de confirmation
-        this.router.navigate(['/']);
+        // Rediriger après 3 secondes
+        setTimeout(() => {
+          this.router.navigate(['/']);
+        }, 3000);
       },
       error: (error) => {
         console.error('❌ Error creating order:', error);
         console.error('🔍 Error details:', JSON.stringify(error, null, 2));
-        alert('Erreur lors de la création de la commande. Veuillez réessayer.');
+        this.notificationMessage = 'error';
+        this.showNotification = true;
         this.isProcessing = false;
+        
+        // Cacher la notification après 4 secondes
+        setTimeout(() => {
+          this.showNotification = false;
+        }, 4000);
       }
     });
   }

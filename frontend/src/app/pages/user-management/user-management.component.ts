@@ -88,6 +88,18 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   successMessage = '';
   showErrorMessage = false;
   errorMessage = '';
+  
+  // Order history
+  showOrderHistoryModal = false;
+  orderHistoryUser: any = null;
+  userOrders: any[] = [];
+  loadingOrders = false;
+  
+  // Delete confirmation modal
+  showDeleteConfirmModal = false;
+  deleteConfirmUserId: number | null = null;
+  deleteConfirmTableType: string | null = null;
+  deleteConfirmUserName: string = '';
 
   constructor(
     private userService: UserService,
@@ -495,11 +507,69 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   deleteUser(userId: number, tableType: string) {
     console.log('🗑️ Delete user:', userId, 'from table:', tableType);
     
-    if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur?')) {
-      // Implementation for deletion
-      console.log('User deletion confirmed for ID:', userId, 'table:', tableType);
-      // TODO: Implement actual deletion logic with backend API
+    // Find user name for confirmation
+    let user: ExtendedUser | undefined;
+    if (tableType === 'client') {
+      user = this.clients.find(u => u.id === userId || u.id_client === userId);
+    } else if (tableType === 'magasin') {
+      user = this.providers.find(u => u.id === userId || u.id_magazin === userId);
+    } else if (tableType === 'livreur') {
+      user = this.deliveryUsers.find(u => u.id === userId || u.id_liv === userId);
     }
+    
+    this.deleteConfirmUserName = user?.nom || user?.name || user?.email || 'cet utilisateur';
+    this.deleteConfirmUserId = userId;
+    this.deleteConfirmTableType = tableType;
+    this.showDeleteConfirmModal = true;
+  }
+  
+  confirmDelete() {
+    if (!this.deleteConfirmUserId || !this.deleteConfirmTableType) return;
+    
+    const userId = this.deleteConfirmUserId;
+    const tableType = this.deleteConfirmTableType;
+    
+    this.showDeleteConfirmModal = false;
+    this.loading = true;
+    
+    this.userService.deleteUser(userId, tableType).subscribe({
+      next: (response) => {
+        console.log('✅ User deleted successfully:', response);
+        
+        this.showSuccessMessage = true;
+        this.successMessage = 'Utilisateur supprimé avec succès';
+        this.loading = false;
+        
+        // Refresh all users to show updated data
+        this.loadAllUserTypes();
+        
+        setTimeout(() => {
+          this.showSuccessMessage = false;
+        }, 3000);
+      },
+      error: (error) => {
+        console.error('❌ Error deleting user:', error);
+        this.showErrorMessage = true;
+        this.errorMessage = 'Erreur lors de la suppression de l\'utilisateur';
+        this.loading = false;
+        
+        setTimeout(() => {
+          this.showErrorMessage = false;
+        }, 4000);
+      }
+    });
+    
+    // Reset confirmation data
+    this.deleteConfirmUserId = null;
+    this.deleteConfirmTableType = null;
+    this.deleteConfirmUserName = '';
+  }
+  
+  cancelDelete() {
+    this.showDeleteConfirmModal = false;
+    this.deleteConfirmUserId = null;
+    this.deleteConfirmTableType = null;
+    this.deleteConfirmUserName = '';
   }
 
   closeEditModal() {
@@ -508,6 +578,79 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     this.editingUserId = null;
     this.editingUserType = undefined;
     this.saving = false;
+  }
+  
+  viewOrderHistory(user: ExtendedUser) {
+    console.log('📦 Viewing order history for user:', user);
+    console.log('🔑 User ID being used:', user.id_client || user.id);
+    console.log('🔍 User object:', JSON.stringify(user, null, 2));
+    this.orderHistoryUser = user;
+    this.showOrderHistoryModal = true;
+    this.loadUserOrders(user.id_client || user.id);
+  }
+  
+  loadUserOrders(userId: number) {
+    console.log('📊 Loading orders for userId:', userId);
+    this.loadingOrders = true;
+    this.userOrders = [];
+    
+    this.userService.getUserOrders(userId).subscribe({
+      next: (orders) => {
+        console.log('✅ Orders loaded successfully:', orders);
+        console.log('📦 Number of orders:', orders?.length);
+        this.userOrders = orders || [];
+        this.loadingOrders = false;
+      },
+      error: (error) => {
+        console.error('❌ Error loading orders:', error);
+        console.error('🔍 Error details:', JSON.stringify(error, null, 2));
+        this.showErrorMessage = true;
+        this.errorMessage = 'Erreur lors du chargement des commandes';
+        this.loadingOrders = false;
+        
+        setTimeout(() => {
+          this.showErrorMessage = false;
+        }, 4000);
+      }
+    });
+  }
+  
+  closeOrderHistoryModal() {
+    this.showOrderHistoryModal = false;
+    this.orderHistoryUser = null;
+    this.userOrders = [];
+  }
+  
+  getStatusClass(status: string): string {
+    const statusMap: { [key: string]: string } = {
+      'en attente': 'status-pending',
+      'en cours': 'status-processing',
+      'préparée': 'status-prepared',
+      'livraison': 'status-delivery',
+      'livrée': 'status-delivered',
+      'annulée': 'status-cancelled'
+    };
+    return statusMap[status] || 'status-default';
+  }
+  
+  getStatusLabel(status: string): string {
+    const statusLabels: { [key: string]: string } = {
+      'en attente': 'En attente',
+      'en cours': 'En cours',
+      'préparée': 'Préparée',
+      'livraison': 'En livraison',
+      'livrée': 'Livrée',
+      'annulée': 'Annulée'
+    };
+    return statusLabels[status] || status;
+  }
+  
+  get deliveredOrdersCount(): number {
+    return this.userOrders.filter(o => o.status === 'livrée').length;
+  }
+  
+  get totalSpent(): number {
+    return this.userOrders.reduce((sum, order) => sum + (order.total || 0), 0);
   }
 
   getEditModalTitle(): string {
@@ -663,15 +806,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       case 'inactive': return 'Inactif';
       case 'suspended': return 'Suspendu';
       default: return status;
-    }
-  }
-
-  getStatusClass(status: string): string {
-    switch (status) {
-      case 'active': return 'status-active';
-      case 'inactive': return 'status-inactive';
-      case 'suspended': return 'status-suspended';
-      default: return '';
     }
   }
 

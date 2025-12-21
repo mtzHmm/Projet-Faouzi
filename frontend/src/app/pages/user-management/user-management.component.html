@@ -125,10 +125,13 @@
               <td>{{ user.gouv_client || '-' }}</td>
               <td>{{ user.ville_client || '-' }}</td>
               <td>
+                <button class="btn-history" (click)="viewOrderHistory(user)" title="Historique des commandes">
+                  📦
+                </button>
                 <button class="btn-edit" (click)="editUser(user.id_client || user.id, 'client')" title="Modifier">
                   ✏️
                 </button>
-                <button class="btn-delete" (click)="deleteUser(user.id, 'client')" title="Supprimer">
+                <button class="btn-delete" (click)="deleteUser(user.id_client || user.id, 'client')" title="Supprimer">
                   🗑️
                 </button>
               </td>
@@ -236,6 +239,110 @@
         <div class="empty-icon">🚚</div>
         <h3>Aucun livreur trouvé</h3>
         <p>Il n'y a aucun livreur dans la base de données.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div *ngIf="showDeleteConfirmModal" class="modal-overlay" (click)="cancelDelete()">
+  <div class="delete-confirm-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>⚠️ Confirmer la suppression</h2>
+      <button class="close-btn" (click)="cancelDelete()">✕</button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="warning-icon">🗑️</div>
+      <p class="confirm-message">
+        Êtes-vous sûr de vouloir supprimer <strong>{{ deleteConfirmUserName }}</strong>?
+      </p>
+      <p class="confirm-warning">
+        Cette action est <strong>irréversible</strong> et supprimera toutes les données associées.
+      </p>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="cancelDelete()">
+        Annuler
+      </button>
+      <button class="delete-btn" (click)="confirmDelete()">
+        Supprimer définitivement
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Order History Modal -->
+<div *ngIf="showOrderHistoryModal" class="modal-overlay" (click)="closeOrderHistoryModal()">
+  <div class="order-history-modal wide-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>📦 Historique des commandes</h2>
+      <button class="close-btn" (click)="closeOrderHistoryModal()">✕</button>
+    </div>
+    
+    <div class="modal-body">
+      <div *ngIf="orderHistoryUser" class="user-info-section">
+        <div class="user-info-card">
+          <h3>👤 {{ orderHistoryUser.prenom }} {{ orderHistoryUser.nom }}</h3>
+          <p><strong>Email:</strong> {{ orderHistoryUser.email }}</p>
+          <p><strong>Téléphone:</strong> {{ orderHistoryUser.tel || orderHistoryUser.phone || '-' }}</p>
+        </div>
+      </div>
+      
+      <div *ngIf="loadingOrders" class="loading-container">
+        <div class="loading-spinner">⏳</div>
+        <p>Chargement des commandes...</p>
+      </div>
+      
+      <div *ngIf="!loadingOrders && userOrders.length === 0" class="empty-state">
+        <div class="empty-icon">📦</div>
+        <h3>Aucune commande</h3>
+        <p>Cet utilisateur n'a pas encore passé de commande.</p>
+      </div>
+      
+      <div *ngIf="!loadingOrders && userOrders.length > 0" class="orders-list">
+        <div class="orders-stats">
+          <div class="stat-item">
+            <span class="stat-value">{{ userOrders.length }}</span>
+            <span class="stat-label">Commandes</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">{{ deliveredOrdersCount }}</span>
+            <span class="stat-label">Livrées</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">{{ totalSpent | number:'1.2-2' }} DT</span>
+            <span class="stat-label">Total dépensé</span>
+          </div>
+        </div>
+        
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th>#ID</th>
+              <th>Date</th>
+              <th>Articles</th>
+              <th>Total</th>
+              <th>Statut</th>
+              <th>Adresse</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let order of userOrders" class="order-row">
+              <td><strong>#{{ order.id }}</strong></td>
+              <td>{{ order.dateCommande | date:'dd/MM/yyyy' }}</td>
+              <td>{{ order.items?.length || 0 }} article(s)</td>
+              <td><strong>{{ order.total | number:'1.2-2' }} DT</strong></td>
+              <td>
+                <span class="status-badge" [ngClass]="getStatusClass(order.status)">
+                  {{ getStatusLabel(order.status) }}
+                </span>
+              </td>
+              <td>{{ order.deliveryAddress || order.city || '-' }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>

@@ -1,4 +1,44 @@
 <div class="checkout-container">
+  <!-- Notification de succès/erreur -->
+  <div class="notification-overlay" *ngIf="showNotification">
+    <div class="notification-card" [ngClass]="notificationMessage">
+      <div class="notification-icon">
+        <svg *ngIf="notificationMessage === 'success'" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="9 12 11 14 15 10"></polyline>
+        </svg>
+        <svg *ngIf="notificationMessage === 'error'" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="15" y1="9" x2="9" y2="15"></line>
+          <line x1="9" y1="9" x2="15" y2="15"></line>
+        </svg>
+      </div>
+      
+      <div class="notification-content">
+        <h2 *ngIf="notificationMessage === 'success'">🎉 Commande confirmée !</h2>
+        <h2 *ngIf="notificationMessage === 'error'">❌ Erreur</h2>
+        
+        <div *ngIf="notificationMessage === 'success'" class="order-details">
+          <p class="order-number">Numéro de commande: <strong>#{{ notificationOrderId }}</strong></p>
+          <p class="order-total">Total: <strong>{{ notificationTotal | number:'1.2-2' }} DT</strong></p>
+          <p class="redirect-message">Redirection en cours...</p>
+        </div>
+        
+        <p *ngIf="notificationMessage === 'error'" class="error-message">
+          Une erreur s'est produite lors de la création de votre commande.<br>
+          Veuillez réessayer.
+        </p>
+      </div>
+      
+      <button class="close-notification" (click)="closeNotification()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
   <div class="checkout-header">
     <button class="btn-back" (click)="goBack()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">

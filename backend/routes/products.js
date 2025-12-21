@@ -156,7 +156,7 @@ router.get('/', async (req, res) => {
     // Format products with proper price conversion
     const products = result.rows.map(product => ({
       ...product,
-      price: parseFloat(product.price) / 1000, // Convert from millimes to DT
+      price: parseFloat(product.price), // Price already in DT
       available: true
       // Note: image field comes from database as 'image' (mapped from image_url)
     }));
@@ -257,7 +257,7 @@ router.get('/:id', async (req, res) => {
     
     const product = {
       ...result.rows[0],
-      price: result.rows[0].price / 1000 // Convert from millimes to DT
+      price: result.rows[0].price // Price already in DT
     };
     
     res.json(product);
@@ -363,7 +363,7 @@ router.post('/', upload.single('image'), async (req, res) => {
     const result = await db.query(insertQuery, [
       name,
       description,
-      Math.round(parseFloat(price) * 1000), // Store as millimes (1000 = 1 DT)
+      parseFloat(price), // Store price as-is in DT
       parseInt(store_id),
       parseInt(category_id),
       imageUrl,
@@ -590,7 +590,7 @@ router.put('/:id', upload.single('image'), async (req, res) => {
     const updateParams = [
       name,
       description,
-      Math.round(parseFloat(price) * 1000), // Store as millimes (1000 = 1 DT)
+      parseFloat(price), // Store price as-is in DT
       parseInt(category_id),
       imageUrl,
       Boolean(prescription),

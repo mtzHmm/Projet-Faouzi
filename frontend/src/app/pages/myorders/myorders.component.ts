@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
@@ -30,7 +30,8 @@ export class MyordersComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private orderService: OrderService
+    private orderService: OrderService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -63,14 +64,17 @@ export class MyordersComponent implements OnInit {
       next: (response) => {
         console.log('✅ Orders loaded:', response);
         this.orders = response.orders || [];
-        this.filteredOrders = this.orders;
+        this.filteredOrders = [...this.orders];
         this.calculateStats();
         this.loading = false;
+        this.cdr.detectChanges();
+        console.log('🔄 Change detection triggered. Orders count:', this.filteredOrders.length);
       },
       error: (error) => {
         console.error('❌ Error loading orders:', error);
         this.error = 'Failed to load your orders. Please try again later.';
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -88,12 +92,14 @@ export class MyordersComponent implements OnInit {
 
   filterOrders() {
     if (this.selectedStatus === 'all') {
-      this.filteredOrders = this.orders;
+      this.filteredOrders = [...this.orders];
     } else {
       this.filteredOrders = this.orders.filter(order => 
         order.status === this.selectedStatus
       );
     }
+    this.cdr.detectChanges();
+    console.log('🔍 Filter applied. Showing', this.filteredOrders.length, 'orders');
   }
 
   viewOrderDetails(order: Order) {

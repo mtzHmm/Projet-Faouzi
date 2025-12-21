@@ -46,7 +46,7 @@
         <div class="product-meta">
           <span class="product-category">{{ product.category_name || 'Épicerie' }}</span>
           <div class="product-price-unit">
-            <div class="product-price">{{ product.price | currency:'EUR':'symbol':'1.2-2' }}</div>
+            <div class="product-price">{{ product.price | number:'1.2-2' }} DT</div>
             <div class="product-unit" *ngIf="product.unit">/ {{ product.unit }}</div>
           </div>
         </div>
@@ -86,7 +86,7 @@
           <span class="cart-item-name">{{ item.name }}</span>
           <div class="cart-item-details">
             <span class="cart-item-unit" *ngIf="item.unit">{{ item.unit }}</span>
-            <span class="cart-item-price">{{ item.price | currency:'EUR':'symbol':'1.2-2' }}</span>
+            <span class="cart-item-price">{{ item.price | number:'1.2-2' }} DT</span>
           </div>
         </div>
         <button class="remove-item-btn" (click)="removeFromCart(item)">
