@@ -21,6 +21,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
   isAdmin = false;
   isProvider = false;
   isDelivery = false;
+  isClient = false;
+  canAccessOrders = false;
   private authSubscription: Subscription = new Subscription();
   private cartSubscription: Subscription = new Subscription();
 
@@ -46,13 +48,18 @@ export class HeaderComponent implements OnInit, OnDestroy {
           this.isAdmin = this.authService.isAdmin();
           this.isProvider = this.authService.isProvider();
           this.isDelivery = this.authService.isDelivery();
-          console.log('✅ Header - User:', this.userName, 'ID:', this.userId, 'Admin:', this.isAdmin, 'Provider:', this.isProvider, 'Delivery:', this.isDelivery);
+          const userRole = this.authService.getUserRole().toLowerCase();
+          this.isClient = userRole === 'client';
+          this.canAccessOrders = this.isClient || this.isAdmin;
+          console.log('✅ Header - User:', this.userName, 'ID:', this.userId, 'Admin:', this.isAdmin, 'Provider:', this.isProvider, 'Delivery:', this.isDelivery, 'Client:', this.isClient, 'CanAccessOrders:', this.canAccessOrders);
         } else {
           this.userName = '';
           this.userId = '';
           this.isAdmin = false;
           this.isProvider = false;
           this.isDelivery = false;
+          this.isClient = false;
+          this.canAccessOrders = false;
         }
       }
     );
@@ -89,12 +96,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
       this.isAdmin = this.authService.isAdmin();
       this.isProvider = this.authService.isProvider();
       this.isDelivery = this.authService.isDelivery();
+      const userRole = this.authService.getUserRole().toLowerCase();
+      this.isClient = userRole === 'client';
+      this.canAccessOrders = this.isClient || this.isAdmin;
     } else {
       this.userName = '';
       this.userId = '';
       this.isAdmin = false;
       this.isProvider = false;
       this.isDelivery = false;
+      this.isClient = false;
+      this.canAccessOrders = false;
     }
   }
 
@@ -103,6 +115,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.isLoggedIn = false;
     this.userName = '';
     this.userId = '';
+    this.isClient = false;
     this.isAdmin = false;
     this.isProvider = false;
     this.isDelivery = false;

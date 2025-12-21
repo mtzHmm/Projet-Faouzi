@@ -134,6 +134,20 @@
   color: #3E2723;
 }
 
+.navigation a.myorders-link {
+  color: #667eea;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.navigation a.myorders-link:hover {
+  color: #764ba2;
+}
+
+.navigation a.myorders-link.active::after {
+  background: #667eea;
+}
+
 .header-actions {
   display: flex;
   align-items: center;

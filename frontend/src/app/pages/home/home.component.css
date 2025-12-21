@@ -44,6 +44,65 @@
   line-height: 1.6;
 }
 
+/* My Orders Button for Clients */
+.client-actions {
+  margin-top: 2rem;
+}
+
+.my-orders-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.my-orders-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+}
+
+.my-orders-btn .btn-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.my-orders-btn .btn-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.my-orders-btn .btn-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.my-orders-btn .btn-subtitle {
+  font-size: 0.85rem;
+  opacity: 0.9;
+  line-height: 1;
+}
+
+.my-orders-btn .btn-arrow {
+  font-size: 1.5rem;
+  font-weight: 700;
+  transition: transform 0.3s ease;
+}
+
+.my-orders-btn:hover .btn-arrow {
+  transform: translateX(5px);
+}
+
 .hero-illustration {
   position: relative;
   display: flex;
@@ -138,6 +197,34 @@
 .service-description {
   color: #666;
   line-height: 1.5;
+}
+
+/* My Orders Card Special Styling */
+.service-card.my-orders-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: 2px solid transparent;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.service-card.my-orders-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.service-card.my-orders-card .service-title,
+.service-card.my-orders-card .service-description {
+  color: white;
+}
+
+.service-card.my-orders-card .service-icon {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
 }
 
 .features-section {

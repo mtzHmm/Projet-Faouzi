@@ -61,3 +61,24 @@ export const deliveryGuard: CanActivateFn = (route, state) => {
   console.log('✅ Delivery route access granted');
   return true;
 };
+
+export const clientGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+  
+  if (!authService.isLoggedIn()) {
+    console.log('❌ Client route access denied - not logged in');
+    router.navigate(['/signin']);
+    return false;
+  }
+  
+  const userRole = authService.getUserRole().toLowerCase();
+  if (userRole !== 'client' && userRole !== 'admin') {
+    console.log('❌ Client route access denied - must be a client or admin');
+    router.navigate(['/']);
+    return false;
+  }
+  
+  console.log('✅ Client route access granted');
+  return true;
+};

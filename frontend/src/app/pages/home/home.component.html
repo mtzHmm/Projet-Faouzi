@@ -5,6 +5,18 @@
         <div class="hero-text">
           <h1 class="hero-title">{{ slogan }}</h1>
           <p class="hero-subtitle">Fast, reliable delivery from your favorite local stores</p>
+          
+          <!-- My Orders Button for Clients & Admins -->
+          <div *ngIf="canAccessOrders" class="client-actions">
+            <a routerLink="/myorders" class="my-orders-btn">
+              <span class="btn-icon">📦</span>
+              <div class="btn-content">
+                <span class="btn-title">My Orders</span>
+                <span class="btn-subtitle">Track your deliveries</span>
+              </div>
+              <span class="btn-arrow">→</span>
+            </a>
+          </div>
         </div>
         <div class="hero-illustration">
           <div class="delivery-person">
@@ -79,6 +91,17 @@
   <div class="services-section">
     <div class="container">
       <div class="services-grid">
+        <!-- My Orders Card for Clients & Admins -->
+        <div 
+          *ngIf="canAccessOrders"
+          class="service-card my-orders-card"
+          routerLink="/myorders"
+        >
+          <div class="service-icon">📦</div>
+          <h3 class="service-title">My Orders</h3>
+          <p class="service-description">View and track your orders</p>
+        </div>
+        
         <div 
           *ngFor="let service of serviceCategories" 
           class="service-card"

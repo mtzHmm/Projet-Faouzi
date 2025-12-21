@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { HomeComponent } from './pages/home/home.component';
 import { SigninComponent } from './pages/signin/signin.component';
 import { SignupComponent } from './pages/signup/signup.component';
-import { adminGuard, providerGuard, deliveryGuard } from './guards/auth.guard';
+import { adminGuard, providerGuard, deliveryGuard, clientGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -17,6 +17,11 @@ export const routes: Routes = [
     path: 'delivery', 
     loadChildren: () => import('./pages/delivery/delivery.routes').then(m => m.routes),
     canActivate: [deliveryGuard]
+  },
+  { 
+    path: 'myorders', 
+    loadChildren: () => import('./pages/myorders/myorders.routes').then(m => m.routes),
+    canActivate: [clientGuard]
   },
   { path: 'shop', loadChildren: () => import('./pages/shop/shop.routes').then(m => m.routes) },
   { path: 'contact', loadChildren: () => import('./pages/contact/contact.routes').then(m => m.routes) },
